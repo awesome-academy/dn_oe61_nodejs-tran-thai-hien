@@ -1,10 +1,57 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import configuration from 'configuration';
+import {
+  AcceptLanguageResolver,
+  I18nJsonLoader,
+  I18nModule,
+} from 'nestjs-i18n';
+import * as path from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AuthModule } from './auth/auth.module';
+import { I18nValidationPipe } from './common/pipes/i18n-validation.pipe';
+import { PrismaModule } from './prisma/prisma.module';
+import { UserModule } from './user/user.module';
 
 @Module({
-  imports: [],
+  imports: [
+    ConfigModule.forRoot({
+      envFilePath: `../.env`,
+      isGlobal: true,
+      load: [configuration],
+    }),
+    PrismaModule.registerAsync({
+      useFactory: (configService: ConfigService) =>
+        configService.get<string>('database.url', 'localdb'),
+      inject: [ConfigService],
+      isGlobal: true,
+    }),
+    I18nModule.forRoot({
+      fallbackLanguage: 'en',
+      loaderOptions: {
+        path: path.join(process.cwd(), 'src/locales'),
+        watch: true,
+      },
+      loader: I18nJsonLoader,
+      resolvers: [
+        {
+          use: AcceptLanguageResolver,
+          options: ['x-custom-lang'],
+        },
+      ],
+    }),
+    UserModule,
+    AuthModule,
+  ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+
+    {
+      provide: 'APP_PIPE',
+      useClass: I18nValidationPipe,
+    },
+  ],
 })
 export class AppModule {}

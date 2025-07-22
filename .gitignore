@@ -31,3 +31,4 @@ TestResults.xml
 .temp
 .tmp
 #config file
+/configuration.ts

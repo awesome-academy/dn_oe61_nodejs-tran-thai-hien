@@ -1,0 +1,48 @@
+{
+    "auth": {
+    "login": {
+      "success": "Login successfully",
+      "failed": "Invalid user credentials",
+      "unauthorized": "Unauthorized access",
+      "validation":{
+        "userNameNotEmpty":"User must not be empty",
+        "passwordNotEmpty":"Password must not be empty",
+        "passwordMindLength":"Password must be at least {constraint1} characters"
+      }
+    },
+    "signup": {
+      "success": "User created successfully",
+      "emailExists": "Email already exists",
+      "usernameExists": "Username already exists",
+       "validation":{
+        "nameNotEmpty":"Name must not be empty",
+        "userNameNotEmpty":"User must not be empty",
+        "emailInvalid":"Email format is invalid",
+        "passwordNotEmpty":"Password must not be empty",
+        "passwordMindLength":"Password must be at least {constraint1} characters"
+      }
+    },
+    "logout": {
+      "success": "Logout successfully"
+    }
+  },
+  "user": {
+    "notFound": "User not found",
+    "alreadyVerified": "Account already verified",
+    "notVerified": "Account not verified",
+    "status": {
+      "pending": "Pending",
+      "active": "Active",
+      "deactivated": "Deactivated"
+    }
+  },
+  "token": {
+    "invalid": "Invalid token",
+    "expired": "Token has expired",
+    "blacklisted": "Token is revoked"
+  },
+  "errors": {
+    "internal": "Internal server error",
+    "forbidden": "You do not have permission to access this resource"
+  }
+}
