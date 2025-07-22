@@ -20,3 +20,14 @@ rad.json
 *.flf
 #Test results file
 TestResults.xml
+#compiled ouput
+/node_modules
+/dist
+/build
+/generated/prisma
+# dotenv enviroment
+.env
+#temp file
+.temp
+.tmp
+#config file
