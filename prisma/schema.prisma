@@ -12,3 +12,267 @@ datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
+
+model Role {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  users     User[]
+
+  @@map("roles")
+}
+
+model User {
+  id                  Int            @id @default(autoincrement())
+  name                String
+  email               String         @unique
+  userName            String         @unique
+  password            String
+  status              UserStatus     @default(PENDING)
+  isVerified          Boolean        @default(false)
+  roleId              Int
+  role                Role           @relation(fields: [roleId], references: [id])
+  venues              Venue[]
+  bookings            Booking[]
+  spaceManagers       SpaceManager[] @relation("ManagerRelation")
+  chatMessageSent     ChatMessage[]  @relation("ChatMessageSent")
+  chatMessageReceived ChatMessage[]  @relation("ChatMessageReceived")
+  notifications       Notification[]
+  createdAt           DateTime       @default(now())
+  deletedAt           DateTime?
+
+  @@map("users")
+}
+
+model SpaceManager {
+  id        Int       @id @default(autoincrement())
+  managerId Int
+  manager   User      @relation(name: "ManagerRelation", fields: [managerId], references: [id])
+  spaceId   Int
+  space     Space     @relation(fields: [spaceId], references: [id])
+  startDate DateTime  @default(now())
+  endDate   DateTime?
+
+  @@map("space_managers")
+}
+
+model Venue {
+  id             Int            @id @default(autoincrement())
+  name           String         @unique
+  street         String
+  city           String
+  latitude       Float
+  longitude      Float
+  status         VenueStatus    @default(PENDING)
+  ownerId        Int
+  owner          User           @relation(fields: [ownerId], references: [id])
+  spaces         Space[]
+  venueAmenities VenueAmenity[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  deletedAt      DateTime?
+
+  @@map("venues")
+}
+
+model Space {
+  id             Int            @id @default(autoincrement())
+  name           String         @unique
+  type           SpaceType      @default(PRIVATE_OFFICE)
+  capacity       Int
+  description    String?
+  openHour       String
+  closeHour      String
+  venueId        Int
+  venue          Venue          @relation(fields: [venueId], references: [id])
+  spacePrices    SpacePrice[]
+  spaceAmenities SpaceAmenity[]
+  bookings       Booking[]
+  spaceManagers  SpaceManager[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  deletedAt      DateTime?
+
+  @@map("spaces")
+}
+
+model SpacePrice {
+  id        Int            @id @default(autoincrement())
+  price     Float
+  unit      SpacePriceUnit @default(HOUR)
+  spaceId   Int
+  space     Space          @relation(fields: [spaceId], references: [id])
+  startDate DateTime       @default(now())
+  endDate   DateTime?
+
+  @@map("space_prices")
+}
+
+model Amenity {
+  id             Int            @id @default(autoincrement())
+  name           String         @unique
+  description    String?
+  venueAmenities VenueAmenity[]
+  spaceAmenities SpaceAmenity[]
+  createdAt      DateTime       @default(now())
+  deletedAt      DateTime?
+
+  @@map("amenities")
+}
+
+model VenueAmenity {
+  id        Int           @id @default(autoincrement())
+  venueId   Int
+  venue     Venue         @relation(fields: [venueId], references: [id])
+  amenityId Int
+  amenity   Amenity       @relation(fields: [amenityId], references: [id])
+  status    AmenityStatus @default(ACTIVE)
+  startDate DateTime      @default(now())
+  endDate   DateTime?
+
+  @@map("venue_amenities")
+}
+
+model SpaceAmenity {
+  id        Int           @id @default(autoincrement())
+  spaceId   Int
+  space     Space         @relation(fields: [spaceId], references: [id])
+  amenityId Int
+  amenity   Amenity       @relation(fields: [amenityId], references: [id])
+  status    AmenityStatus @default(ACTIVE)
+  startDate DateTime      @default(now())
+  endDate   DateTime?
+
+  @@map("space_amenities")
+}
+
+model Booking {
+  id         Int           @id @default(autoincrement())
+  userId     Int
+  user       User          @relation(fields: [userId], references: [id])
+  spaceId    Int
+  space      Space         @relation(fields: [spaceId], references: [id])
+  startTime  DateTime
+  endTime    DateTime
+  totalPrice Float
+  status     BookingStatus @default(PENDING)
+  Payment    Payment?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@map("bookings")
+}
+
+model Payment {
+  id        Int           @id @default(autoincrement())
+  bookingId Int           @unique
+  booking   Booking       @relation(fields: [bookingId], references: [id])
+  amount    Float
+  method    PaymentMethod
+  status    PaymentStatus
+  paidAt    DateTime
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@map("payments")
+}
+
+model ChatMessage {
+  id         Int      @id @default(autoincrement())
+  senderId   Int
+  sender     User     @relation("ChatMessageSent", fields: [senderId], references: [id])
+  receiverId Int
+  receiver   User     @relation("ChatMessageReceived", fields: [receiverId], references: [id])
+  content    String
+  isRead     Boolean  @default(false)
+  sentAt     DateTime @default(now())
+
+  @@map("chat_messages")
+}
+
+model Notification {
+  id         Int              @id @default(autoincrement())
+  receiverId Int
+  receiver   User             @relation(fields: [receiverId], references: [id])
+  title      String
+  message    String
+  type       NotificationType
+  isRead     Boolean          @default(false)
+  createdAt  DateTime         @default(now())
+  deletedAt  DateTime?
+
+  @@map("notifications")
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  DEACTIVED
+}
+
+enum VenueStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  BLOCKED
+  DEACTIVED
+}
+
+enum SpaceType {
+  PRIVATE_OFFICE
+  WORKING_DESK
+  MEETING_SPACE
+}
+
+enum SpacePriceUnit {
+  HOUR
+  DAY
+  WEEK
+  MONTH
+}
+
+enum AmenityStatus {
+  ACTIVE
+  BROKEN
+  MAINTENANCE
+  PENDING
+  TEMPORARY_UNAVAILABLE
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+  COMPLETED
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  VNPAY
+  MOMO
+  ZALO_PAY
+  CREDIT_CARD
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+  PARTIAL_REFUNDED
+}
+
+enum NotificationType {
+  BOOKING_CREATED
+  BOOKING_CONFIRMED
+  BOOKING_CANCELLED
+  PAYMENT_SUCCESS
+  PAYMENT_FAILED
+  VENUE_CREATED
+  VENUE_REJECTED
+  VENUE_APPROVED
+  VENUE_BLOCKED
+  SYSTEM_ANNOUNCEMENT
+  NEW_MESSAGE
+}
