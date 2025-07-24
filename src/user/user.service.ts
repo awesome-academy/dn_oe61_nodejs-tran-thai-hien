@@ -59,6 +59,7 @@ import { VerifyUpdateRequestDto } from './dto/requests/verify-update.dto';
 import { RoleUpdateRequestDto } from './dto/requests/role-update.dto';
 import { BaseResponse } from 'src/common/interfaces/base-response';
 import { StatusKey } from 'src/common/enums/status-key.enum';
+import { getErrorPrismaClient } from 'src/common/helpers/catch-error.helper';
 @Injectable()
 export class UserService {
   constructor(
@@ -449,10 +450,7 @@ export class UserService {
       });
     } catch (error) {
       const errorPrismaClient = error as PrismaClientKnownRequestError;
-      const message = this.getErrorPrimsaClient(
-        errorPrismaClient,
-        'Update Profile',
-      );
+      const message = getErrorPrismaClient(errorPrismaClient, 'Update Profile');
       this.loggerService.error(
         message,
         JSON.stringify(error),
@@ -676,21 +674,21 @@ export class UserService {
         return 'An unexpected error occurred while sending the email.';
     }
   }
-  private getErrorPrimsaClient(
-    error: PrismaClientKnownRequestError,
-    context: string,
-  ) {
-    switch (error.code) {
-      case PrismaError.RECORD_NOT_FOUND.toString():
-        return `[${context}] Record not found`;
-      case PrismaError.FOREIGN_KEY_CONSTRAINT.toString():
-        return `[${context}] Invalid foreign key `;
-      case PrismaError.UNIQUE_CONSTRAINT.toString():
-        return `[${context}] Duplicate value `;
-      default:
-        return `[${context}] Prisma client error `;
-    }
-  }
+  // private getErrorPrimsaClient(
+  //   error: PrismaClientKnownRequestError,
+  //   context: string,
+  // ) {
+  //   switch (error.code) {
+  //     case PrismaError.RECORD_NOT_FOUND.toString():
+  //       return `[${context}] Record not found`;
+  //     case PrismaError.FOREIGN_KEY_CONSTRAINT.toString():
+  //       return `[${context}] Invalid foreign key `;
+  //     case PrismaError.UNIQUE_CONSTRAINT.toString():
+  //       return `[${context}] Duplicate value `;
+  //     default:
+  //       return `[${context}] Prisma client error `;
+  //   }
+  // }
   private buildUserSummaryResponse(user: User): UserSummaryDto {
     return {
       name: user.name,

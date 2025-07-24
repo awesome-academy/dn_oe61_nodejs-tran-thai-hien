@@ -34,6 +34,19 @@
       "invalidOrExpired":"Email is invalid or already verified"
     }
   },
+  "validation": {
+    "error":"Validation Error",
+    "isString": "The field {field} must be a string.",
+    "isNotEmpty": "The field {field} cannot be empty.",
+    "isEnum": "The field {field} must be one of the allowed values {enum}.",
+    "isNumber": "The field {field} must be a number.",
+    "isBoolean": "The field {field} must be a boolean value.",
+    "isDate": "The field {field} must be a valid date.",
+    "isInt": "The field {field} must be an integer",
+    "max": "The field {field} must be less than or equal to {max}",
+    "min": "The field {field} must be at least {min}",
+    "atLeastOneDefined":"At least one field must be provided."
+  },
    "request": {
     "errors": {
       "tokenInvalidExpired": "Token is invalid or expired",
@@ -42,6 +55,32 @@
       "tokenExpired": "The token has expired.",
       "emailNotFound": "email not found.",
       "missingParameters": "Some required parameters are missing."
+    }
+  },
+   "token": {
+    "missing":"Authorization token is required",
+    "invalid": "Invalid token",
+    "expired": "Token has expired",
+    "blacklisted": "Token is revoked"
+  },
+  "errors": {
+    "internal": "Internal server error",
+    "forbidden": "You do not have permission to access this resource"
+  },
+  "mail": {
+    "send": {
+      "typeNotNull":"type email must not be null",
+      "invalidType":"invalid type email",
+      "success": "Email has been sent successfully.",
+      "failed": "Failed to send the email.",
+      "invalidRecipient": "Invalid recipient email address.",
+      "serverError": "Mail server error. Please try again later.",
+      "timeout": "Email sending timed out.",
+      "templateError": "Email template could not be loaded.",
+      "usernameNotNull": "Recipient username is required.",
+      "tokenNotNull": "Token is required for sending the email.",
+      "expiresAtNotNull": "Expiration date is required for the email.",
+      "invalidPayload": "The provided data for sending the email is invalid."
     }
   },
   "user": {
@@ -115,43 +154,33 @@
   },
   "profile":{
     "action":{
-      "updateSuccess":"Profile updated successfully",
-      "updateFailed":"Profile updated failed"
+      "updateSuccess":"Profile updated successfully.",
+      "updateFailed":"Profile updated failed."
     }
   },
-  "token": {
-    "missing":"Authorization token is required",
-    "invalid": "Invalid token",
-    "expired": "Token has expired",
-    "blacklisted": "Token is revoked"
-  },
-  "errors": {
-    "internal": "Internal server error",
-    "forbidden": "You do not have permission to access this resource"
-  },
-  "mail": {
-    "send": {
-      "typeNotNull":"type email must not be null",
-      "invalidType":"invalid type email",
-      "success": "Email has been sent successfully.",
-      "failed": "Failed to send the email.",
-      "invalidRecipient": "Invalid recipient email address.",
-      "serverError": "Mail server error. Please try again later.",
-      "timeout": "Email sending timed out.",
-      "templateError": "Email template could not be loaded.",
-      "usernameNotNull": "Recipient username is required.",
-      "tokenNotNull": "Token is required for sending the email.",
-      "expiresAtNotNull": "Expiration date is required for the email.",
-      "invalidPayload": "The provided data for sending the email is invalid."
+  "venue":{
+    "nameExists":"Name venue already exists.",
+    "missingAmenities":"Some amenities do not exist.",
+    "notFound":"Venue not found.",
+    "action":{
+      "create":{
+        "success":"Venue created successfully.",
+        "failed": "Venue created failed."
+      },
+      "findVenues":{
+        "success": "Find all venues successfully."
+      },
+      "findVenuesByOwner":{
+        "success": "Find all venues of the owner successfully."
+      },
+      "update":{
+        "success":"Venue updated successfully.",
+        "failed": "Failed to update venue"
+      },
+      "delete":{
+        "success":"Venue deleted sucessfully.",
+        "failed": "Failed to delete venue."
+      }
     }
-  },
-  "validation": {
-    "error":"Validation Error",
-    "isString": "The field {field} must be a string.",
-    "isNotEmpty": "The field {field} cannot be empty.",
-    "isEnum": "The field {field} must be one of the allowed values {enum}.",
-    "isNumber": "The field {field} must be a number.",
-    "isBoolean": "The field {field} must be a boolean value.",
-    "isDate": "The field {field} must be a valid date."
   }
 }

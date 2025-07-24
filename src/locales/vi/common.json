@@ -148,7 +148,36 @@
     "isEnum": "Trường {field} phải là một trong các giá trị hợp lệ {enum}.",
     "isNumber": "Trường {field} phải là số.",
     "isBoolean": "Trường {field} phải là giá trị đúng/sai.",
-    "isDate": "Trường {field} phải là ngày hợp lệ."
-}
+    "isDate": "Trường {field} phải là ngày hợp lệ.",
+    "isInt": "Trường {field} phải là số nguyên",
+    "min": "Trường {field} phải lớn hơn hoặc bằng {min}",
+    "max": "Trường {field} phải nhỏ hơn hoặc bằng {max}",
+    "atLeastOneDefined": "Cần cung cấp ít nhất một trường."
+  },
+   "venue":{
+    "nameExists":"Tên của toà nhà đã tồn tại",
+    "missingAmenities":"Một vài tiện ích không tồn tại",
+    "notFound":"Không tìm thấy toà nhà",
+     "action":{
+      "create":{
+        "success":"Tạo toà nhà thành công",
+        "failed": "Tạo toà nhà thất bại"
+      },
+      "findVenues":{
+        "success": "Lấy danh sách tất cả toà nhà thành công"
+      },
+      "findVenuesByOwner":{
+        "success": "Lấy danh sách toà nhà của chủ sở hữu thành công"
+      },
+      "update":{
+        "success":"Cập nhập thông tin toà nhà thành công",
+        "failed": "Cập nhập thông tin toà nhà thất bại"
+      },
+      "delete": {
+        "success": "Xóa thông tin toà nhà thành công.",
+        "failed": "Xóa toà nhà thất bại."
+      }
+    }
+  }
 
 }
