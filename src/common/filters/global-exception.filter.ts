@@ -3,24 +3,57 @@ import {
   Catch,
   ExceptionFilter,
   HttpException,
+  HttpStatus,
 } from '@nestjs/common';
+import { ValidationError } from 'class-validator';
 import { Request, Response } from 'express';
 import { I18nService } from 'nestjs-i18n';
+import { MailErrorCode } from 'src/mail/constants/mail-error.constant';
+import { MailException } from 'src/mail/exceptions/mail.exception';
+import { ValidationErrorResponse } from '../interfaces/type';
+import {
+  HTTP_EXCEPTION_CODE,
+  UNKNOWN_ERROR_CODE,
+} from './constant/code-error.constant';
+import { UNKNOWN_MESSAGE } from './constant/message-error.constant';
+import { CustomLogger } from '../logger/custom-logger.service';
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
-  constructor(private readonly i18nService: I18nService) {}
-  catch(exception: unknown, host: ArgumentsHost) {
+  constructor(
+    private readonly i18nService: I18nService,
+    private readonly loggerService: CustomLogger,
+  ) {}
+  async catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
     let status = 400;
     let detail: object | string | undefined;
-    let code = 'UNKNOWN_ERROR';
-    let message: string | object = 'unknown message';
+    let code = UNKNOWN_ERROR_CODE;
+    let message = UNKNOWN_MESSAGE;
+    if (exception instanceof MailException) {
+      status = this.mapMailStatus(exception.code);
+      code = exception.code;
+      message = this.i18nService.translate(
+        `common.mail.send.${this.mapMailKey(exception.code)}`,
+      );
+      detail = exception?.detail;
+    }
     if (exception instanceof HttpException) {
+      const errorResponse = exception.getResponse() as ValidationErrorResponse;
+      code = HTTP_EXCEPTION_CODE;
       status = exception.getStatus();
-      message = exception.getResponse();
-      code = 'HttpException';
+      message = exception.message;
+      this.loggerService.log(
+        'Response error validation:: ',
+        JSON.stringify(errorResponse),
+      );
+      const validationMessage = errorResponse.message;
+      if (Array.isArray(validationMessage)) {
+        status = HttpStatus.BAD_REQUEST;
+        message = this.i18nService.translate('common.validation.error');
+        detail = await this.formatErrors(validationMessage);
+      }
     }
     response.status(status).json({
       code,
@@ -29,5 +62,64 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       timestamp: new Date().toISOString(),
       details: detail,
     });
+  }
+  private mapMailKey(code: MailErrorCode): string {
+    switch (code) {
+      case MailErrorCode.TIME_OUT:
+        return 'timeout';
+      case MailErrorCode.TEMPLATE_ERROR:
+        return 'template_error';
+      case MailErrorCode.INVALID_RECIPIENT:
+        return 'invalid_recipient';
+      case MailErrorCode.INVALID_PAYLOAD:
+        return 'invalid_payload';
+      default:
+        return 'server_error';
+    }
+  }
+  private mapMailStatus(code: MailErrorCode): number {
+    switch (code) {
+      case MailErrorCode.INVALID_RECIPIENT:
+        return HttpStatus.BAD_REQUEST;
+      case MailErrorCode.TIME_OUT:
+        return HttpStatus.GATEWAY_TIMEOUT;
+      case MailErrorCode.TEMPLATE_ERROR:
+      case MailErrorCode.SERVER_ERROR:
+      default:
+        return HttpStatus.INTERNAL_SERVER_ERROR;
+    }
+  }
+  private async formatErrors(
+    errors: ValidationError[],
+  ): Promise<{ field: string; message: string[] }[]> {
+    return Promise.all(
+      errors.map(async (err) => {
+        const translated = await Promise.all(
+          Object.values(err.constraints || {}).map((constraint) => {
+            const [key, argsRaw] = constraint.split('|');
+            let args: Record<string, unknown> = {};
+            try {
+              args = argsRaw
+                ? (JSON.parse(argsRaw) as Record<string, unknown>)
+                : {};
+            } catch (exception) {
+              this.loggerService.error(
+                'Parse constraint field failed',
+                JSON.stringify(exception),
+              );
+              args = {};
+            }
+            if (Array.isArray(args.constraints)) {
+              args.constraints.forEach(
+                (value, index) =>
+                  (args[`constraint${index + 1}`] = value) as string,
+              );
+            }
+            return this.i18nService.translate<string>(key, { args }) as string;
+          }),
+        );
+        return { field: err.property, message: translated };
+      }),
+    );
   }
 }

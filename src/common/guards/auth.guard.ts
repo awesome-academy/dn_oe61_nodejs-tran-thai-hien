@@ -20,14 +20,9 @@ export class AuthGuard implements CanActivate {
     if (isPublicRoute(this.reflector, context)) return true;
     const request = context.switchToHttp().getRequest<Request>();
     const token = extractTokenFromHeader(request);
-    if (!token) throw new UnauthorizedException('Token is required');
-    try {
-      const user = await this.authService.verifyToken(token);
-      request['user'] = user;
-      return true;
-    } catch (e) {
-      console.error('Error verify token - AuthGuard:: ' + e);
-      throw new UnauthorizedException('Invalid or expired token');
-    }
+    if (!token) throw new UnauthorizedException();
+    const user = await this.authService.verifyToken(token);
+    request['user'] = user;
+    return true;
   }
 }
