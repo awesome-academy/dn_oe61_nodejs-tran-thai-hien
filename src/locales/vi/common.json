@@ -1,0 +1,48 @@
+{
+  "auth": {
+    "login": {
+      "success": "Đăng nhập thành công",
+      "failed": "Thông tin đăng nhập không hợp lệ",
+      "unauthorized": "Truy cập không được phép",
+      "validation": {
+        "userNameNotEmpty": "Tên đăng nhập không được để trống",
+        "passwordNotEmpty": "Mật khẩu không được để trống",
+        "passwordMindLength": "Mật khẩu phải có ít nhất {constraint1} ký tự"
+      }
+    },
+    "signup": {
+      "success": "Tạo tài khoản thành công",
+      "emailExists": "Email đã tồn tại",
+      "usernameExists": "Tên đăng nhập đã tồn tại",
+      "validation": {
+        "nameNotEmpty": "Tên không được để trống",
+        "userNameNotEmpty": "Tên đăng nhập không được để trống",
+        "emailInvalid": "Định dạng email không hợp lệ",
+        "passwordNotEmpty": "Mật khẩu không được để trống",
+        "passwordMindLength": "Mật khẩu phải có ít nhất {constraint1} ký tự"
+      }
+    },
+    "logout": {
+      "success": "Đăng xuất thành công"
+    }
+  },
+  "user": {
+    "notFound": "Không tìm thấy người dùng",
+    "alreadyVerified": "Tài khoản đã được xác minh",
+    "notVerified": "Tài khoản chưa được xác minh",
+    "status": {
+      "pending": "Đang chờ",
+      "active": "Hoạt động",
+      "deactivated": "Đã vô hiệu hóa"
+    }
+  },
+  "token": {
+    "invalid": "Token không hợp lệ",
+    "expired": "Token đã hết hạn",
+    "blacklisted": "Token đã bị thu hồi"
+  },
+  "errors": {
+    "internal": "Lỗi máy chủ nội bộ",
+    "forbidden": "Bạn không có quyền truy cập tài nguyên này"
+  }
+}
