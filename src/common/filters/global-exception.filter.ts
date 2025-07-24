@@ -31,6 +31,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     let detail: object | string | undefined;
     let code = UNKNOWN_ERROR_CODE;
     let message = UNKNOWN_MESSAGE;
+    this.loggerService.error(
+      'Error catch by filter',
+      JSON.stringify(exception),
+    );
     if (exception instanceof MailException) {
       status = this.mapMailStatus(exception.code);
       code = exception.code;
@@ -68,13 +72,13 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       case MailErrorCode.TIME_OUT:
         return 'timeout';
       case MailErrorCode.TEMPLATE_ERROR:
-        return 'template_error';
+        return 'templateError';
       case MailErrorCode.INVALID_RECIPIENT:
-        return 'invalid_recipient';
+        return 'invalidRecipient';
       case MailErrorCode.INVALID_PAYLOAD:
-        return 'invalid_payload';
+        return 'invaliPayload';
       default:
-        return 'server_error';
+        return 'serverError';
     }
   }
   private mapMailStatus(code: MailErrorCode): number {

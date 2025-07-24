@@ -4,6 +4,8 @@ import {
   Controller,
   Get,
   NotFoundException,
+  Param,
+  ParseIntPipe,
   Patch,
   Post,
   Query,
@@ -21,7 +23,11 @@ import { I18nService } from 'nestjs-i18n';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { AccessTokenPayload } from 'src/auth/interfaces/access-token-payload';
 import { ProfileUpdateRequestDto } from './dto/requests/profile-update.dto';
-
+import { StatusUpdateRequestDto } from './dto/requests/status-update.dto';
+import { HasRole } from 'src/common/decorators/role.decorator';
+import { Role } from 'src/common/enums/role.enum';
+import { VerifyUpdateRequestDto } from './dto/requests/verify-update.dto';
+import { RoleUpdateRequestDto } from './dto/requests/role-update.dto';
 @Controller('users')
 export class UserController {
   constructor(
@@ -66,6 +72,7 @@ export class UserController {
     return await this.userService.verifyEmail(token);
   }
   @Get('/forgot-password')
+  @IsPublicRoute()
   async forgotPassowrd(@Query('email') email: string) {
     if (!email)
       throw new NotFoundException(
@@ -88,5 +95,29 @@ export class UserController {
     @Body() dto: ProfileUpdateRequestDto,
   ) {
     return await this.userService.updateMyProfile(user, dto);
+  }
+  @HasRole(Role.MODERATOR, Role.ADMIN)
+  @Patch('/:id/status')
+  async changeStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: StatusUpdateRequestDto,
+  ) {
+    return await this.userService.changeStatus(id, dto);
+  }
+  @HasRole(Role.MODERATOR, Role.ADMIN)
+  @Patch('/:id/verify')
+  async changeVerify(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: VerifyUpdateRequestDto,
+  ) {
+    return await this.userService.changeVerify(id, dto);
+  }
+  @HasRole(Role.ADMIN)
+  @Patch('/:id/role')
+  async changeRole(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: RoleUpdateRequestDto,
+  ) {
+    return await this.userService.changeRole(id, dto);
   }
 }

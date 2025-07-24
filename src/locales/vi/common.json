@@ -1,6 +1,7 @@
 {
   "auth": {
     "unauthorized": "Bạn không được phép truy cập. Vui lòng đăng nhập.",
+    "forbidden":"Bạn không có quyền truy cập tài nguyên này.",
     "login": {
       "success": "Đăng nhập thành công",
       "failed": "Thông tin đăng nhập không hợp lệ",
@@ -31,23 +32,29 @@
   },
     "request": {
     "errors": {
-      "token_invalid_expired": "Token không hợp lệ hoặc đã hết hạn",
-      "token_invalid": "Token không hợp lệ.",
-      "token_not_found": "Không tìm thấy token.",
-      "token_expired": "Token đã hết hạn.",
-      "email_not_found": "Không tìm thấy địa chỉ email.",
-      "missing_parameters": "Thiếu một số tham số bắt buộc."
+      "tokenInvalidExpired": "Token không hợp lệ hoặc đã hết hạn",
+      "tokenInvalid": "Token không hợp lệ.",
+      "tokenNotFound": "Không tìm thấy token.",
+      "tokenExpired": "Token đã hết hạn.",
+      "emailNotFound": "Không tìm thấy địa chỉ email.",
+      "missingParameters": "Thiếu một số tham số bắt buộc."
     }
   },
   "user": {
     "notFound": "Không tìm thấy người dùng",
     "alreadyVerified": "Tài khoản đã được xác minh",
     "notVerified": "Tài khoản chưa được xác minh",
+    "roleNotFound":"Không tìm thấy vai trò",
     "status": {
-      "pending": "Đang chờ",
+      "pending": "Đang chờ xác thực",
       "active": "Hoạt động",
       "deactivated": "Đã vô hiệu hóa"
-    }
+    },
+     "action": {
+      "statusMissing": "Vui lòng cung cấp trạng thái người dùng.",
+      "roleMissing":"Vui lòng cung cấp vai trò cần thay đổi.",    
+      "statusUpdated": "Cập nhật trạng thái người dùng thành công."
+      }
   },
   "profile":{
     "action":{
@@ -56,6 +63,7 @@
     }
   },
   "token": {
+    "missing":"Yêu cầu cung cấp token xác thực",
     "invalid": "Token không hợp lệ",
     "expired": "Token đã hết hạn",
     "blacklisted": "Token đã bị thu hồi"
@@ -66,28 +74,28 @@
   },
   "mail": {
     "send": {
-      "type_not_null":"Loại email gửi không được để trống",
-      "invalid_type":"Loại email gửi không hợp lệ",
+      "typeNotNull":"Loại email gửi không được để trống",
+      "invalidType":"Loại email gửi không hợp lệ",
       "success": "Gửi email thành công.",
       "failed": "Gửi email thất bại.",
-      "invalid_recipient": "Địa chỉ email người nhận không hợp lệ.",
-      "server_error": "Lỗi máy chủ gửi mail. Vui lòng thử lại sau.",
+      "invalidRecipient": "Địa chỉ email người nhận không hợp lệ.",
+      "serverError": "Lỗi máy chủ gửi mail. Vui lòng thử lại sau.",
       "timeout": "Quá thời gian gửi email.",
-      "template_error": "Không thể tải mẫu email.",
-      "username_not_null": "Tên người dùng không được để trống.",
-      "token_not_null": "Token bắt buộc phải có để gửi email.",
-      "expires_at_not_null": "Thời hạn của email là bắt buộc.",
-      "invalid_payload":"Dữ liệu để gửi email không hợp lệ."
+      "templateError": "Không thể tải mẫu email.",
+      "usernameNotNull": "Tên người dùng không được để trống.",
+      "tokenNotNull": "Token bắt buộc phải có để gửi email.",
+      "expiresAtNotNull": "Thời hạn của email là bắt buộc.",
+      "invalidPayload":"Dữ liệu để gửi email không hợp lệ."
     }
   },
   "validation": {
     "error":"Dữ liệu không hợp lệ",
-    "is_string": "Trường {field} phải là chuỗi.",
-    "is_not_empty": "Trường {field} không được để trống.",
-    "is_enum": "Trường {field} phải là một trong các giá trị hợp lệ.",
-    "is_number": "Trường {field} phải là số.",
-    "is_boolean": "Trường {field} phải là giá trị đúng/sai.",
-    "is_date": "Trường {field} phải là ngày hợp lệ."
+    "isString": "Trường {field} phải là chuỗi.",
+    "isNotEmpty": "Trường {field} không được để trống.",
+    "isEnum": "Trường {field} phải là một trong các giá trị hợp lệ.",
+    "isNumber": "Trường {field} phải là số.",
+    "isBoolean": "Trường {field} phải là giá trị đúng/sai.",
+    "isDate": "Trường {field} phải là ngày hợp lệ."
 }
 
 }

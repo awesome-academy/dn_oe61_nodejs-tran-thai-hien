@@ -1,0 +1,13 @@
+  auth-temp[m
+  backup-fg[m
+  backup-ve[m
+  feat/auth-basic[m
+  feat/auth-logout-confirm-forgot[m
+  feat/forgot-password[m
+  feat/logout-verify-email[m
+* [32mfeat/manage-user[m
+  feat/view-and-edit-profile[m
+  init-model[m
+  init-project[m
+  master[m
+  refactor-interceptor-transform-data[m
