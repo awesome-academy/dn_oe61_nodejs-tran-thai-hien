@@ -1,0 +1,21 @@
+doctype html
+html
+  head
+    meta(charset="UTF-8")
+    title Xác nhận email
+    style.
+      body { font-family: Arial, sans-serif; background: #f9f9f9; padding: 20px; }
+      .container { max-width: 600px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; }
+      .btn { display: inline-block; padding: 10px 20px; background: #007bff; color: #fff; text-decoration: none; border-radius: 5px; }
+      .footer { margin-top: 20px; font-size: 12px; color: #777; }
+  body
+    .container
+      h2 Xin chào #{name},
+      p Cảm ơn bạn đã đăng ký tài khoản tại #{appName} với tên đăng nhập là #{userName}.
+      p Để hoàn tất quá trình đăng ký, vui lòng xác nhận email bằng cách nhấn vào nút dưới đây:
+      p
+        a.btn(href=verificationLink) Xác nhận Email
+      p Nếu nút trên không hoạt động, hãy sao chép và dán liên kết này vào trình duyệt của bạn:
+      p 
+        a(href=verificationLink)= verificationLink
+      p.footer Liên kết này sẽ hết hạn vào lúc #{expiresAt}. Nếu bạn không đăng ký tài khoản, vui lòng bỏ qua email này.

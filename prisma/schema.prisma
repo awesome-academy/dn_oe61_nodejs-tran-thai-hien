@@ -204,6 +204,14 @@ model Notification {
   @@map("notifications")
 }
 
+model TokenBlackList {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  createdAt DateTime @default(now())
+
+  @@map("token_blacklist")
+}
+
 enum UserStatus {
   PENDING
   ACTIVE

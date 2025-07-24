@@ -1,0 +1,76 @@
+import dayjs from 'dayjs';
+import { SupportedLocalesType } from '../constants/locales.constant';
+
+// export function parseExpiresInToDate(expiresIn: number | string): Date {
+//   let seconds = 0;
+//   if (typeof expiresIn === 'number') {
+//     seconds = expiresIn;
+//   } else {
+//     const timeUnitRegex = /[dhms]/i;
+//     if (!timeUnitRegex.test(expiresIn)) {
+//       throw new Error('ExpiresIn must include a time unit (s/m/h/d)');
+//     }
+//     const regex = /(\d+)\s*(d|h|m|s)/gi;
+//     let match: RegExpExecArray | null;
+//     while ((match = regex.exec(expiresIn)) !== null) {
+//       const value = parseInt(match[1], 10);
+//       switch (match[2].toLowerCase()) {
+//         case 'd':
+//           seconds += value * 86400;
+//           break;
+//         case 'h':
+//           seconds += value * 3600;
+//           break;
+//         case 'm':
+//           seconds += value * 60;
+//           break;
+//         case 's':
+//           seconds += value;
+//           break;
+//       }
+//     }
+//     if (seconds === 0) throw new Error('ExpiresIn invalid format');
+//   }
+//   return new Date(Date.now() + seconds * 1000);
+// }
+export function parseExpiresInToDate(expiresIn: number | string): Date {
+  let seconds = 0;
+  const numberRegex = /^\d+$/;
+  if (typeof expiresIn == 'number') seconds = expiresIn;
+  else if (numberRegex.test(expiresIn)) {
+    seconds = parseInt(expiresIn, 10);
+  } else {
+    const timeUnitRegex = /[dhms]/i;
+    if (!timeUnitRegex.test(expiresIn)) {
+      throw new Error('ExpiresIn must include a time unit (s/m/h/d)');
+    }
+    const regex = /^(\d+)\s*(d|h|m|s)$/i;
+    const match = expiresIn.match(regex);
+    if (!match) throw new Error('Expiresin invalid format');
+    const value = parseInt(match[1], 10);
+    switch (match[2].toLowerCase()) {
+      case 'd':
+        seconds = value * 86400;
+        break;
+      case 'h':
+        seconds = value * 3600;
+        break;
+      case 'm':
+        seconds = value * 60;
+        break;
+      case 's':
+        seconds = value;
+        break;
+    }
+    if (seconds === 0) throw new Error('ExpiresIn invalid format');
+  }
+  return new Date(Date.now() + seconds * 1000);
+}
+export function formatDateTime(
+  date: Date,
+  lang: SupportedLocalesType = 'vi',
+): string {
+  return dayjs(date)
+    .locale(lang)
+    .format(lang === 'vi' ? 'DD/MM/YY HH:mm' : 'MMM D,YYYY, h:mm A');
+}
