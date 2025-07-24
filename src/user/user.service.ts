@@ -6,15 +6,22 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Prisma, Role as RoleEntity, User, UserStatus } from '@prisma/client';
+import {
+  Prisma,
+  Profile,
+  Role as RoleEntity,
+  User,
+  UserStatus,
+} from '@prisma/client';
+import { I18nService } from 'nestjs-i18n';
 import { AuthService } from 'src/auth/auth.service';
-import { accessTokenPayload } from 'src/auth/interfaces/access-token-payload';
+import { AccessTokenPayload } from 'src/auth/interfaces/access-token-payload';
 import { ForgotPasswordTokenPayload } from 'src/auth/interfaces/forgot-password-token-payload';
 import { VerifyEmailTokenPayload } from 'src/auth/interfaces/verify-email-token-payload';
 import { PrismaError } from 'src/common/enums/prisma-error.enum';
 import { Role } from 'src/common/enums/role.enum';
 import { CustomLogger } from 'src/common/logger/custom-logger.service';
-import { omitData } from 'src/common/utils/data.util';
+import { omitData, removeEmpty } from 'src/common/utils/data.util';
 import {
   formatDateTime,
   parseExpiresInToDate,
@@ -35,9 +42,11 @@ import { ForgotPasswordResponse } from './dto/responses/forgot-password-response
 import { LoginResponseDto } from './dto/responses/login-response.dto';
 import { ResendVerifyEmailResponseDto } from './dto/responses/resend-verify-email.dto';
 import { SignupResponseDto } from './dto/responses/signup-response.dto';
+import { UserProfileResponse } from './dto/responses/user-profile.response';
 import { VerifyUserResponseDto } from './dto/responses/verify-email.dto';
 import { MailErrorCode } from 'src/mail/constants/mail-error.constant';
 import { MailException } from 'src/mail/exceptions/mail.exception';
+import { ProfileUpdateRequestDto } from './dto/requests/profile-update.dto';
 @Injectable()
 export class UserService {
   constructor(
@@ -46,20 +55,30 @@ export class UserService {
     private readonly mailService: MailService,
     private readonly configService: ConfigService,
     private readonly loggerService: CustomLogger,
+    private readonly i18nService: I18nService,
   ) {}
   async signup(dto: SignupDto): Promise<SignupResponseDto> {
     const expiresIn = this.configService.get<string>(
       'jwt.verifyEmailExpiresIn',
       '1h',
     );
-    console.log('Signup expires in:: ' + expiresIn);
     const expiresAt = formatDateTime(parseExpiresInToDate(expiresIn));
     const userExistByEmail = await this.prismaService.user.findUnique({
       where: {
         email: dto.email,
       },
     });
-
+    if (dto.phone) {
+      const userExistByPhone = await this.prismaService.profile.findUnique({
+        where: {
+          phone: dto.phone,
+        },
+      });
+      if (userExistByPhone)
+        throw new ConflictException(
+          this.i18nService.translate('common.auth.signup.phoneExists'),
+        );
+    }
     if (userExistByEmail && !userExistByEmail.isVerified) {
       const appUrl = this.configService.get<string>('app.url');
       return {
@@ -78,7 +97,7 @@ export class UserService {
     if (userExistByUserName)
       throw new ConflictException('Username already exist');
     const hashedPassword = await hashPassword(dto.password);
-    const data: Prisma.UserCreateInput = {
+    const userData: Prisma.UserCreateInput = {
       name: dto.name,
       email: dto.email,
       userName: dto.userName,
@@ -89,8 +108,21 @@ export class UserService {
         },
       },
     };
+    const profileData = {
+      address: dto.address ?? '',
+      avatar: '',
+      bio: dto.bio ?? '',
+      phone: dto.phone ?? '',
+    };
     const user = await this.prismaService.user.create({
-      data,
+      data: {
+        ...userData,
+        profile: {
+          create: {
+            ...profileData,
+          },
+        },
+      },
     });
 
     const verifyEmailTokenPayload: VerifyEmailTokenPayload = {
@@ -170,7 +202,7 @@ export class UserService {
     // }
     if (!isComparePassword)
       throw new UnauthorizedException('Invalid user credentials');
-    const payload: accessTokenPayload = {
+    const payload: AccessTokenPayload = {
       sub: userByUserName.id,
       userName: userByUserName.userName,
       role: userByUserName.role.name,
@@ -252,7 +284,6 @@ export class UserService {
   }
   async resetPassword(dto: ResetPasswordDto): Promise<VerifyUserResponseDto> {
     try {
-      console.log('DTO:: ', dto);
       const payload = await this.authService.verifyToken(dto.token);
       const user = await this.prismaService.user.findUnique({
         where: { id: payload.sub },
@@ -275,6 +306,93 @@ export class UserService {
     } catch (error) {
       this.loggerService.error('Reset password error', JSON.stringify(error));
       return { verifyStatus: VERIFY_USER_STATUS.INVALID_OR_EXPIRED };
+    }
+  }
+  async myProfile(
+    currentUser: AccessTokenPayload,
+  ): Promise<UserProfileResponse> {
+    if (!currentUser)
+      throw new UnauthorizedException(
+        this.i18nService.translate('common.auth.unauthorized'),
+      );
+    const userId = currentUser.sub;
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        id: userId,
+      },
+      include: { profile: true },
+    });
+    if (!user) {
+      throw new NotFoundException(
+        this.i18nService.translate('common.user.notFound'),
+      );
+    }
+    return this.buidMyProfileResponse(user);
+  }
+  async updateMyProfile(
+    currentUser: AccessTokenPayload,
+    dto: ProfileUpdateRequestDto,
+  ) {
+    if (!currentUser)
+      throw new UnauthorizedException(
+        this.i18nService.translate('common.auth.unauthorized'),
+      );
+    const userId = currentUser.sub;
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        id: userId,
+      },
+      include: { profile: true },
+    });
+    if (!user) {
+      throw new NotFoundException(
+        this.i18nService.translate('common.user.notFound'),
+      );
+    }
+    const { name, phone } = dto;
+    if (phone) {
+      const profileExistPhone = await this.prismaService.profile.findUnique({
+        where: {
+          phone: phone,
+        },
+      });
+      const myProfile = user?.profile as Profile;
+      if (profileExistPhone && myProfile.phone !== phone)
+        throw new ConflictException(
+          this.i18nService.translate('common.auth.signup.phoneExists'),
+        );
+    }
+    const profileData = removeEmpty(omitData(dto, ['name']));
+    const profilePayload =
+      Object.keys(profileData).length > 0
+        ? user.profile
+          ? { update: profileData }
+          : { create: profileData }
+        : undefined;
+    if (!name && !profilePayload) return this.buidMyProfileResponse(user);
+    try {
+      const userUpdated = await this.prismaService.user.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          ...(name && { name }),
+          ...(profilePayload && { profile: profilePayload }),
+        },
+        include: {
+          profile: true,
+        },
+      });
+      return this.buidMyProfileResponse(userUpdated);
+    } catch (error) {
+      this.loggerService.error(
+        'Update profile failed',
+        JSON.stringify(error),
+        UserService.name,
+      );
+      throw new ConflictException(
+        this.i18nService.translate('common.profile.action.updateSuccess'),
+      );
     }
   }
   private buildSignupResponse(
@@ -390,5 +508,18 @@ export class UserService {
       default:
         return 'An unexpected error occurred while sending the email.';
     }
+  }
+
+  private buidMyProfileResponse(
+    userData: User & { profile: Profile | null },
+  ): UserProfileResponse {
+    return {
+      name: userData.name,
+      email: userData.email,
+      avatar: userData.profile?.avatar ?? '',
+      address: userData.profile?.address ?? '',
+      phone: userData.profile?.phone ?? '',
+      bio: userData.profile?.bio ?? '',
+    };
   }
 }

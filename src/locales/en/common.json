@@ -1,5 +1,6 @@
 {
     "auth": {
+    "unauthorized": "You are not authorized. Please login.",
     "login": {
       "success": "Login successfully",
       "failed": "Invalid user credentials",
@@ -13,13 +14,15 @@
     "signup": {
       "success": "User created successfully",
       "emailExists": "Email already exists",
+      "phoneExists": "Phone number already exists",
       "usernameExists": "Username already exists",
        "validation":{
         "nameNotEmpty":"Name must not be empty",
         "userNameNotEmpty":"User must not be empty",
         "emailInvalid":"Email format is invalid",
         "passwordNotEmpty":"Password must not be empty",
-        "passwordMindLength":"Password must be at least {constraint1} characters"
+        "passwordMindLength":"Password must be at least {constraint1} characters",
+        "invalidFormatPhone":"The phone number is invalid."
       }
     },
     "logout": {
@@ -28,6 +31,7 @@
   },
    "request": {
     "errors": {
+      "token_invalid_expired": "Token is invalid or expired",
       "token_invalid": "The token is invalid.",
       "token_not_found": "Token not found.",
       "token_expired": "The token has expired.",
@@ -43,6 +47,12 @@
       "pending": "Pending",
       "active": "Active",
       "deactivated": "Deactivated"
+    }
+  },
+  "profile":{
+    "action":{
+      "updateSuccess":"Profile updated successfully",
+      "updateFailed":"Profile updated failed"
     }
   },
   "token": {
@@ -69,5 +79,14 @@
       "expires_at_not_null": "Expiration date is required for the email.",
       "invalid_payload": "The provided data for sending the email is invalid."
     }
-  } 
+  },
+  "validation": {
+    "error":"Validation Error",
+    "is_string": "The field {field} must be a string.",
+    "is_not_empty": "The field {field} cannot be empty.",
+    "is_enum": "The field {field} must be one of the allowed values.",
+    "is_number": "The field {field} must be a number.",
+    "is_boolean": "The field {field} must be a boolean value.",
+    "is_date": "The field {field} must be a valid date."
+  }
 }
