@@ -3,9 +3,10 @@
     "unauthorized": "You are not authorized. Please login.",
     "forbidden":"You do not have permission to access this resource.",
     "login": {
-      "success": "Login successfully",
-      "failed": "Invalid user credentials",
       "unauthorized": "Unauthorized access",
+      "notVerified": "User is not verified yet.",
+      "deactivated": "User account is deactivated.",
+      "invalidCredentials":"Invalid user credentials.",
       "validation":{
         "userNameNotEmpty":"User must not be empty",
         "passwordNotEmpty":"Password must not be empty",
@@ -13,7 +14,10 @@
       }
     },
     "signup": {
-      "success": "User created successfully",
+      "success": "User created successfully, please check email is verify account",
+      "pending":"The account has been created. Please click on the send mail option to verify your account",
+      "failed": "Failed to create user. Please try again later.",
+      "sendMailFailed":"User created successfully, but the confirmation email could not be sent. Please contact support.",
       "emailExists": "Email already exists",
       "phoneExists": "Phone number already exists",
       "usernameExists": "Username already exists",
@@ -26,8 +30,8 @@
         "invalidFormatPhone":"The phone number is invalid."
       }
     },
-    "logout": {
-      "success": "Logout successfully"
+    "resendEmail":{
+      "invalidOrExpired":"Email is invalid or already verified"
     }
   },
    "request": {
@@ -51,9 +55,62 @@
       "deactivated": "Deactivated"
     },
     "action": {
-    "statusMissing": "Please provide a user status.",
-    "roleMissing":"Please provide a role change.",    
-    "statusUpdated": "User status updated successfully."
+        "statusMissing": "Please provide a user status.",
+        "roleMissing":"Please provide a role change.", 
+        "nonUpdate":"User role i",
+        "roleUpdated": "User role updated successfully.",
+        "signup":{
+          "success": "Your account has been created successfully. Please check your email to verify your account.",
+          "pending": "Your account has been registered. Please click the verification option to resend the confirmation email.",
+          "emailSendFailed": "Your account has been created, but we could not send the verification email. Please try resending the email later."
+        },
+        "login":{
+          "success": "Login successfully",
+          "failed": "Invalid user credentials"
+        },
+        "sendVeirifyEmail":{
+          "success":"Verification email has been sent successfully",
+          "failed":"Failed to send verification email. Please try again later"
+        },
+        "logout": {
+          "success": "Logout successfully",
+          "failed":"Logout failed. Please try again"
+        },
+        "verifyEmail":{
+          "success":"Your email has been successfully verified",
+          "failed":"Email verification failed due to a system error. Please try again later",
+          "invalidOrExpired":"The verification link is invalid or has expired",
+          "alreadyVerified":"Your email has already been verified"
+        },
+         "forgotPassword": {
+            "success": "Password reset instructions have been sent to your email",
+            "failed": "Failed to process password reset request. Please try again later"
+        },
+         "resetPassword": {
+          "success": "Your password has been reset successfully",
+          "invalidOrExpired": "The reset link is invalid or has expired",
+          "failed": "Failed to reset password. Please try again later"
+        },
+         "myProfile": {
+          "success": "Your profile information has been retrieved successfully"
+        },
+        "updateMyProfile":{
+          "success": "Your profile has been updated successfully",
+          "unchanged": "No changes were made to your profile",
+          "failed": "Failed to update your profile. Please try again later"
+        },
+        "changeStatus":{
+          "success": "User status updated successfully.",
+          "unChanged":"The user status remains unchanged."
+        },
+         "changeVerify":{
+          "success": "User verify updated successfully.",
+          "unChanged":"The user veirfy remains unchanged."
+        },
+         "changeRole":{
+          "success": "User role updated successfully.",
+          "unChanged":"The user role remains unchanged."
+        }
     }
   },
   "profile":{
@@ -92,7 +149,7 @@
     "error":"Validation Error",
     "isString": "The field {field} must be a string.",
     "isNotEmpty": "The field {field} cannot be empty.",
-    "isEnum": "The field {field} must be one of the allowed values.",
+    "isEnum": "The field {field} must be one of the allowed values {enum}.",
     "isNumber": "The field {field} must be a number.",
     "isBoolean": "The field {field} must be a boolean value.",
     "isDate": "The field {field} must be a valid date."

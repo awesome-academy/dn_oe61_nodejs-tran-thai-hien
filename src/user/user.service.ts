@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -21,7 +22,11 @@ import { VerifyEmailTokenPayload } from 'src/auth/interfaces/verify-email-token-
 import { PrismaError } from 'src/common/enums/prisma-error.enum';
 import { Role } from 'src/common/enums/role.enum';
 import { CustomLogger } from 'src/common/logger/custom-logger.service';
-import { omitData, removeEmpty } from 'src/common/utils/data.util';
+import {
+  buildBaseResponse,
+  omitData,
+  removeEmpty,
+} from 'src/common/utils/data.util';
 import {
   formatDateTime,
   parseExpiresInToDate,
@@ -38,6 +43,7 @@ import { SEND_MAIL_STATUS, SendMailStatus } from './constant/email.constant';
 import { REGISTER_TYPE } from './constant/register.constant';
 import { VERIFY_USER_STATUS } from './constant/verify-email.constant';
 import { LoginDto } from './dto/requests/login.dto';
+import { ProfileUpdateRequestDto } from './dto/requests/profile-update.dto';
 import { ResetPasswordDto } from './dto/requests/reset-password';
 import { SignupDto } from './dto/requests/signup.dto';
 import { StatusUpdateRequestDto } from './dto/requests/status-update.dto';
@@ -48,10 +54,11 @@ import { SignupResponseDto } from './dto/responses/signup-response.dto';
 import { UserProfileResponse } from './dto/responses/user-profile.response';
 import { UserSummaryDto } from './dto/responses/user-summary.dto';
 import { VerifyUserResponseDto } from './dto/responses/verify-email.dto';
-import { ProfileUpdateRequestDto } from './dto/requests/profile-update.dto';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { VerifyUpdateRequestDto } from './dto/requests/verify-update.dto';
 import { RoleUpdateRequestDto } from './dto/requests/role-update.dto';
+import { BaseResponse } from 'src/common/interfaces/base-response';
+import { StatusKey } from 'src/common/enums/status-key.enum';
 @Injectable()
 export class UserService {
   constructor(
@@ -62,7 +69,7 @@ export class UserService {
     private readonly loggerService: CustomLogger,
     private readonly i18nService: I18nService,
   ) {}
-  async signup(dto: SignupDto): Promise<SignupResponseDto> {
+  async signup(dto: SignupDto): Promise<BaseResponse<SignupResponseDto>> {
     const expiresIn = this.configService.get<string>(
       'jwt.verifyEmailExpiresIn',
       '1h',
@@ -86,11 +93,11 @@ export class UserService {
     }
     if (userExistByEmail && !userExistByEmail.isVerified) {
       const appUrl = this.configService.get<string>('app.url');
-      return {
+      return buildBaseResponse(StatusKey.PENDING, {
         type: REGISTER_TYPE.PENDING_VERIFY,
         expiresAt,
         verificationLink: `${appUrl}/users/resend-verify-email?email=${userExistByEmail.email}`,
-      };
+      });
     }
     if (userExistByEmail && userExistByEmail.isVerified)
       throw new ConflictException('Email already exist');
@@ -129,7 +136,6 @@ export class UserService {
         },
       },
     });
-
     const verifyEmailTokenPayload: VerifyEmailTokenPayload = {
       sub: user.id,
       userName: user.userName,
@@ -149,18 +155,27 @@ export class UserService {
       user.email,
       MAIL_TYPE.VERIFY_EMAIL,
     );
-    return this.buildSignupResponse(user, responseSendMail);
+    const statusKey =
+      responseSendMail === SEND_MAIL_STATUS.SENT
+        ? StatusKey.SUCCESS
+        : StatusKey.SEND_MAIL_FAILED;
+    return buildBaseResponse(
+      statusKey,
+      this.buildSignupResponse(user, responseSendMail),
+    );
   }
   async resendVerifyEmail(
     email: string,
-  ): Promise<ResendVerifyEmailResponseDto> {
+  ): Promise<BaseResponse<ResendVerifyEmailResponseDto>> {
     const userExistByEmail = await this.prismaService.user.findUnique({
       where: {
         email: email,
       },
     });
     if (!userExistByEmail || userExistByEmail.isVerified)
-      throw new BadRequestException('Email is invalid or already verified');
+      throw new BadRequestException(
+        this.i18nService.translate('common.auth.resendEmail.invalidOrExpired'),
+      );
     const expiresIn = this.configService.get<string>(
       'jwt.verifyEmailExpiresIn',
       '1h',
@@ -176,12 +191,14 @@ export class UserService {
       MAIL_TYPE.VERIFY_EMAIL,
     );
     const expiresAt = formatDateTime(parseExpiresInToDate(expiresIn));
-    return {
+    const statusKey =
+      status == SEND_MAIL_STATUS.SENT ? StatusKey.SUCCESS : StatusKey.FAILED;
+    return buildBaseResponse(statusKey, {
       sendMailStatus: status,
-      expiresAt: expiresAt,
-    };
+      expiresAt: statusKey == StatusKey.SUCCESS ? expiresAt : null,
+    });
   }
-  async login(dto: LoginDto): Promise<LoginResponseDto> {
+  async login(dto: LoginDto): Promise<BaseResponse<LoginResponseDto>> {
     const userByUserName = await this.prismaService.user.findUnique({
       where: {
         userName: dto.userName,
@@ -196,26 +213,35 @@ export class UserService {
       dto.password,
       userByUserName.password,
     );
-    // if (
-    //   !userByUserName.isVerified &&
-    //   userByUserName.status == UserStatus.PENDING
-    // ) {
-    //   throw new ForbiddenException('User is not verified yet');
-    // }
-    // if (userByUserName.status == UserStatus.DEACTIVED) {
-    //   throw new ForbiddenException('User is deactived');
-    // }
+    if (
+      !userByUserName.isVerified &&
+      userByUserName.status == UserStatus.PENDING
+    ) {
+      throw new ForbiddenException(
+        this.i18nService.translate('common.auth.login.notVerified'),
+      );
+    }
+    if (userByUserName.status == UserStatus.DEACTIVED) {
+      throw new ForbiddenException(
+        this.i18nService.translate('common.auth.login.deactivated'),
+      );
+    }
     if (!isComparePassword)
-      throw new UnauthorizedException('Invalid user credentials');
+      throw new UnauthorizedException(
+        this.i18nService.translate('common.auth.login.invalidCredentials'),
+      );
     const payload: AccessTokenPayload = {
       sub: userByUserName.id,
       userName: userByUserName.userName,
       role: userByUserName.role.name,
     };
     const accessToken = await this.authService.generateAccessToken(payload);
-    return this.buildLoginResponse(userByUserName, accessToken);
+    return {
+      statusKey: StatusKey.SUCCESS,
+      data: this.buildLoginResponse(userByUserName, accessToken),
+    };
   }
-  async logout(token: string) {
+  async logout(token: string): Promise<BaseResponse<null>> {
     const data: Prisma.TokenBlackListCreateInput = {
       token: token,
     };
@@ -223,32 +249,37 @@ export class UserService {
       await this.prismaService.tokenBlackList.create({
         data,
       });
-      return {
-        message: 'Logout successfully',
-      };
+      return buildBaseResponse(StatusKey.SUCCESS);
     } catch (err) {
       const error = err as Prisma.PrismaClientKnownRequestError;
       if (error.code === PrismaError.UNIQUE_CONSTRAINT.toString()) {
         throw new ConflictException('Token already exists');
       }
+      this.loggerService.error('Logout failed', JSON.stringify(error));
       throw err;
     }
   }
-  async verifyEmail(token: string): Promise<VerifyUserResponseDto> {
+  async verifyEmail(
+    token: string,
+  ): Promise<BaseResponse<VerifyUserResponseDto>> {
     try {
       const payload = await this.authService.verifyToken(token);
       const user = await this.prismaService.user.findUnique({
         where: { id: payload.sub },
       });
-      if (!user) return { verifyStatus: VERIFY_USER_STATUS.INVALID_OR_EXPIRED };
+      if (!user)
+        return buildBaseResponse(StatusKey.INVALID_OR_EXPIRED, {
+          verifyStatus: VERIFY_USER_STATUS.INVALID_OR_EXPIRED,
+        });
       if (user.isVerified)
-        return { verifyStatus: VERIFY_USER_STATUS.ALREADY_VERIFIED };
-
+        return buildBaseResponse(StatusKey.ALREADY_VERIFIED, {
+          verifyStatus: VERIFY_USER_STATUS.ALREADY_VERIFIED,
+        });
       const userUpdated = await this.prismaService.user.update({
         where: { id: user.id },
         data: { isVerified: true, status: UserStatus.ACTIVE },
       });
-      return {
+      return buildBaseResponse(StatusKey.SUCCESS, {
         verifyStatus: VERIFY_USER_STATUS.SUCCESS,
         user: {
           email: userUpdated.email,
@@ -257,13 +288,18 @@ export class UserService {
           status: userUpdated.status,
           isVerified: userUpdated.isVerified,
         },
-      };
+      });
     } catch (error) {
       this.loggerService.error('Verify email failed', JSON.stringify(error));
-      return { verifyStatus: VERIFY_USER_STATUS.INVALID_OR_EXPIRED };
+      return {
+        statusKey: StatusKey.FAILED,
+        data: { verifyStatus: VERIFY_USER_STATUS.INVALID_OR_EXPIRED },
+      };
     }
   }
-  async forgotPassword(email: string): Promise<ForgotPasswordResponse> {
+  async forgotPassword(
+    email: string,
+  ): Promise<BaseResponse<ForgotPasswordResponse>> {
     const expiresIn = this.configService.get<string>(
       'jwt.forgotPasswordExpiresIn',
       '1h',
@@ -275,7 +311,9 @@ export class UserService {
     });
     if (!userExistByEmail)
       throw new NotFoundException(
-        this.i18nService.translate('common.user.notFound'),
+        this.i18nService.translate(
+          'common.user.action.forgotPassword.invalidEmail',
+        ),
       );
     const payload = await this.generateContentEmailUserPayload(
       userExistByEmail,
@@ -287,23 +325,28 @@ export class UserService {
       userExistByEmail.email,
       MAIL_TYPE.FORGOT_PASWORD,
     );
-    return {
-      sendMailStatus: status,
-    };
+    const statusKey =
+      status === SEND_MAIL_STATUS.SENT ? StatusKey.SUCCESS : StatusKey.FAILED;
+    return buildBaseResponse(statusKey, { sendMailStatus: status });
   }
-  async resetPassword(dto: ResetPasswordDto): Promise<VerifyUserResponseDto> {
+  async resetPassword(
+    dto: ResetPasswordDto,
+  ): Promise<BaseResponse<VerifyUserResponseDto>> {
     try {
       const payload = await this.authService.verifyToken(dto.token);
       const user = await this.prismaService.user.findUnique({
         where: { id: payload.sub },
       });
-      if (!user) return { verifyStatus: VERIFY_USER_STATUS.INVALID_OR_EXPIRED };
+      if (!user)
+        return buildBaseResponse(StatusKey.INVALID_OR_EXPIRED, {
+          verifyStatus: VERIFY_USER_STATUS.INVALID_OR_EXPIRED,
+        });
       const hashedPassword = await hashPassword(dto.newPassword);
       const userUpdated = await this.prismaService.user.update({
         where: { id: user.id },
         data: { password: hashedPassword },
       });
-      return {
+      return buildBaseResponse(StatusKey.SUCCESS, {
         verifyStatus: VERIFY_USER_STATUS.SUCCESS,
         user: {
           email: userUpdated.email,
@@ -312,15 +355,17 @@ export class UserService {
           status: userUpdated.status,
           isVerified: userUpdated.isVerified,
         },
-      };
+      });
     } catch (error) {
       this.loggerService.error('Reset password error', JSON.stringify(error));
-      return { verifyStatus: VERIFY_USER_STATUS.INVALID_OR_EXPIRED };
+      return buildBaseResponse(StatusKey.INVALID_OR_EXPIRED, {
+        verifyStatus: VERIFY_USER_STATUS.INVALID_OR_EXPIRED,
+      });
     }
   }
   async myProfile(
     currentUser: AccessTokenPayload,
-  ): Promise<UserProfileResponse> {
+  ): Promise<BaseResponse<UserProfileResponse>> {
     if (!currentUser)
       throw new UnauthorizedException(
         this.i18nService.translate('common.auth.unauthorized'),
@@ -337,13 +382,15 @@ export class UserService {
         this.i18nService.translate('common.user.notFound'),
       );
     }
-    return this.buildMyProfileResponse(user);
+    return buildBaseResponse(
+      StatusKey.SUCCESS,
+      this.buildMyProfileResponse(user),
+    );
   }
-
   async updateMyProfile(
     currentUser: AccessTokenPayload,
     dto: ProfileUpdateRequestDto,
-  ) {
+  ): Promise<BaseResponse<UserProfileResponse | null>> {
     if (!currentUser)
       throw new UnauthorizedException(
         this.i18nService.translate('common.auth.unauthorized'),
@@ -380,9 +427,9 @@ export class UserService {
           ? { update: profileData }
           : { create: profileData }
         : undefined;
-    if (!name && !profilePayload) return this.buildMyProfileResponse(user);
+    if (!name && !profilePayload) buildBaseResponse(StatusKey.UNCHANGED);
     try {
-      await this.prismaService.$transaction(async (tx) => {
+      return await this.prismaService.$transaction(async (tx) => {
         const userUpdated = await tx.user.update({
           where: {
             id: user.id,
@@ -395,7 +442,10 @@ export class UserService {
             profile: true,
           },
         });
-        return this.buildMyProfileResponse(userUpdated);
+        return buildBaseResponse(
+          StatusKey.SUCCESS,
+          this.buildMyProfileResponse(userUpdated),
+        );
       });
     } catch (error) {
       const errorPrismaClient = error as PrismaClientKnownRequestError;
@@ -416,7 +466,7 @@ export class UserService {
   async changeStatus(
     userId: number,
     dto: StatusUpdateRequestDto,
-  ): Promise<UserSummaryDto | null> {
+  ): Promise<BaseResponse<UserSummaryDto | null>> {
     const user = await this.prismaService.user.findUnique({
       where: {
         id: userId,
@@ -427,7 +477,11 @@ export class UserService {
         this.i18nService.translate('common.user.notFound'),
       );
     const { status } = dto;
-    if (user.status === status) return null;
+    if (user.status === status)
+      return {
+        statusKey: StatusKey.UNCHANGED,
+        data: null,
+      };
     const newStatus = status as UserStatus;
     const userUpdated = await this.prismaService.user.update({
       where: {
@@ -437,12 +491,15 @@ export class UserService {
         status: newStatus,
       },
     });
-    return this.buildUserSummaryResponse(userUpdated);
+    return {
+      statusKey: StatusKey.SUCCESS,
+      data: this.buildUserSummaryResponse(userUpdated),
+    };
   }
   async changeVerify(
     userId: number,
     dto: VerifyUpdateRequestDto,
-  ): Promise<UserSummaryDto | null> {
+  ): Promise<BaseResponse<UserSummaryDto | null>> {
     const user = await this.prismaService.user.findUnique({
       where: {
         id: userId,
@@ -453,8 +510,8 @@ export class UserService {
         this.i18nService.translate('common.user.notFound'),
       );
     const { isVerify } = dto;
-    this.loggerService.log(`Is verify:: ${isVerify}`);
-    if (user.isVerified === isVerify) return null;
+    if (user.isVerified === isVerify)
+      return buildBaseResponse(StatusKey.UNCHANGED);
     const userUpdated = await this.prismaService.user.update({
       where: {
         id: user.id,
@@ -463,12 +520,15 @@ export class UserService {
         isVerified: isVerify,
       },
     });
-    return this.buildUserSummaryResponse(userUpdated);
+    return buildBaseResponse(
+      StatusKey.SUCCESS,
+      this.buildUserSummaryResponse(userUpdated),
+    );
   }
   async changeRole(
     userId: number,
     dto: RoleUpdateRequestDto,
-  ): Promise<UserSummaryDto | null> {
+  ): Promise<BaseResponse<UserSummaryDto | null>> {
     const user = await this.prismaService.user.findUnique({
       where: {
         id: userId,
@@ -482,7 +542,7 @@ export class UserService {
         this.i18nService.translate('common.user.notFound'),
       );
     const { role } = dto;
-    if (user.role.name === role) return null;
+    if (user.role.name === role) return buildBaseResponse(StatusKey.UNCHANGED);
     const roleUpdate = await this.prismaService.role.findUnique({
       where: {
         name: role,
@@ -503,7 +563,10 @@ export class UserService {
         role: true,
       },
     });
-    return this.buildUserSummaryResponse(userUpdated);
+    return buildBaseResponse(
+      StatusKey.SUCCESS,
+      this.buildUserSummaryResponse(userUpdated),
+    );
   }
   private buildSignupResponse(
     userData: User,
@@ -543,7 +606,6 @@ export class UserService {
     type: MailType,
   ): Promise<ContentMailUserPayload> {
     let token: string;
-    console.log('Type:: ' + type);
     if (type == MAIL_TYPE.FORGOT_PASWORD) {
       const forgotPasswordTokenPayload: ForgotPasswordTokenPayload = {
         sub: user.id,

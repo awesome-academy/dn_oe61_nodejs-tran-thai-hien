@@ -5,7 +5,10 @@
     "login": {
       "success": "Đăng nhập thành công",
       "failed": "Thông tin đăng nhập không hợp lệ",
+      "notVerified": "Tài khoản người dùng chưa được xác thực.",
+      "deactivated": "Tài khoản người dùng đã bị vô hiệu hóa.",
       "unauthorized": "Truy cập không được phép",
+      "invalidCredentials":"Thông tin đăng nhập không hợp lệ.",
       "validation": {
         "userNameNotEmpty": "Tên đăng nhập không được để trống",
         "passwordNotEmpty": "Mật khẩu không được để trống",
@@ -13,7 +16,10 @@
       }
     },
     "signup": {
-      "success": "Tạo tài khoản thành công",
+      "success": "Tạo tài khoản thành công, vui lòng kiểm tra email để xác thực tài khoản",
+      "failed":"Không thể tạo tài khoản. Vui lòng thử lại sau.",
+      "pending":"Tài khoản đã được tạo, vui lòng nhấp vào mục gửi email để xác thực tài khoản",
+      "sendMailFailed":"Tạo tài khoản thành công, nhưng không thể gửi email xác nhận. Vui lòng liên hệ bộ phận hỗ trợ",
       "emailExists": "Email đã tồn tại",
       "phoneExists":"Số điện thoại đã tồn tại",
       "usernameExists": "Tên đăng nhập đã tồn tại",
@@ -28,6 +34,9 @@
     },
     "logout": {
       "success": "Đăng xuất thành công"
+    },
+     "resendEmail":{
+      "invalidOrExpired":"Email không hợp lệ hoặc đã được xác thực"
     }
   },
     "request": {
@@ -51,10 +60,54 @@
       "deactivated": "Đã vô hiệu hóa"
     },
      "action": {
-      "statusMissing": "Vui lòng cung cấp trạng thái người dùng.",
-      "roleMissing":"Vui lòng cung cấp vai trò cần thay đổi.",    
-      "statusUpdated": "Cập nhật trạng thái người dùng thành công."
-      }
+            "statusMissing": "Vui lòng cung cấp trạng thái người dùng.",
+            "roleMissing":"Vui lòng cung cấp vai trò cần thay đổi.",    
+            "signup": {
+              "success": "Tài khoản của bạn đã được tạo thành công. Vui lòng kiểm tra email để xác thực tài khoản.",
+              "pending": "Tài khoản đã được đăng ký. Vui lòng nhấp vào mục xác thực để gửi lại email xác nhận.",
+              "emailSendFailed": "Tài khoản của bạn đã được tạo nhưng gửi email xác minh thất bại. Vui lòng thử gửi lại sau."
+            },
+            "login":{
+              "success": "Đăng nhập thành công",
+              "failed": "Thông tin đăng nhập không hợp lệ"
+            },
+            "sendVerifyEmail": {
+              "success": "Email xác minh đã được gửi thành công",
+              "failed": "Gửi email xác minh thất bại. Vui lòng thử lại sau"
+            },
+            "statusUpdated": "Cập nhật trạng thái người dùng thành công."
+            },
+            "logout": {
+              "success": "Đăng xuất thành công",
+              "failed": "Đăng xuất thất bại. Vui lòng thử lại"
+            },
+            "verifyEmail": {
+              "success": "Email của bạn đã được xác minh thành công",
+              "invalidOrExpired": "Liên kết xác minh không hợp lệ hoặc đã hết hạn",
+              "alreadyVerified": "Email của bạn đã được xác minh trước đó",
+              "failed": "Xác minh email thất bại do lỗi hệ thống. Vui lòng thử lại sau"
+            },
+            "forgotPassword": {
+              "success": "Hướng dẫn đặt lại mật khẩu đã được gửi đến email của bạn",
+              "failed": "Yêu cầu đặt lại mật khẩu thất bại. Vui lòng thử lại sau"
+            },
+            "resetPassword": {
+              "success": "Mật khẩu của bạn đã được đặt lại thành công",
+              "invalidOrExpired": "Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn",
+              "failed": "Đặt lại mật khẩu thất bại. Vui lòng thử lại sau"
+            },
+             "changeStatus": {
+              "success": "Trạng thái người dùng đã được cập nhật thành công.",
+              "unChanged": "Trạng thái người dùng không có thay đổi."
+            },
+            "changeVerify": {
+              "success": "Trạng thái xác minh của người dùng đã được cập nhật thành công.",
+              "unChanged": "Trạng thái xác minh của người dùng không có thay đổi."
+            },
+            "changeRole": {
+              "success": "Vai trò của người dùng đã được cập nhật thành công.",
+              "unChanged": "Vai trò của người dùng không có thay đổi."
+            }
   },
   "profile":{
     "action":{
@@ -92,7 +145,7 @@
     "error":"Dữ liệu không hợp lệ",
     "isString": "Trường {field} phải là chuỗi.",
     "isNotEmpty": "Trường {field} không được để trống.",
-    "isEnum": "Trường {field} phải là một trong các giá trị hợp lệ.",
+    "isEnum": "Trường {field} phải là một trong các giá trị hợp lệ {enum}.",
     "isNumber": "Trường {field} phải là số.",
     "isBoolean": "Trường {field} phải là giá trị đúng/sai.",
     "isDate": "Trường {field} phải là ngày hợp lệ."

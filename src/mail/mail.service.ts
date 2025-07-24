@@ -70,7 +70,7 @@ export class MailService {
   private getTempalte(type: MailType): string {
     switch (type) {
       case MAIL_TYPE.VERIFY_EMAIL:
-        return 'verify-email';
+        return 'verify-emaizl';
       case MAIL_TYPE.FORGOT_PASWORD:
         return 'forgot-password';
     }

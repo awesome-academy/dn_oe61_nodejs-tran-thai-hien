@@ -17,6 +17,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { UserModule } from './user/user.module';
 import { AuthGuard } from './common/guards/auth.guard';
 import { RoleGuard } from './common/guards/role.guard';
+import { TransformDataInterceptor } from './common/interceptors/transform-data.interceptor';
 
 @Module({
   imports: [
@@ -67,6 +68,10 @@ import { RoleGuard } from './common/guards/role.guard';
     {
       provide: 'APP_GUARD',
       useClass: RoleGuard,
+    },
+    {
+      provide: 'APP_INTERCEPTOR',
+      useClass: TransformDataInterceptor,
     },
   ],
 })

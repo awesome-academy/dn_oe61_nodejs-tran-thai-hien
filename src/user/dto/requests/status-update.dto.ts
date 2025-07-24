@@ -11,6 +11,7 @@ export class StatusUpdateRequestDto {
   @IsEnum(UserStatus, {
     message: i18nValidationMessage('common.validation.isEnum', {
       field: 'status',
+      enum: '(active/deactived)',
     }),
   })
   @IsOptional()
