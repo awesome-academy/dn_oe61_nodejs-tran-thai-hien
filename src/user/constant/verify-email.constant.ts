@@ -1,7 +1,7 @@
-export const VERIFY_EMAIL_STATUS = {
+export const VERIFY_USER_STATUS = {
   SUCCESS: 'SUCCESS',
   ALREADY_VERIFIED: 'ALREADY_VERIFIED',
   INVALID_OR_EXPIRED: 'INVALID_OR_EXPIRED',
 } as const;
-export type VerifyEmailStatus =
-  (typeof VERIFY_EMAIL_STATUS)[keyof typeof VERIFY_EMAIL_STATUS];
+export type VerifyUserStatus =
+  (typeof VERIFY_USER_STATUS)[keyof typeof VERIFY_USER_STATUS];

@@ -1,4 +1,4 @@
-export interface VerifyEmailPayload {
+export interface ContentMailUserPayload {
   recipientUserName: string;
   recipientName?: string;
   token: string;

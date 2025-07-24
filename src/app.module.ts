@@ -10,7 +10,9 @@ import * as path from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { I18nValidationPipe } from './common/pipes/i18n-validation.pipe';
+import { CoreModule } from './core/core.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UserModule } from './user/user.module';
 
@@ -43,11 +45,15 @@ import { UserModule } from './user/user.module';
     }),
     UserModule,
     AuthModule,
+    CoreModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
-
+    {
+      provide: 'APP_FILTER',
+      useClass: GlobalExceptionFilter,
+    },
     {
       provide: 'APP_PIPE',
       useClass: I18nValidationPipe,

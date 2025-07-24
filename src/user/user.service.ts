@@ -2,33 +2,42 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma, Role as RoleEntity, User, UserStatus } from '@prisma/client';
 import { AuthService } from 'src/auth/auth.service';
 import { accessTokenPayload } from 'src/auth/interfaces/access-token-payload';
+import { ForgotPasswordTokenPayload } from 'src/auth/interfaces/forgot-password-token-payload';
 import { VerifyEmailTokenPayload } from 'src/auth/interfaces/verify-email-token-payload';
 import { PrismaError } from 'src/common/enums/prisma-error.enum';
 import { Role } from 'src/common/enums/role.enum';
+import { CustomLogger } from 'src/common/logger/custom-logger.service';
 import { omitData } from 'src/common/utils/data.util';
 import {
   formatDateTime,
   parseExpiresInToDate,
 } from 'src/common/utils/date.util';
 import { comparePassword, hashPassword } from 'src/common/utils/hash.util';
-import { VerifyEmailPayload } from 'src/mail/interfaces/verify-email-payload.interface';
+import { MAIL_TYPE, MailType } from 'src/mail/constants/mail-type.constant';
+import { MailPayloadDto } from 'src/mail/dto/mail-payload.dto';
+import { ContentMailUserPayload } from 'src/mail/interfaces/content-mail-user.interface';
 import { MailService } from 'src/mail/mail.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SEND_MAIL_STATUS, SendMailStatus } from './constant/email.constant';
 import { REGISTER_TYPE } from './constant/register.constant';
-import { VERIFY_EMAIL_STATUS } from './constant/verify-email.constant';
+import { VERIFY_USER_STATUS } from './constant/verify-email.constant';
 import { LoginDto } from './dto/requests/login.dto';
+import { ResetPasswordDto } from './dto/requests/reset-password';
 import { SignupDto } from './dto/requests/signup.dto';
+import { ForgotPasswordResponse } from './dto/responses/forgot-password-response';
 import { LoginResponseDto } from './dto/responses/login-response.dto';
 import { ResendVerifyEmailResponseDto } from './dto/responses/resend-verify-email.dto';
 import { SignupResponseDto } from './dto/responses/signup-response.dto';
-import { VerifyEmailResponseDto } from './dto/responses/verify-email.dto';
+import { VerifyUserResponseDto } from './dto/responses/verify-email.dto';
+import { MailErrorCode } from 'src/mail/constants/mail-error.constant';
+import { MailException } from 'src/mail/exceptions/mail.exception';
 @Injectable()
 export class UserService {
   constructor(
@@ -36,6 +45,7 @@ export class UserService {
     private readonly authService: AuthService,
     private readonly mailService: MailService,
     private readonly configService: ConfigService,
+    private readonly loggerService: CustomLogger,
   ) {}
   async signup(dto: SignupDto): Promise<SignupResponseDto> {
     const expiresIn = this.configService.get<string>(
@@ -55,7 +65,7 @@ export class UserService {
       return {
         type: REGISTER_TYPE.PENDING_VERIFY,
         expiresAt,
-        verficationLink: `${appUrl}/users/resend-verify-email?email=${userExistByEmail.email}`,
+        verificationLink: `${appUrl}/users/resend-verify-email?email=${userExistByEmail.email}`,
       };
     }
     if (userExistByEmail && userExistByEmail.isVerified)
@@ -91,15 +101,16 @@ export class UserService {
       verifyEmailTokenPayload,
       { expiresIn },
     );
-    const verifyEmailMailPayload: VerifyEmailPayload = {
+    const verifyEmailMailPayload: ContentMailUserPayload = {
       recipientUserName: user.userName,
       expiresAt,
       token: tokenVerifyEmail,
       recipientName: user.name,
     };
-    const responseSendMail = await this.sendVerifyEmail(
+    const responseSendMail = await this.sendUserEmail(
       verifyEmailMailPayload,
       user.email,
+      MAIL_TYPE.VERIFY_EMAIL,
     );
     return this.buildSignupResponse(user, responseSendMail);
   }
@@ -117,12 +128,16 @@ export class UserService {
       'jwt.verifyEmailExpiresIn',
       '1h',
     );
-    console.log('Resend mail exires:: ' + expiresIn);
-    const payload = await this.generateVerifyEmailPayload(
+    const payload = await this.generateContentEmailUserPayload(
       userExistByEmail,
       expiresIn,
+      MAIL_TYPE.VERIFY_EMAIL,
     );
-    const status = await this.sendVerifyEmail(payload, userExistByEmail.email);
+    const status = await this.sendUserEmail(
+      payload,
+      userExistByEmail.email,
+      MAIL_TYPE.VERIFY_EMAIL,
+    );
     const expiresAt = formatDateTime(parseExpiresInToDate(expiresIn));
     return {
       sendMailStatus: status,
@@ -182,23 +197,22 @@ export class UserService {
       throw err;
     }
   }
-  async verifyEmail(token: string): Promise<VerifyEmailResponseDto> {
+  async verifyEmail(token: string): Promise<VerifyUserResponseDto> {
     try {
       const payload = await this.authService.verifyToken(token);
       const user = await this.prismaService.user.findUnique({
         where: { id: payload.sub },
       });
-      if (!user)
-        return { verifyStatus: VERIFY_EMAIL_STATUS.INVALID_OR_EXPIRED };
+      if (!user) return { verifyStatus: VERIFY_USER_STATUS.INVALID_OR_EXPIRED };
       if (user.isVerified)
-        return { verifyStatus: VERIFY_EMAIL_STATUS.ALREADY_VERIFIED };
+        return { verifyStatus: VERIFY_USER_STATUS.ALREADY_VERIFIED };
 
       const userUpdated = await this.prismaService.user.update({
         where: { id: user.id },
         data: { isVerified: true, status: UserStatus.ACTIVE },
       });
       return {
-        verifyStatus: VERIFY_EMAIL_STATUS.SUCCESS,
+        verifyStatus: VERIFY_USER_STATUS.SUCCESS,
         user: {
           email: userUpdated.email,
           name: userUpdated.name,
@@ -207,11 +221,62 @@ export class UserService {
         },
       };
     } catch (error) {
-      console.error(`Error verify confirm email - caused by: ${error}`);
-      return { verifyStatus: VERIFY_EMAIL_STATUS.INVALID_OR_EXPIRED };
+      this.loggerService.error('Verify email failed', JSON.stringify(error));
+      return { verifyStatus: VERIFY_USER_STATUS.INVALID_OR_EXPIRED };
     }
   }
-
+  async forgotPassword(email: string): Promise<ForgotPasswordResponse> {
+    const expiresIn = this.configService.get<string>(
+      'jwt.forgotPasswordExpiresIn',
+      '1h',
+    );
+    const userExistByEmail = await this.prismaService.user.findUnique({
+      where: {
+        email: email,
+      },
+    });
+    if (!userExistByEmail) throw new NotFoundException('User not found');
+    const payload = await this.generateContentEmailUserPayload(
+      userExistByEmail,
+      expiresIn,
+      MAIL_TYPE.FORGOT_PASWORD,
+    );
+    const status = await this.sendUserEmail(
+      payload,
+      userExistByEmail.email,
+      MAIL_TYPE.FORGOT_PASWORD,
+    );
+    return {
+      sendMailStatus: status,
+    };
+  }
+  async resetPassword(dto: ResetPasswordDto): Promise<VerifyUserResponseDto> {
+    try {
+      console.log('DTO:: ', dto);
+      const payload = await this.authService.verifyToken(dto.token);
+      const user = await this.prismaService.user.findUnique({
+        where: { id: payload.sub },
+      });
+      if (!user) return { verifyStatus: VERIFY_USER_STATUS.INVALID_OR_EXPIRED };
+      const hashedPassword = await hashPassword(dto.newPassword);
+      const userUpdated = await this.prismaService.user.update({
+        where: { id: user.id },
+        data: { password: hashedPassword },
+      });
+      return {
+        verifyStatus: VERIFY_USER_STATUS.SUCCESS,
+        user: {
+          email: userUpdated.email,
+          name: userUpdated.name,
+          userName: userUpdated.userName,
+          isVerified: userUpdated.isVerified,
+        },
+      };
+    } catch (error) {
+      this.loggerService.error('Reset password error', JSON.stringify(error));
+      return { verifyStatus: VERIFY_USER_STATUS.INVALID_OR_EXPIRED };
+    }
+  }
   private buildSignupResponse(
     userData: User,
     status: SendMailStatus,
@@ -249,37 +314,81 @@ export class UserService {
   ) {
     return omitData(userData, excluedKeys);
   }
-  private async generateVerifyEmailPayload(
+  private async generateContentEmailUserPayload(
     user: User,
     expiresIn: string,
-  ): Promise<VerifyEmailPayload> {
-    const verifyEmailTokenPayload: VerifyEmailTokenPayload = {
-      sub: user.id,
-      userName: user.userName,
-    };
-    const tokenVerifyEmail = await this.authService.generateVerifyEmailToken(
-      verifyEmailTokenPayload,
-      { expiresIn },
-    );
+    type: MailType,
+  ): Promise<ContentMailUserPayload> {
+    let token: string;
+    console.log('Type:: ' + type);
+    if (type == MAIL_TYPE.FORGOT_PASWORD) {
+      const forgotPasswordTokenPayload: ForgotPasswordTokenPayload = {
+        sub: user.id,
+        userName: user.userName,
+      };
+      token = await this.authService.generateForgotPassword(
+        forgotPasswordTokenPayload,
+        {
+          expiresIn,
+        },
+      );
+    } else {
+      const verifyEmailTokenPayload: VerifyEmailTokenPayload = {
+        sub: user.id,
+        userName: user.userName,
+      };
+      token = await this.authService.generateVerifyEmailToken(
+        verifyEmailTokenPayload,
+        { expiresIn },
+      );
+    }
     const expiresAt = formatDateTime(parseExpiresInToDate(expiresIn));
-    const verifyEmailMailPayload: VerifyEmailPayload = {
+    const contentMailUserPayload: ContentMailUserPayload = {
       recipientUserName: user.userName,
       expiresAt,
-      token: tokenVerifyEmail,
+      token: token,
       recipientName: user.name,
     };
-    return verifyEmailMailPayload;
+    return contentMailUserPayload;
   }
-  private async sendVerifyEmail(
-    payload: VerifyEmailPayload,
+  private async sendUserEmail(
+    payload: ContentMailUserPayload,
     to: string,
+    type: MailType,
   ): Promise<SendMailStatus> {
+    const mailPayLoad: MailPayloadDto = {
+      to,
+      type,
+      ...payload,
+    };
     try {
-      await this.mailService.sendVerifyEmail(to, payload);
+      await this.mailService.sendUserMail(mailPayLoad);
       return SEND_MAIL_STATUS.SENT;
-    } catch (err) {
-      console.error(`Send email failed to ${to} caused by ${err}`);
+    } catch (error) {
+      let message: string;
+      let caused: string | undefined;
+      if (error instanceof MailException) {
+        message = this.getErrorMessageSendMail(error.code);
+      } else {
+        message = 'SEND EMAIL FAILED';
+        caused = JSON.stringify(error);
+      }
+      this.loggerService.error(message, caused, UserService.name);
       return SEND_MAIL_STATUS.FAILED;
+    }
+  }
+  private getErrorMessageSendMail(code: MailErrorCode): string {
+    switch (code) {
+      case MailErrorCode.TIME_OUT:
+        return 'The email sending request timed out';
+      case MailErrorCode.TEMPLATE_ERROR:
+        return 'The email template could not be loaded.';
+      case MailErrorCode.INVALID_RECIPIENT:
+        return 'The recipient email address is invalid.';
+      case MailErrorCode.INVALID_PAYLOAD:
+        return 'Payload send email invalid';
+      default:
+        return 'An unexpected error occurred while sending the email.';
     }
   }
 }

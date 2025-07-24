@@ -6,6 +6,7 @@ export default () => ({
     secretKey: process.env.JWT_SECRET_KEY,
     expiresIn: process.env.JWT_EXPIRES_IN,
     verifyEmailExpiresIn: process.env.JWT_VERIFY_EMAIL_EXPIRES_IN,
+    forgotPasswordExpiresIn: process.env.JWT_FORGOT_PASSWORD_EXPIRES_IN,
   },
   app: {
     url: process.env.APP_URL,

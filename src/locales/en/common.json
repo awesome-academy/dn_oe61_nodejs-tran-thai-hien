@@ -26,6 +26,15 @@
       "success": "Logout successfully"
     }
   },
+   "request": {
+    "errors": {
+      "token_invalid": "The token is invalid.",
+      "token_not_found": "Token not found.",
+      "token_expired": "The token has expired.",
+      "email_not_found": "email not found.",
+      "missing_parameters": "Some required parameters are missing."
+    }
+  },
   "user": {
     "notFound": "User not found",
     "alreadyVerified": "Account already verified",
@@ -44,5 +53,21 @@
   "errors": {
     "internal": "Internal server error",
     "forbidden": "You do not have permission to access this resource"
-  }
+  },
+  "mail": {
+    "send": {
+      "type_not_null":"type email must not be null",
+      "invalid_type":"invalid type email",
+      "success": "Email has been sent successfully.",
+      "failed": "Failed to send the email.",
+      "invalid_recipient": "Invalid recipient email address.",
+      "server_error": "Mail server error. Please try again later.",
+      "timeout": "Email sending timed out.",
+      "template_error": "Email template could not be loaded.",
+      "username_not_null": "Recipient username is required.",
+      "token_not_null": "Token is required for sending the email.",
+      "expires_at_not_null": "Expiration date is required for the email.",
+      "invalid_payload": "The provided data for sending the email is invalid."
+    }
+  } 
 }
