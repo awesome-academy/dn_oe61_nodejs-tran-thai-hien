@@ -1,6 +1,5 @@
 import { ValidationError } from '@nestjs/common';
 import { Amenity, AmenityStatus, Space, User } from '@prisma/client';
-
 export type ValidationErrorResponse = { message: ValidationError[] };
 export type OwnerLite = Pick<User, 'id' | 'name'>;
 export type AmenityLite = Pick<Amenity, 'id' | 'name'>;
