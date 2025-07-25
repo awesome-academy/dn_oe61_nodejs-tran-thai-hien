@@ -4,6 +4,7 @@ import {
   Controller,
   Get,
   NotFoundException,
+  Patch,
   Post,
   Query,
   Req,
@@ -17,6 +18,9 @@ import { Request } from 'express';
 import { IsPublicRoute } from 'src/common/decorators/public-route.decorator';
 import { ResetPasswordDto } from './dto/requests/reset-password';
 import { I18nService } from 'nestjs-i18n';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { AccessTokenPayload } from 'src/auth/interfaces/access-token-payload';
+import { ProfileUpdateRequestDto } from './dto/requests/profile-update.dto';
 
 @Controller('users')
 export class UserController {
@@ -73,5 +77,16 @@ export class UserController {
   @IsPublicRoute()
   async resetPassowrd(@Body() dto: ResetPasswordDto) {
     return await this.userService.resetPassword(dto);
+  }
+  @Get('/profile')
+  async myProfile(@CurrentUser() user: AccessTokenPayload) {
+    return await this.userService.myProfile(user);
+  }
+  @Patch('/profile')
+  async updateProfile(
+    @CurrentUser() user: AccessTokenPayload,
+    @Body() dto: ProfileUpdateRequestDto,
+  ) {
+    return await this.userService.updateMyProfile(user, dto);
   }
 }

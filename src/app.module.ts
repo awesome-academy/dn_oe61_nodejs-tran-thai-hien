@@ -15,6 +15,7 @@ import { I18nValidationPipe } from './common/pipes/i18n-validation.pipe';
 import { CoreModule } from './core/core.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UserModule } from './user/user.module';
+import { AuthGuard } from './common/guards/auth.guard';
 
 @Module({
   imports: [
@@ -51,12 +52,16 @@ import { UserModule } from './user/user.module';
   providers: [
     AppService,
     {
+      provide: 'APP_PIPE',
+      useClass: I18nValidationPipe,
+    },
+    {
       provide: 'APP_FILTER',
       useClass: GlobalExceptionFilter,
     },
     {
-      provide: 'APP_PIPE',
-      useClass: I18nValidationPipe,
+      provide: 'APP_GUARD',
+      useClass: AuthGuard,
     },
   ],
 })
