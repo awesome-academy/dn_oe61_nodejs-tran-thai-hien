@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService, JwtSignOptions, JwtVerifyOptions } from '@nestjs/jwt';
-import { UserValidate } from './interfaces/user-validate';
 import { accessTokenPayload } from './interfaces/access-token-payload';
+import { UserValidate } from './interfaces/user-validate';
+import { VerifyEmailTokenPayload } from './interfaces/verify-email-token-payload';
 
 @Injectable()
 export class AuthService {
@@ -17,5 +18,11 @@ export class AuthService {
     options?: JwtVerifyOptions,
   ): Promise<UserValidate> {
     return await this.jwtService.verifyAsync<UserValidate>(token, options);
+  }
+  async generateVerifyEmailToken(
+    payload: VerifyEmailTokenPayload,
+    options?: JwtSignOptions,
+  ) {
+    return await this.jwtService.signAsync(payload, options);
   }
 }
