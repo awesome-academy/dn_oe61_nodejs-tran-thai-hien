@@ -3,6 +3,7 @@ import { JwtService, JwtSignOptions, JwtVerifyOptions } from '@nestjs/jwt';
 import { accessTokenPayload } from './interfaces/access-token-payload';
 import { UserValidate } from './interfaces/user-validate';
 import { VerifyEmailTokenPayload } from './interfaces/verify-email-token-payload';
+import { ForgotPasswordTokenPayload } from './interfaces/forgot-password-token-payload';
 
 @Injectable()
 export class AuthService {
@@ -21,6 +22,12 @@ export class AuthService {
   }
   async generateVerifyEmailToken(
     payload: VerifyEmailTokenPayload,
+    options?: JwtSignOptions,
+  ) {
+    return await this.jwtService.signAsync(payload, options);
+  }
+  async generateForgotPassword(
+    payload: ForgotPasswordTokenPayload,
     options?: JwtSignOptions,
   ) {
     return await this.jwtService.signAsync(payload, options);

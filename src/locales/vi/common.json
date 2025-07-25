@@ -26,6 +26,15 @@
       "success": "Đăng xuất thành công"
     }
   },
+    "request": {
+    "errors": {
+      "token_invalid": "Token không hợp lệ.",
+      "token_not_found": "Không tìm thấy token.",
+      "token_expired": "Token đã hết hạn.",
+      "email_not_found": "Không tìm thấy địa chỉ email.",
+      "missing_parameters": "Thiếu một số tham số bắt buộc."
+    }
+  },
   "user": {
     "notFound": "Không tìm thấy người dùng",
     "alreadyVerified": "Tài khoản đã được xác minh",
@@ -44,5 +53,21 @@
   "errors": {
     "internal": "Lỗi máy chủ nội bộ",
     "forbidden": "Bạn không có quyền truy cập tài nguyên này"
+  },
+  "mail": {
+    "send": {
+      "type_not_null":"Loại email gửi không được để trống",
+      "invalid_type":"Loại email gửi không hợp lệ",
+      "success": "Gửi email thành công.",
+      "failed": "Gửi email thất bại.",
+      "invalid_recipient": "Địa chỉ email người nhận không hợp lệ.",
+      "server_error": "Lỗi máy chủ gửi mail. Vui lòng thử lại sau.",
+      "timeout": "Quá thời gian gửi email.",
+      "template_error": "Không thể tải mẫu email.",
+      "username_not_null": "Tên người dùng không được để trống.",
+      "token_not_null": "Token bắt buộc phải có để gửi email.",
+      "expires_at_not_null": "Thời hạn của email là bắt buộc.",
+      "invalid_payload":"Dữ liệu để gửi email không hợp lệ."
+    }
   }
 }

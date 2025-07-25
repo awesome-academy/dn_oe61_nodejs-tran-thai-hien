@@ -15,6 +15,6 @@ export class SignupResponseDto {
   type: RegisterType;
   sendMailStatus?: SendMailStatus;
   expiresAt?: string;
-  verficationLink?: string;
+  verificationLink?: string;
   user?: UserSummaryDto;
 }
