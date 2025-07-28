@@ -27,8 +27,10 @@ import {
   parseExpiresInToDate,
 } from 'src/common/utils/date.util';
 import { comparePassword, hashPassword } from 'src/common/utils/hash.util';
+import { MailErrorCode } from 'src/mail/constants/mail-error.constant';
 import { MAIL_TYPE, MailType } from 'src/mail/constants/mail-type.constant';
 import { MailPayloadDto } from 'src/mail/dto/mail-payload.dto';
+import { MailException } from 'src/mail/exceptions/mail.exception';
 import { ContentMailUserPayload } from 'src/mail/interfaces/content-mail-user.interface';
 import { MailService } from 'src/mail/mail.service';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -38,16 +40,18 @@ import { VERIFY_USER_STATUS } from './constant/verify-email.constant';
 import { LoginDto } from './dto/requests/login.dto';
 import { ResetPasswordDto } from './dto/requests/reset-password';
 import { SignupDto } from './dto/requests/signup.dto';
+import { StatusUpdateRequestDto } from './dto/requests/status-update.dto';
 import { ForgotPasswordResponse } from './dto/responses/forgot-password-response';
 import { LoginResponseDto } from './dto/responses/login-response.dto';
 import { ResendVerifyEmailResponseDto } from './dto/responses/resend-verify-email.dto';
 import { SignupResponseDto } from './dto/responses/signup-response.dto';
 import { UserProfileResponse } from './dto/responses/user-profile.response';
+import { UserSummaryDto } from './dto/responses/user-summary.dto';
 import { VerifyUserResponseDto } from './dto/responses/verify-email.dto';
-import { MailErrorCode } from 'src/mail/constants/mail-error.constant';
-import { MailException } from 'src/mail/exceptions/mail.exception';
 import { ProfileUpdateRequestDto } from './dto/requests/profile-update.dto';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { VerifyUpdateRequestDto } from './dto/requests/verify-update.dto';
+import { RoleUpdateRequestDto } from './dto/requests/role-update.dto';
 @Injectable()
 export class UserService {
   constructor(
@@ -250,6 +254,7 @@ export class UserService {
           email: userUpdated.email,
           name: userUpdated.name,
           userName: userUpdated.userName,
+          status: userUpdated.status,
           isVerified: userUpdated.isVerified,
         },
       };
@@ -268,7 +273,10 @@ export class UserService {
         email: email,
       },
     });
-    if (!userExistByEmail) throw new NotFoundException('User not found');
+    if (!userExistByEmail)
+      throw new NotFoundException(
+        this.i18nService.translate('common.user.notFound'),
+      );
     const payload = await this.generateContentEmailUserPayload(
       userExistByEmail,
       expiresIn,
@@ -301,6 +309,7 @@ export class UserService {
           email: userUpdated.email,
           name: userUpdated.name,
           userName: userUpdated.userName,
+          status: userUpdated.status,
           isVerified: userUpdated.isVerified,
         },
       };
@@ -330,6 +339,7 @@ export class UserService {
     }
     return this.buildMyProfileResponse(user);
   }
+
   async updateMyProfile(
     currentUser: AccessTokenPayload,
     dto: ProfileUpdateRequestDto,
@@ -403,6 +413,98 @@ export class UserService {
       );
     }
   }
+  async changeStatus(
+    userId: number,
+    dto: StatusUpdateRequestDto,
+  ): Promise<UserSummaryDto | null> {
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+    if (!user)
+      throw new NotFoundException(
+        this.i18nService.translate('common.user.notFound'),
+      );
+    const { status } = dto;
+    if (user.status === status) return null;
+    const newStatus = status as UserStatus;
+    const userUpdated = await this.prismaService.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        status: newStatus,
+      },
+    });
+    return this.buildUserSummaryResponse(userUpdated);
+  }
+  async changeVerify(
+    userId: number,
+    dto: VerifyUpdateRequestDto,
+  ): Promise<UserSummaryDto | null> {
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+    if (!user)
+      throw new NotFoundException(
+        this.i18nService.translate('common.user.notFound'),
+      );
+    const { isVerify } = dto;
+    this.loggerService.log(`Is verify:: ${isVerify}`);
+    if (user.isVerified === isVerify) return null;
+    const userUpdated = await this.prismaService.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        isVerified: isVerify,
+      },
+    });
+    return this.buildUserSummaryResponse(userUpdated);
+  }
+  async changeRole(
+    userId: number,
+    dto: RoleUpdateRequestDto,
+  ): Promise<UserSummaryDto | null> {
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        id: userId,
+      },
+      include: {
+        role: true,
+      },
+    });
+    if (!user)
+      throw new NotFoundException(
+        this.i18nService.translate('common.user.notFound'),
+      );
+    const { role } = dto;
+    if (user.role.name === role) return null;
+    const roleUpdate = await this.prismaService.role.findUnique({
+      where: {
+        name: role,
+      },
+    });
+    if (!roleUpdate)
+      throw new NotFoundException(
+        this.i18nService.translate('common.user.roleNotFound'),
+      );
+    const userUpdated = await this.prismaService.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        roleId: roleUpdate.id,
+      },
+      include: {
+        role: true,
+      },
+    });
+    return this.buildUserSummaryResponse(userUpdated);
+  }
   private buildSignupResponse(
     userData: User,
     status: SendMailStatus,
@@ -410,12 +512,7 @@ export class UserService {
     return {
       type: REGISTER_TYPE.NEW_REGISTER,
       sendMailStatus: status,
-      user: {
-        name: userData.name,
-        userName: userData.userName,
-        email: userData.email,
-        isVerified: userData.isVerified,
-      },
+      user: this.buildUserSummaryResponse(userData),
     };
   }
   private buildLoginResponse(
@@ -531,6 +628,15 @@ export class UserService {
       default:
         return `[${context}] Prisma client error `;
     }
+  }
+  private buildUserSummaryResponse(user: User): UserSummaryDto {
+    return {
+      name: user.name,
+      userName: user.userName,
+      email: user.email,
+      status: user.status,
+      isVerified: user.isVerified,
+    };
   }
   private buildMyProfileResponse(
     userData: User & { profile: Profile | null },

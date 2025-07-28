@@ -5,12 +5,14 @@ import { ForgotPasswordTokenPayload } from './interfaces/forgot-password-token-p
 import { UserValidate } from './interfaces/user-validate';
 import { VerifyEmailTokenPayload } from './interfaces/verify-email-token-payload';
 import { I18nService } from 'nestjs-i18n';
+import { CustomLogger } from 'src/common/logger/custom-logger.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly i18nService: I18nService,
+    private readonly loggerService: CustomLogger,
   ) {}
   async generateAccessToken(
     payload: AccessTokenPayload,
@@ -25,11 +27,9 @@ export class AuthService {
     try {
       return await this.jwtService.verifyAsync<UserValidate>(token, options);
     } catch (error) {
-      console.error(error);
+      this.loggerService.error('Verify token failed', JSON.stringify(error));
       throw new UnauthorizedException(
-        this.i18nService.translate(
-          'common.request.errors.token_invalid_expired',
-        ),
+        this.i18nService.translate('common.request.errors.tokenInvalidExpired'),
       );
     }
   }

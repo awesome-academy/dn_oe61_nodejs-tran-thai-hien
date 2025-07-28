@@ -4,14 +4,14 @@ import { i18nValidationMessage } from 'nestjs-i18n';
 export class ProfileUpdateRequestDto {
   @IsOptional()
   @IsString({
-    message: i18nValidationMessage('common.validation.is_string', {
+    message: i18nValidationMessage('common.validation.isString', {
       constraint: 'name',
     }),
   })
   name?: string;
   @IsOptional()
   @IsString({
-    message: i18nValidationMessage('common.validation.is_string', {
+    message: i18nValidationMessage('common.validation.isString', {
       constraint: 'address',
     }),
   })
@@ -23,7 +23,7 @@ export class ProfileUpdateRequestDto {
   phone?: string;
   @IsOptional()
   @IsString({
-    message: i18nValidationMessage('common.validation.is_string', {
+    message: i18nValidationMessage('common.validation.isString', {
       field: 'bio',
     }),
   })

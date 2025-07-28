@@ -1,6 +1,7 @@
 {
     "auth": {
     "unauthorized": "You are not authorized. Please login.",
+    "forbidden":"You do not have permission to access this resource.",
     "login": {
       "success": "Login successfully",
       "failed": "Invalid user credentials",
@@ -31,22 +32,28 @@
   },
    "request": {
     "errors": {
-      "token_invalid_expired": "Token is invalid or expired",
-      "token_invalid": "The token is invalid.",
-      "token_not_found": "Token not found.",
-      "token_expired": "The token has expired.",
-      "email_not_found": "email not found.",
-      "missing_parameters": "Some required parameters are missing."
+      "tokenInvalidExpired": "Token is invalid or expired",
+      "tokenInvalid": "The token is invalid.",
+      "tokenNotFound": "Token not found.",
+      "tokenExpired": "The token has expired.",
+      "emailNotFound": "email not found.",
+      "missingParameters": "Some required parameters are missing."
     }
   },
   "user": {
     "notFound": "User not found",
     "alreadyVerified": "Account already verified",
     "notVerified": "Account not verified",
+    "roleNotFound":"Role not found",
     "status": {
       "pending": "Pending",
       "active": "Active",
       "deactivated": "Deactivated"
+    },
+    "action": {
+    "statusMissing": "Please provide a user status.",
+    "roleMissing":"Please provide a role change.",    
+    "statusUpdated": "User status updated successfully."
     }
   },
   "profile":{
@@ -56,6 +63,7 @@
     }
   },
   "token": {
+    "missing":"Authorization token is required",
     "invalid": "Invalid token",
     "expired": "Token has expired",
     "blacklisted": "Token is revoked"
@@ -66,27 +74,27 @@
   },
   "mail": {
     "send": {
-      "type_not_null":"type email must not be null",
-      "invalid_type":"invalid type email",
+      "typeNotNull":"type email must not be null",
+      "invalidType":"invalid type email",
       "success": "Email has been sent successfully.",
       "failed": "Failed to send the email.",
-      "invalid_recipient": "Invalid recipient email address.",
-      "server_error": "Mail server error. Please try again later.",
+      "invalidRecipient": "Invalid recipient email address.",
+      "serverError": "Mail server error. Please try again later.",
       "timeout": "Email sending timed out.",
-      "template_error": "Email template could not be loaded.",
-      "username_not_null": "Recipient username is required.",
-      "token_not_null": "Token is required for sending the email.",
-      "expires_at_not_null": "Expiration date is required for the email.",
-      "invalid_payload": "The provided data for sending the email is invalid."
+      "templateError": "Email template could not be loaded.",
+      "usernameNotNull": "Recipient username is required.",
+      "tokenNotNull": "Token is required for sending the email.",
+      "expiresAtNotNull": "Expiration date is required for the email.",
+      "invalidPayload": "The provided data for sending the email is invalid."
     }
   },
   "validation": {
     "error":"Validation Error",
-    "is_string": "The field {field} must be a string.",
-    "is_not_empty": "The field {field} cannot be empty.",
-    "is_enum": "The field {field} must be one of the allowed values.",
-    "is_number": "The field {field} must be a number.",
-    "is_boolean": "The field {field} must be a boolean value.",
-    "is_date": "The field {field} must be a valid date."
+    "isString": "The field {field} must be a string.",
+    "isNotEmpty": "The field {field} cannot be empty.",
+    "isEnum": "The field {field} must be one of the allowed values.",
+    "isNumber": "The field {field} must be a number.",
+    "isBoolean": "The field {field} must be a boolean value.",
+    "isDate": "The field {field} must be a valid date."
   }
 }

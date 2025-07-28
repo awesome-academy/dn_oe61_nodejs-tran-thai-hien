@@ -16,6 +16,7 @@ import { CoreModule } from './core/core.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UserModule } from './user/user.module';
 import { AuthGuard } from './common/guards/auth.guard';
+import { RoleGuard } from './common/guards/role.guard';
 
 @Module({
   imports: [
@@ -62,6 +63,10 @@ import { AuthGuard } from './common/guards/auth.guard';
     {
       provide: 'APP_GUARD',
       useClass: AuthGuard,
+    },
+    {
+      provide: 'APP_GUARD',
+      useClass: RoleGuard,
     },
   ],
 })
