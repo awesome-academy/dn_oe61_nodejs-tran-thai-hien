@@ -1,5 +1,6 @@
 {
   "auth": {
+    "unauthorized": "Bạn không được phép truy cập. Vui lòng đăng nhập.",
     "login": {
       "success": "Đăng nhập thành công",
       "failed": "Thông tin đăng nhập không hợp lệ",
@@ -13,13 +14,15 @@
     "signup": {
       "success": "Tạo tài khoản thành công",
       "emailExists": "Email đã tồn tại",
+      "phoneExists":"Số điện thoại đã tồn tại",
       "usernameExists": "Tên đăng nhập đã tồn tại",
       "validation": {
         "nameNotEmpty": "Tên không được để trống",
         "userNameNotEmpty": "Tên đăng nhập không được để trống",
         "emailInvalid": "Định dạng email không hợp lệ",
         "passwordNotEmpty": "Mật khẩu không được để trống",
-        "passwordMindLength": "Mật khẩu phải có ít nhất {constraint1} ký tự"
+        "passwordMindLength": "Mật khẩu phải có ít nhất {constraint1} ký tự",
+        "invalidFormatPhone":"Số điện thoại không hợp lệ."
       }
     },
     "logout": {
@@ -28,6 +31,7 @@
   },
     "request": {
     "errors": {
+      "token_invalid_expired": "Token không hợp lệ hoặc đã hết hạn",
       "token_invalid": "Token không hợp lệ.",
       "token_not_found": "Không tìm thấy token.",
       "token_expired": "Token đã hết hạn.",
@@ -43,6 +47,12 @@
       "pending": "Đang chờ",
       "active": "Hoạt động",
       "deactivated": "Đã vô hiệu hóa"
+    }
+  },
+  "profile":{
+    "action":{
+      "updateSuccess":"Cập nhập thông tin profile thành công",
+      "updateFailed":"Cập nhập thông tin profile thất bại"
     }
   },
   "token": {
@@ -69,5 +79,15 @@
       "expires_at_not_null": "Thời hạn của email là bắt buộc.",
       "invalid_payload":"Dữ liệu để gửi email không hợp lệ."
     }
-  }
+  },
+  "validation": {
+    "error":"Dữ liệu không hợp lệ",
+    "is_string": "Trường {field} phải là chuỗi.",
+    "is_not_empty": "Trường {field} không được để trống.",
+    "is_enum": "Trường {field} phải là một trong các giá trị hợp lệ.",
+    "is_number": "Trường {field} phải là số.",
+    "is_boolean": "Trường {field} phải là giá trị đúng/sai.",
+    "is_date": "Trường {field} phải là ngày hợp lệ."
+}
+
 }
