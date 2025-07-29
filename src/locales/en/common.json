@@ -228,6 +228,10 @@
         "unChanged": "No new managers were added.",
         "success": "Managers added successfully.",
         "failed": "Failed to add managers."
+      },
+      "getPublicSpaces":{
+        "success":"Find all spaces sucessfully.",
+        "failed":"Find all spaces failed."
       }
     }
   }

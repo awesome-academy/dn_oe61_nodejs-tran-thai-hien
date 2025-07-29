@@ -224,6 +224,10 @@
         "unChanged": "Không có người quản lý nào được thêm mới.",
         "success": "Thêm người quản lý thành công.",
         "failed": "Thêm người quản lý thất bại."        
+      },
+       "getPublicSpaces":{
+        "success":"Lấy thông tin tất cả không gian thành công.",
+        "failed":"Lấy thông tin tất cả không gian thất bại."
       }
     }
   }

@@ -12,6 +12,7 @@ import {
   SpaceType,
   User,
   Venue,
+  VenueStatus,
 } from '@prisma/client';
 import { I18nService } from 'nestjs-i18n';
 import { AccessTokenPayload } from 'src/auth/interfaces/access-token-payload';
@@ -19,8 +20,14 @@ import { Role } from 'src/common/enums/role.enum';
 import { StatusKey } from 'src/common/enums/status-key.enum';
 import { validateAmenities } from 'src/common/helpers/amenity.helper';
 import { logAndThrowPrismaClientError } from 'src/common/helpers/catch-error.helper';
+import { ParseSingleSort } from 'src/common/helpers/parse-sort';
 import { getUserOrFail, validateUsers } from 'src/common/helpers/user.helper';
 import { BaseResponse } from 'src/common/interfaces/base-response';
+import {
+  FindOptions,
+  PaginationParams,
+  PaginationResult,
+} from 'src/common/interfaces/paginate-type';
 import {
   AmenityLite,
   OwnerLite,
@@ -36,8 +43,11 @@ import {
 } from './constant/include.constant';
 import { AddManageSpaceRequestDto } from './dto/requests/add-manage-space-request.dto';
 import { SpaceCreationRequestDto } from './dto/requests/space-creation-request.dto';
-import { SpaceSummaryResponseDto } from './dto/responses/space-summary-response.dto';
+import { SpaceFilterRequestDto } from './dto/requests/space-filter-request.dto';
 import { SpaceManagerResponseDto } from './dto/responses/space-manager-response.dto';
+import { SpaceSummaryResponseDto } from './dto/responses/space-summary-response.dto';
+import { queryWithPagination } from 'src/common/helpers/paginate.helper';
+import { SpaceSummaryType } from './interfaces/space-summary.type';
 
 @Injectable()
 export class SpaceService {
@@ -190,6 +200,81 @@ export class SpaceService {
       );
     }
   }
+  async findPublicSpaces(
+    filter: SpaceFilterRequestDto,
+  ): Promise<PaginationResult<SpaceSummaryResponseDto>> {
+    const { page, pageSize, sortBy, direction } = filter;
+    const fieldsValidEnum = Prisma.SpaceOrderByRelevanceFieldEnum;
+    const sortFieldsValid = Object.values(fieldsValidEnum) as readonly string[];
+    const fieldDefault = fieldsValidEnum.name;
+    const sort = ParseSingleSort(
+      sortFieldsValid,
+      fieldDefault,
+      direction,
+      sortBy,
+    );
+    console.log('sort', sort);
+    const paginationParams: PaginationParams = {
+      page,
+      pageSize,
+    };
+    const venueFilter = {
+      status: VenueStatus.APPROVED,
+      // deletedAt: null,
+      ...(filter.city && {
+        city: { contains: filter.city },
+      }),
+      ...(filter.street && {
+        street: { contains: filter.street },
+      }),
+    };
+    const queryOptions = {
+      where: {
+        ...(filter?.name && {
+          name: { contains: filter.name },
+        }),
+        venue: venueFilter,
+        ...(filter?.type && {
+          type: {
+            in: Array.isArray(filter.type)
+              ? filter.type.filter(Boolean).length > 0
+                ? filter.type
+                : undefined
+              : [filter.type],
+          },
+        }),
+        ...(filter.priceUnit || filter.minPrice || filter.maxPrice
+          ? {
+              spacePrices: {
+                some: {
+                  ...(filter.priceUnit && { unit: filter.priceUnit }),
+                  price: {
+                    ...(filter.minPrice !== undefined && {
+                      gte: filter.minPrice,
+                    }),
+                    ...(filter.maxPrice !== undefined && {
+                      lte: filter.maxPrice,
+                    }),
+                  },
+                },
+              },
+            }
+          : {}),
+        ...(filter.startTime && filter.endTime
+          ? {
+              AND: [
+                { openHour: { lte: filter.startTime } },
+                { closeHour: { gte: filter.endTime } },
+              ],
+            }
+          : {}),
+      },
+      include: SPACE_SUMMARY_INCLUDE,
+      orderBy: sort,
+    };
+    console.log(JSON.stringify(queryOptions, null, 2));
+    return this.getPaginatedSpaces(paginationParams, queryOptions);
+  }
   private buildSpaceSummaryDto(
     data: Space & {
       spaceAmenities: { status: AmenityStatus; amenity: AmenityLite }[];
@@ -254,6 +339,34 @@ export class SpaceService {
     if (venue.ownerId !== user.id && !this.validRoleAction(role)) {
       throw new ForbiddenException(
         this.i18nService.translate('common.auth.forbidden'),
+      );
+    }
+  }
+  private async getPaginatedSpaces(
+    paginationParams: PaginationParams,
+    options: FindOptions,
+  ): Promise<PaginationResult<SpaceSummaryResponseDto>> {
+    try {
+      const spaces = await queryWithPagination(
+        this.prismaService.space,
+        paginationParams,
+        options,
+      );
+      return {
+        ...spaces,
+        data: spaces.data.map((v: SpaceSummaryType) =>
+          this.buildSpaceSummaryDto(v),
+        ),
+      };
+    } catch (exception) {
+      logAndThrowPrismaClientError(
+        exception as Error,
+        SpaceService.name,
+        'space',
+        'findPublicSpaces',
+        'failed',
+        this.loggerService,
+        this.i18nService,
       );
     }
   }
