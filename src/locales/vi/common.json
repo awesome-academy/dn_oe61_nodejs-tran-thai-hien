@@ -258,7 +258,12 @@
           "create": {
               "success": "Đặt chỗ thành công.",
               "failed": "Đặt chỗ thất bại."
-          }
+          },
+            "confirmBooking":{
+              "success":"Xác nhận đặt chỗ thành công.",
+              "failed":"Xác nhận đặt chỗ thất bại.",
+              "unChanged":"Đặt chỗ đã được xác nhận"
+            }
          }
     }
 }

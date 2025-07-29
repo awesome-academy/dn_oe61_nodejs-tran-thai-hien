@@ -262,6 +262,11 @@
       "create":{
         "success": "Booking created successfully.",
         "failed": "Failed to create booking."
+      },
+      "confirmBooking":{
+        "success":"Booking confirmed successfully.",
+        "failed":"Failed to confirm booking",
+        "unchanged":"The booking remains unchanged."
       }
     }
   }

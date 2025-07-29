@@ -12,3 +12,13 @@ export const INCLUDE_BOOKING_SUMMARY = {
     },
   },
 };
+export const INCLUDE_PAYLOAD_EMAIL_BOOKING = {
+  user: {
+    select: {
+      id: true,
+      name: true,
+      email: true,
+    },
+  },
+  space: true,
+};
