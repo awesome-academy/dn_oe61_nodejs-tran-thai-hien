@@ -8,35 +8,50 @@ import {
   Booking,
   BookingStatus,
   Prisma,
+  Space,
   SpacePriceUnit,
+  Venue,
   VenueStatus,
 } from '@prisma/client';
 import { I18nService } from 'nestjs-i18n';
 import { AccessTokenPayload } from 'src/auth/interfaces/access-token-payload';
+import { QueryParamDto } from 'src/common/constants/query-param.dto';
+import { SortDirection } from 'src/common/enums/query.enum';
 import { StatusKey } from 'src/common/enums/status-key.enum';
 import {
   getErrorMessageSendMail,
   logAndThrowPrismaClientError,
 } from 'src/common/helpers/catch-error.helper';
+import { queryWithPagination } from 'src/common/helpers/paginate.helper';
+import { ParseSingleSort } from 'src/common/helpers/parse-sort';
 import { getUserOrFail } from 'src/common/helpers/user.helper';
 import { BaseResponse } from 'src/common/interfaces/base-response';
+import {
+  FindOptions,
+  PaginationParams,
+  PaginationResult,
+} from 'src/common/interfaces/paginate-type';
 import { OwnerLite, SpaceLite } from 'src/common/interfaces/type';
 import { CustomLogger } from 'src/common/logger/custom-logger.service';
 import { buildBaseResponse } from 'src/common/utils/data.util';
 import { convertTimeToDate, isSameDay } from 'src/common/utils/date.util';
+import { BookingStatusPayloadDto } from 'src/mail/dto/booking-confirmed-payload.dto';
 import { BookingRequestPayloadDto } from 'src/mail/dto/booking-request-payload.dto';
 import { MailException } from 'src/mail/exceptions/mail.exception';
 import { MailService } from 'src/mail/mail.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SEND_MAIL_STATUS } from 'src/user/constant/email.constant';
 import {
+  INCLUDE_BOOKING_INFO,
   INCLUDE_BOOKING_SUMMARY,
   INCLUDE_PAYLOAD_EMAIL_BOOKING,
 } from './constants/include.constant';
 import { DEFAULT_REJECTION_REASON } from './constants/reason.constant';
 import { BookingCreationRequestDto } from './dto/requests/booking-creation-request.dto';
+import { BookingFilterRequestDto } from './dto/requests/booking-filter-request.dto';
+import { BookingInfoResponse } from './dto/responses/booking-info.response';
 import { BookingSummaryResponseDto } from './dto/responses/booking-summary-response.dto';
-import { BookingStatusPayloadDto } from 'src/mail/dto/booking-confirmed-payload.dto';
+import { BookingInfoType } from './interfaces/booking-summary.type';
 
 @Injectable()
 export class BookingService {
@@ -270,6 +285,104 @@ export class BookingService {
       );
     }
   }
+  async findBookingHistory(
+    currentUser: AccessTokenPayload,
+    query: QueryParamDto,
+  ): Promise<PaginationResult<BookingInfoResponse>> {
+    const user = await getUserOrFail(
+      this.prismaService,
+      this.i18nService,
+      currentUser.sub,
+    );
+    const { page, pageSize, sortBy, direction } = query;
+    const fieldsValidEnum = Prisma.BookingScalarFieldEnum;
+    const sortFieldsValid = Object.values(fieldsValidEnum) as readonly string[];
+    const fieldDefault = fieldsValidEnum.startTime;
+    const sort = ParseSingleSort(
+      sortFieldsValid,
+      fieldDefault,
+      direction,
+      sortBy,
+    );
+    const paginationParams: PaginationParams = {
+      page,
+      pageSize,
+    };
+    const queryOptions = {
+      where: {
+        userId: user.id,
+      },
+      include: INCLUDE_BOOKING_INFO,
+      orderBy: sort,
+    };
+    return this.getPaginatedBookings(
+      paginationParams,
+      queryOptions,
+      'findBookingHistory',
+    );
+  }
+  async findSpaceBookingStates(
+    currentUser: AccessTokenPayload,
+    filter: BookingFilterRequestDto,
+  ) {
+    const user = await getUserOrFail(
+      this.prismaService,
+      this.i18nService,
+      currentUser.sub,
+    );
+    const { page, pageSize, sortBy, direction } = filter;
+    const fieldsValidEnum = Prisma.BookingScalarFieldEnum;
+    const sortFieldsValid = Object.values(fieldsValidEnum) as readonly string[];
+    const fieldDefault = fieldsValidEnum.startTime;
+    const sort = ParseSingleSort(
+      sortFieldsValid,
+      fieldDefault,
+      direction,
+      sortBy,
+    );
+    const paginationParams: PaginationParams = {
+      page,
+      pageSize,
+    };
+    const queryOptions = this.buildBookingsQuery(filter, sort, {
+      space: {
+        spaceManagers: {
+          some: {
+            managerId: user.id,
+          },
+        },
+      },
+    });
+    return this.getPaginatedBookings(
+      paginationParams,
+      queryOptions,
+      'findSpaceBookingStates',
+    );
+  }
+  async findBookings(
+    filter: BookingFilterRequestDto,
+  ): Promise<PaginationResult<BookingInfoResponse>> {
+    const { page, pageSize, sortBy, direction } = filter;
+    const fieldsValidEnum = Prisma.BookingScalarFieldEnum;
+    const sortFieldsValid = Object.values(fieldsValidEnum) as readonly string[];
+    const fieldDefault = fieldsValidEnum.startTime;
+    const sort = ParseSingleSort(
+      sortFieldsValid,
+      fieldDefault,
+      direction,
+      sortBy,
+    );
+    const paginationParams: PaginationParams = {
+      page,
+      pageSize,
+    };
+    const queryOptions = this.buildBookingsQuery(filter, sort, null);
+    return this.getPaginatedBookings(
+      paginationParams,
+      queryOptions,
+      'findBookings',
+    );
+  }
   private calculateBookingPrice(
     startTime: Date,
     endTime: Date,
@@ -295,6 +408,37 @@ export class BookingService {
     }
     return blocks * unitPrice;
   }
+  private buildBookingsQuery(
+    filter: BookingFilterRequestDto,
+    sort: Record<string, SortDirection>,
+    conditionExtras: Record<string, unknown> | null,
+  ) {
+    const queryFilters = {
+      where: {
+        ...(filter?.spaceName && {
+          space: {
+            name: { contains: filter.spaceName },
+          },
+        }),
+        ...(filter.startDate &&
+          filter.endDate && {
+            startTime: { gte: filter.startDate, lte: filter.endDate },
+          }),
+        ...(!filter.endDate &&
+          filter.startDate && {
+            startTime: { gte: filter.startDate },
+          }),
+        ...(!filter.startDate &&
+          filter.endDate && {
+            startTime: { lte: filter.endDate },
+          }),
+        ...conditionExtras,
+      },
+      include: INCLUDE_BOOKING_INFO,
+      orderBy: sort,
+    };
+    return queryFilters;
+  }
   private buildRequestCheckOverlap(booking: Booking, status: BookingStatus) {
     return {
       spaceId: booking.spaceId,
@@ -319,6 +463,35 @@ export class BookingService {
       }
       this.loggerService.error(message, caused, BookingService.name);
       return SEND_MAIL_STATUS.FAILED;
+    }
+  }
+  private async getPaginatedBookings(
+    paginationParams: PaginationParams,
+    options: FindOptions,
+    functionName: string,
+  ): Promise<PaginationResult<BookingInfoResponse>> {
+    try {
+      const spaces = await queryWithPagination(
+        this.prismaService.booking,
+        paginationParams,
+        options,
+      );
+      return {
+        ...spaces,
+        data: spaces.data.map((v: BookingInfoType) =>
+          this.buildBookingInfoDto(v),
+        ),
+      };
+    } catch (exception) {
+      logAndThrowPrismaClientError(
+        exception as Error,
+        BookingService.name,
+        'booking',
+        functionName,
+        'failed',
+        this.loggerService,
+        this.i18nService,
+      );
     }
   }
   private buildBookingSummaryDto(
@@ -379,5 +552,26 @@ export class BookingService {
         }),
       );
     }
+  }
+  private buildBookingInfoDto(
+    data: Booking & { user?: OwnerLite; space: Space & { venue: Venue } },
+  ): BookingInfoResponse {
+    const address = `${data.space.venue.street} - ${data.space.venue.city}`;
+    return {
+      id: data.id,
+      space: {
+        id: data.space.id,
+        name: data.space.name,
+        type: data.space.type,
+        venueName: data.space.venue.name,
+        address: address,
+      },
+      startTime: data.startTime,
+      endTime: data.endTime,
+      status: data.status,
+      totalPrice: data.totalPrice,
+      user: data.user,
+      createdAt: data.createdAt,
+    };
   }
 }

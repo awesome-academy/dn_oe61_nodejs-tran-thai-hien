@@ -263,6 +263,18 @@
               "success":"Xác nhận đặt chỗ thành công.",
               "failed":"Xác nhận đặt chỗ thất bại.",
               "unChanged":"Đặt chỗ đã được xác nhận"
+            },
+             "findBookingHistory":{
+                "success":"Lấy lịch sử đặt chỗ thành công",
+                "failed":"Lấy lịch sử đặt chỗ thất bại"
+             },
+              "findSpaceBookingStates":{
+                "success":"Lấy lịch sử đặt chỗ của các space thành công",
+                "failed":"Lấy lịch sử đặt chỗ của các space thất bại"
+             },
+            "findBookings":{
+              "success":"Lấy tất cả thông tin đặt chỗ thành công",
+              "failed":"Lấy tất cả thông tin đặt chỗ thất bại"
             }
          }
     }
