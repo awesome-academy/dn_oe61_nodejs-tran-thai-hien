@@ -6,6 +6,7 @@ export class RoleUpdateRequestDto {
   @IsEnum(Role, {
     message: i18nValidationMessage('common.validation.isEnum', {
       field: 'role',
+      enum: '(user/moderator/admin)',
     }),
   })
   @IsNotEmpty({

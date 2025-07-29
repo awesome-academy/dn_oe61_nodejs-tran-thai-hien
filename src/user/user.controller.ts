@@ -28,6 +28,7 @@ import { HasRole } from 'src/common/decorators/role.decorator';
 import { Role } from 'src/common/enums/role.enum';
 import { VerifyUpdateRequestDto } from './dto/requests/verify-update.dto';
 import { RoleUpdateRequestDto } from './dto/requests/role-update.dto';
+import { MessageResource } from 'src/common/decorators/resource.decorator';
 @Controller('users')
 export class UserController {
   constructor(
@@ -36,6 +37,7 @@ export class UserController {
   ) {}
   @Post('/signup')
   @IsPublicRoute()
+  @MessageResource('user', 'signup')
   async signup(@Body() dto: SignupDto) {
     return await this.userService.signup(dto);
   }
@@ -53,6 +55,7 @@ export class UserController {
       );
     return await this.userService.logout(token);
   }
+  @MessageResource('user', 'sendVerifyEmail')
   @Get('/resend-verify-email')
   @IsPublicRoute()
   async resendVerifyEmail(@Query('email') email: string) {
@@ -73,7 +76,7 @@ export class UserController {
   }
   @Get('/forgot-password')
   @IsPublicRoute()
-  async forgotPassowrd(@Query('email') email: string) {
+  async forgotPassword(@Query('email') email: string) {
     if (!email)
       throw new NotFoundException(
         this.i18nService.translate('common.request.errors.email_not_found'),
@@ -82,7 +85,7 @@ export class UserController {
   }
   @Post('/reset-password')
   @IsPublicRoute()
-  async resetPassowrd(@Body() dto: ResetPasswordDto) {
+  async resetPassword(@Body() dto: ResetPasswordDto) {
     return await this.userService.resetPassword(dto);
   }
   @Get('/profile')
@@ -98,6 +101,7 @@ export class UserController {
   }
   @HasRole(Role.MODERATOR, Role.ADMIN)
   @Patch('/:id/status')
+  @MessageResource('user', 'changeStatus')
   async changeStatus(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: StatusUpdateRequestDto,
