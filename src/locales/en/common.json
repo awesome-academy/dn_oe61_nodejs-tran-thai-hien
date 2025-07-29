@@ -167,8 +167,9 @@
         "success":"Venue created successfully.",
         "failed": "Venue created failed."
       },
-      "findVenues":{
-        "success": "Find all venues successfully."
+       "findPublicVenues":{
+        "success": "Find all venues successfully.",
+        "failed": "Find all venues failed."
       },
       "findVenuesByOwner":{
         "success": "Find all venues of the owner successfully."
@@ -180,7 +181,31 @@
       "delete":{
         "success":"Venue deleted sucessfully.",
         "failed": "Failed to delete venue."
+      },
+      "findDetailPublicVenue": {
+        "success": "Find detail venues successfully.",
+        "failed": "Find detail venues failed."
       }
     }
+  },
+  "adminvenue":{
+    "action":{
+      "findDetailVenue": {
+        "success": "Find detail venues successfully.",
+        "failed": "Find detail venues failed."
+      },
+      "findVenues":{
+        "success": "Find all venues successfully.",
+        "failed": "Find all venues failed."
+      },
+       "blockVenue":{
+         "success":"Venue blocked sucessfully.",
+        "failed": "Failed to block venue."
+      },
+       "approveVenue":{
+         "success":"Venue approved sucessfully.",
+        "failed": "Failed to approve venue."
+      }
+    } 
   }
 }
