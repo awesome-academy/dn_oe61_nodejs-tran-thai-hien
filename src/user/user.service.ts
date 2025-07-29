@@ -14,6 +14,7 @@ import {
   User,
   UserStatus,
 } from '@prisma/client';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { I18nService } from 'nestjs-i18n';
 import { AuthService } from 'src/auth/auth.service';
 import { AccessTokenPayload } from 'src/auth/interfaces/access-token-payload';
@@ -21,6 +22,12 @@ import { ForgotPasswordTokenPayload } from 'src/auth/interfaces/forgot-password-
 import { VerifyEmailTokenPayload } from 'src/auth/interfaces/verify-email-token-payload';
 import { PrismaError } from 'src/common/enums/prisma-error.enum';
 import { Role } from 'src/common/enums/role.enum';
+import { StatusKey } from 'src/common/enums/status-key.enum';
+import {
+  getErrorMessageSendMail,
+  getErrorPrismaClient,
+} from 'src/common/helpers/catch-error.helper';
+import { BaseResponse } from 'src/common/interfaces/base-response';
 import { CustomLogger } from 'src/common/logger/custom-logger.service';
 import {
   buildBaseResponse,
@@ -32,7 +39,6 @@ import {
   parseExpiresInToDate,
 } from 'src/common/utils/date.util';
 import { comparePassword, hashPassword } from 'src/common/utils/hash.util';
-import { MailErrorCode } from 'src/mail/constants/mail-error.constant';
 import { MAIL_TYPE, MailType } from 'src/mail/constants/mail-type.constant';
 import { MailPayloadDto } from 'src/mail/dto/mail-payload.dto';
 import { MailException } from 'src/mail/exceptions/mail.exception';
@@ -45,8 +51,10 @@ import { VERIFY_USER_STATUS } from './constant/verify-email.constant';
 import { LoginDto } from './dto/requests/login.dto';
 import { ProfileUpdateRequestDto } from './dto/requests/profile-update.dto';
 import { ResetPasswordDto } from './dto/requests/reset-password';
+import { RoleUpdateRequestDto } from './dto/requests/role-update.dto';
 import { SignupDto } from './dto/requests/signup.dto';
 import { StatusUpdateRequestDto } from './dto/requests/status-update.dto';
+import { VerifyUpdateRequestDto } from './dto/requests/verify-update.dto';
 import { ForgotPasswordResponse } from './dto/responses/forgot-password-response';
 import { LoginResponseDto } from './dto/responses/login-response.dto';
 import { ResendVerifyEmailResponseDto } from './dto/responses/resend-verify-email.dto';
@@ -54,12 +62,6 @@ import { SignupResponseDto } from './dto/responses/signup-response.dto';
 import { UserProfileResponse } from './dto/responses/user-profile.response';
 import { UserSummaryDto } from './dto/responses/user-summary.dto';
 import { VerifyUserResponseDto } from './dto/responses/verify-email.dto';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import { VerifyUpdateRequestDto } from './dto/requests/verify-update.dto';
-import { RoleUpdateRequestDto } from './dto/requests/role-update.dto';
-import { BaseResponse } from 'src/common/interfaces/base-response';
-import { StatusKey } from 'src/common/enums/status-key.enum';
-import { getErrorPrismaClient } from 'src/common/helpers/catch-error.helper';
 @Injectable()
 export class UserService {
   constructor(
@@ -651,7 +653,7 @@ export class UserService {
       let message: string;
       let caused: string | undefined;
       if (error instanceof MailException) {
-        message = this.getErrorMessageSendMail(error.code);
+        message = getErrorMessageSendMail(error.code);
       } else {
         message = 'SEND EMAIL FAILED';
         caused = JSON.stringify(error);
@@ -660,20 +662,7 @@ export class UserService {
       return SEND_MAIL_STATUS.FAILED;
     }
   }
-  private getErrorMessageSendMail(code: MailErrorCode): string {
-    switch (code) {
-      case MailErrorCode.TIME_OUT:
-        return 'The email sending request timed out';
-      case MailErrorCode.TEMPLATE_ERROR:
-        return 'The email template could not be loaded.';
-      case MailErrorCode.INVALID_RECIPIENT:
-        return 'The recipient email address is invalid.';
-      case MailErrorCode.INVALID_PAYLOAD:
-        return 'Payload send email invalid';
-      default:
-        return 'An unexpected error occurred while sending the email.';
-    }
-  }
+
   // private getErrorPrimsaClient(
   //   error: PrismaClientKnownRequestError,
   //   context: string,

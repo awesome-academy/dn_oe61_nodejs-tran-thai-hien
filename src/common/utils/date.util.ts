@@ -41,3 +41,16 @@ export function formatDateTime(
     .locale(lang)
     .format(lang === 'vi' ? 'DD/MM/YY HH:mm' : 'MMM D,YYYY, h:mm A');
 }
+export function convertTimeToDate(baseDate: Date, timeStr: string): Date {
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  const date = new Date(baseDate);
+  date.setHours(hours, minutes, 0, 0);
+  return date;
+}
+export function isSameDay(date1: Date, date2: Date): boolean {
+  return (
+    date1.getFullYear() === date2.getFullYear() &&
+    date1.getMonth() === date2.getMonth() &&
+    date1.getDate() === date2.getDate()
+  );
+}
