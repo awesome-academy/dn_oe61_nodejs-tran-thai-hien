@@ -96,7 +96,9 @@ export class SpaceService {
     if (dto?.managers) {
       await validateUsers(dto.managers, this.prismaService, this.i18nService);
     }
-    const managerIds = [...(dto.managers ?? []), venue.ownerId];
+    const managerIds = Array.from(
+      new Set([...(dto.managers ?? []), venue.ownerId]),
+    );
     const spaceData: Prisma.SpaceCreateInput = {
       name: dto.name,
       capacity: dto.capacity,

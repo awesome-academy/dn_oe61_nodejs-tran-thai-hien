@@ -1,0 +1,72 @@
+doctype html
+html
+  head
+    meta(charset="UTF-8")
+    title Booking Rejected
+    style.
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f7f7f7;
+        padding: 30px;
+        margin: 0;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background: #ffffff;
+        border-radius: 8px;
+        padding: 30px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      }
+      h2 {
+        color: #c62828;
+        font-size: 22px;
+        margin-bottom: 20px;
+      }
+      p {
+        font-size: 16px;
+        color: #333;
+        margin-bottom: 15px;
+      }
+      .reason {
+        background: #ffebee;
+        border-left: 4px solid #c62828;
+        padding: 12px;
+        border-radius: 5px;
+        margin: 15px 0;
+        font-size: 15px;
+        color: #444;
+      }
+      .btn {
+        display: inline-block;
+        background: #c62828;
+        color: #fff;
+        padding: 12px 20px;
+        text-decoration: none;
+        border-radius: 5px;
+        font-size: 15px;
+        font-weight: bold;
+      }
+      .footer {
+        margin-top: 20px;
+        font-size: 12px;
+        color: #888;
+      }
+  body
+    .container
+      h2 Xin chào #{name},
+      p Rất tiếc, yêu cầu đặt chỗ của bạn đã bị từ chối.
+      p 
+        strong Không gian: 
+        | #{spaceName}
+      p 
+        strong Thời gian: 
+        | #{startTime} - #{endTime}
+      if reason
+        .reason
+          strong Lý do từ chối: 
+          | #{reason}
+      p Nếu có thắc mắc, vui lòng liên hệ quản lý để biết thêm chi tiết.
+      a.btn(href=bookingLink) Xem chi tiết đặt chỗ
+      .footer
+        p Đây là email tự động, vui lòng không trả lời.
