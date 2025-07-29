@@ -6,5 +6,6 @@ import { AdminVenueController } from './admin-venue.controller';
 @Module({
   providers: [VenueService],
   controllers: [VenueController, AdminVenueController],
+  exports: [VenueService],
 })
 export class VenueModule {}

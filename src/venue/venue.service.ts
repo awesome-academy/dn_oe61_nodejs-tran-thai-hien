@@ -11,7 +11,10 @@ import { I18nService } from 'nestjs-i18n';
 import { AccessTokenPayload } from 'src/auth/interfaces/access-token-payload';
 import { QueryParamDto } from 'src/common/constants/query-param.dto';
 import { StatusKey } from 'src/common/enums/status-key.enum';
-import { getErrorPrismaClient } from 'src/common/helpers/catch-error.helper';
+import {
+  getErrorPrismaClient,
+  logAndThrowPrismaClientError,
+} from 'src/common/helpers/catch-error.helper';
 import { queryWithPagination } from 'src/common/helpers/paginate.helper';
 import { ParseSingleSort } from 'src/common/helpers/parse-sort';
 import { getUserOrFail } from 'src/common/helpers/user.helper';
@@ -43,6 +46,7 @@ import { VenueDetailResponseDto } from './dto/responses/venue-detail.response.dt
 import { VenueSummaryResponseDto } from './dto/responses/venue-summary.response.dto';
 import { ActionStatus } from './enums/action-status.enum';
 import { VenueSummaryType } from './interfaces/venue-summary.type';
+import { validateAmenities } from 'src/common/helpers/amenity.helper';
 @Injectable()
 export class VenueService {
   constructor(
@@ -61,7 +65,11 @@ export class VenueService {
     );
     await this.validateVenueName(dto.name);
     if (dto?.amenities) {
-      await this.validateAmenities(dto.amenities);
+      await validateAmenities(
+        dto.amenities,
+        this.prismaService,
+        this.i18nService,
+      );
     }
     const venueData: Prisma.VenueCreateInput = {
       name: dto.name,
@@ -186,7 +194,11 @@ export class VenueService {
     if (Object.values(venueData).length === 0)
       return buildBaseResponse(StatusKey.UNCHANGED);
     if (dto?.amenities) {
-      await this.validateAmenities(dto.amenities);
+      await validateAmenities(
+        dto.amenities,
+        this.prismaService,
+        this.i18nService,
+      );
     }
     if (dto?.name) {
       await this.validateVenueName(dto.name);
@@ -328,12 +340,14 @@ export class VenueService {
         this.buildVenueSummaryResponse(venueUpdated),
       );
     } catch (error) {
-      this.logAndThrowPrismaClientError(
+      logAndThrowPrismaClientError(
         error as Error,
         VenueService.name,
         'venue',
         action,
         'failed',
+        this.loggerService,
+        this.i18nService,
       );
     }
   }
@@ -408,12 +422,14 @@ export class VenueService {
         this.buildVenueDetailResponse(venue),
       );
     } catch (error) {
-      this.logAndThrowPrismaClientError(
+      logAndThrowPrismaClientError(
         error as Error,
         VenueService.name,
         'venue',
         'findDetailVenue',
         'failed',
+        this.loggerService,
+        this.i18nService,
       );
     }
   }
@@ -509,12 +525,14 @@ export class VenueService {
         ),
       };
     } catch (exception) {
-      this.logAndThrowPrismaClientError(
+      logAndThrowPrismaClientError(
         exception as Error,
         VenueService.name,
         'venue',
         'findVenues',
         'failed',
+        this.loggerService,
+        this.i18nService,
       );
     }
   }
@@ -536,22 +554,6 @@ export class VenueService {
         this.i18nService.translate('common.auth.forbidden'),
       );
     return venue;
-  }
-  private async validateAmenities(amenities: number[]) {
-    const amenitiesExist = await this.prismaService.amenity.findMany({
-      where: { id: { in: amenities } },
-      select: { id: true },
-    });
-    const existingIds = amenitiesExist.map((a) => a.id);
-    const missingAmenityIds = amenities.filter(
-      (id) => !existingIds.includes(id),
-    );
-    if (missingAmenityIds.length > 0) {
-      throw new BadRequestException({
-        message: this.i18nService.translate('common.venue.missingAmenities'),
-        missingAmenities: missingAmenityIds,
-      });
-    }
   }
   private async validateVenueName(name: string) {
     const venueExistByName = await this.prismaService.venue.findUnique({
@@ -578,20 +580,20 @@ export class VenueService {
       ),
     ) as Partial<T>;
   }
-  logAndThrowPrismaClientError(
-    error: Error,
-    context: string,
-    resource: string,
-    fucntionName: string,
-    statusKey: string,
-  ): never {
-    const errorPrismaClient = error as PrismaClientKnownRequestError;
-    const message = getErrorPrismaClient(errorPrismaClient, fucntionName);
-    this.loggerService.error(message, JSON.stringify(error), context);
-    throw new ConflictException(
-      this.i18nService.translate(
-        `common.${resource}.action.${fucntionName}.${statusKey}`,
-      ),
-    );
-  }
+  // logAndThrowPrismaClientError(
+  //   error: Error,
+  //   context: string,
+  //   resource: string,
+  //   fucntionName: string,
+  //   statusKey: string,
+  // ): never {
+  //   const errorPrismaClient = error as PrismaClientKnownRequestError;
+  //   const message = getErrorPrismaClient(errorPrismaClient, fucntionName);
+  //   this.loggerService.error(message, JSON.stringify(error), context);
+  //   throw new ConflictException(
+  //     this.i18nService.translate(
+  //       `common.${resource}.action.${fucntionName}.${statusKey}`,
+  //     ),
+  //   );
+  // }
 }

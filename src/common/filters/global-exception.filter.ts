@@ -112,37 +112,78 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         return HttpStatus.INTERNAL_SERVER_ERROR;
     }
   }
+  // private async formatErrors(
+  //   errors: ValidationError[],
+  // ): Promise<{ field: string; message: string[] }[]> {
+  //   return Promise.all(
+  //     errors.map(async (err) => {
+  //       const translated = await Promise.all(
+  //         Object.values(err.constraints || {}).map((constraint) => {
+  //           const [key, argsRaw] = constraint.split('|');
+  //           let args: Record<string, unknown> = {};
+  //           try {
+  //             args = argsRaw
+  //               ? (JSON.parse(argsRaw) as Record<string, unknown>)
+  //               : {};
+  //           } catch (exception) {
+  //             this.loggerService.error(
+  //               'Parse constraint field failed',
+  //               JSON.stringify(exception),
+  //             );
+  //             args = {};
+  //           }
+  //           if (Array.isArray(args.constraints)) {
+  //             args.constraints.forEach(
+  //               (value, index) =>
+  //                 (args[`constraint${index + 1}`] = value) as string,
+  //             );
+  //           }
+  //           return this.i18nService.translate<string>(key, { args }) as string;
+  //         }),
+  //       );
+  //       return { field: err.property, message: translated };
+  //     }),
+  //   );
+  // }
   private async formatErrors(
     errors: ValidationError[],
+    parentField = '',
   ): Promise<{ field: string; message: string[] }[]> {
-    return Promise.all(
-      errors.map(async (err) => {
+    const formatted: { field: string; message: string[] }[] = [];
+
+    for (const err of errors) {
+      const field = parentField
+        ? `${parentField}.${err.property}`
+        : err.property;
+      if (err.constraints) {
         const translated = await Promise.all(
-          Object.values(err.constraints || {}).map((constraint) => {
+          Object.values(err.constraints).map((constraint) => {
             const [key, argsRaw] = constraint.split('|');
             let args: Record<string, unknown> = {};
             try {
               args = argsRaw
                 ? (JSON.parse(argsRaw) as Record<string, unknown>)
                 : {};
-            } catch (exception) {
-              this.loggerService.error(
-                'Parse constraint field failed',
-                JSON.stringify(exception),
-              );
+            } catch {
               args = {};
             }
             if (Array.isArray(args.constraints)) {
-              args.constraints.forEach(
-                (value, index) =>
-                  (args[`constraint${index + 1}`] = value) as string,
-              );
+              args.constraints.forEach((value, index) => {
+                args[`constraint${index + 1}`] = value;
+              });
             }
             return this.i18nService.translate<string>(key, { args }) as string;
           }),
         );
-        return { field: err.property, message: translated };
-      }),
-    );
+        formatted.push({ field, message: translated });
+      }
+
+      if (err.children && err.children.length > 0) {
+        const childErrors = await this.formatErrors(err.children, field);
+        formatted.push(...childErrors);
+      }
+    }
+
+    return formatted;
   }
 }

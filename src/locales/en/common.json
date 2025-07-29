@@ -45,7 +45,13 @@
     "isInt": "The field {field} must be an integer",
     "max": "The field {field} must be less than or equal to {max}",
     "min": "The field {field} must be at least {min}",
-    "atLeastOneDefined":"At least one field must be provided."
+    "atLeastOneDefined":"At least one field must be provided.",
+    "formatHourInvalid":"{field} must be in HH:mm format.",
+    "ids": {
+      "int": "Each amenity id must be an integer",
+      "min": "Each amenity id must be greater than 0"
+    },
+    "typeOrPriceInvalid":"The space type or price is invalid."
   },
    "request": {
     "errors": {
@@ -88,6 +94,7 @@
     "alreadyVerified": "Account already verified",
     "notVerified": "Account not verified",
     "roleNotFound":"Role not found",
+    "missingUsers":"Some user do not exist.",
     "status": {
       "pending": "Pending",
       "active": "Active",
@@ -207,5 +214,21 @@
         "failed": "Failed to approve venue."
       }
     } 
+  },
+  "space":{
+    "notFound":"Space not found",
+    "nameExists":"Space name already exists in this venue.",
+    "invalidTime":"Open hour must be before close hour",
+    "action":{
+      "create":{
+        "success":"Space created successfully.",
+        "failed":"Failed to create Space"
+      },
+      "addManagers":{
+        "unChanged": "No new managers were added.",
+        "success": "Managers added successfully.",
+        "failed": "Failed to add managers."
+      }
+    }
   }
 }

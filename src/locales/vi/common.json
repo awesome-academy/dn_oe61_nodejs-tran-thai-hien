@@ -29,7 +29,14 @@
         "emailInvalid": "Định dạng email không hợp lệ",
         "passwordNotEmpty": "Mật khẩu không được để trống",
         "passwordMindLength": "Mật khẩu phải có ít nhất {constraint1} ký tự",
-        "invalidFormatPhone":"Số điện thoại không hợp lệ."
+        "invalidFormatPhone":"Số điện thoại không hợp lệ.",
+        "formatHourInvalid":"{field} phải có định dạng HH:mm.",
+         "amenities": {
+            "int": "Id Mỗi tiện ích phải là số nguyên.",
+            "min": "Id Mỗi tiện ích phải lớn hơn 0."
+          },
+        "typeOrPriceInvalid":"Loại hoặc giá tiền của không gian không hợp lệ."
+
       }
     },
     "logout": {
@@ -54,6 +61,7 @@
     "alreadyVerified": "Tài khoản đã được xác minh",
     "notVerified": "Tài khoản chưa được xác minh",
     "roleNotFound":"Không tìm thấy vai trò",
+    "missingUsers":"Một vài người dùng không tồn tại",
     "status": {
       "pending": "Đang chờ xác thực",
       "active": "Hoạt động",
@@ -202,6 +210,22 @@
             "failed": "Duyệt toà nhà thất bại."
           }
       }
+    },
+    "space":{
+    "notFound":"Không tìm thấy không gian",
+    "nameExists":"Tên không gian đã tồn tại trong toà nhà.",
+    "invalidTime":"Thời gian bắt đầu phải trước thời gian kết thúc.",
+    "action":{
+      "create":{
+        "success":"Tạo không gian thành công.",
+        "failed":"Tạo không gian thất bại."
+      },
+      "addManagers":{
+        "unChanged": "Không có người quản lý nào được thêm mới.",
+        "success": "Thêm người quản lý thành công.",
+        "failed": "Thêm người quản lý thất bại."        
+      }
     }
+  }
 
 }

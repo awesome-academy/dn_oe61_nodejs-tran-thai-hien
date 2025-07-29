@@ -1,5 +1,13 @@
 import { ValidationError } from '@nestjs/common';
-import { Amenity, AmenityStatus, Profile, Space, User } from '@prisma/client';
+import {
+  Amenity,
+  AmenityStatus,
+  Profile,
+  Space,
+  SpacePrice,
+  User,
+  Venue,
+} from '@prisma/client';
 
 export type ValidationErrorResponse = { message: ValidationError[] };
 export type OwnerLite = Pick<User, 'id' | 'name'>;
@@ -20,3 +28,5 @@ export type OwnerDetail = {
   address: string | null;
   phone: string | null;
 };
+export type PriceLite = Pick<SpacePrice, 'price' | 'unit'>;
+export type VenueLite = Pick<Venue, 'id' | 'name'>;
