@@ -229,9 +229,25 @@
         "success": "Managers added successfully.",
         "failed": "Failed to add managers."
       },
-      "getPublicSpaces":{
+      "findPublicSpaces":{
         "success":"Find all spaces sucessfully.",
         "failed":"Find all spaces failed."
+      },
+      "findSpacesByManager":{
+        "success":"Find all spaces sucessfully.",
+        "failed":"Find all spaces failed."
+      },
+      "update":{
+        "success":"Space updated sucessfully.",
+        "failed":"Failed to update space."
+      },
+      "delete":{
+        "success":"Space deleted sucessfully.",
+        "failed":"Failed to delete space."
+      },
+      "findDetailPublicSpace":{
+        "success":"Find detail space successfully",
+        "error":"Find detail space failed"
       }
     }
   }

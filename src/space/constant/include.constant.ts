@@ -7,6 +7,9 @@ export const SPACE_SUMMARY_INCLUDE = {
   },
   venue: { select: { id: true, name: true } },
   spacePrices: {
+    where: {
+      endDate: null,
+    },
     select: {
       unit: true,
       price: true,

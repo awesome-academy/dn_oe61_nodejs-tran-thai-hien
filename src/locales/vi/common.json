@@ -225,10 +225,26 @@
         "success": "Thêm người quản lý thành công.",
         "failed": "Thêm người quản lý thất bại."        
       },
-       "getPublicSpaces":{
+       "findPublicSpaces":{
         "success":"Lấy thông tin tất cả không gian thành công.",
         "failed":"Lấy thông tin tất cả không gian thất bại."
+      },"findSpacesByManager":{
+          "success":"Lấy thông tin tất cả không gian thành công.",
+          "failed":"Lấy thông tin tất cả không gian thất bại."
+      } ,
+      "update":{
+        "success":"Cập nhập không gian thành công.",
+        "failed":"Cập nhập không gian thất bại."
+      },
+       "delete":{
+        "success":"Xoá không gian thành công.",
+        "failed":"Xoá không gian thất bại."
+      },
+       "findDetailPublicSpace":{
+        "success":"Lấy thông tin chi tiết không gian thành công",
+        "error":"Lấy thông tin chi tiết không gian thất bại"
       }
+
     }
   }
 
