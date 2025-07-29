@@ -1,0 +1,55 @@
+doctype html
+html
+  head
+    meta(charset="UTF-8")
+    title Booking Canceled - Payment Expired
+    style.
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f7f7f7;
+        padding: 30px;
+        margin: 0;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background: #ffffff;
+        border-radius: 8px;
+        padding: 30px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      }
+      h2 {
+        color: #d32f2f;
+        font-size: 22px;
+        margin-bottom: 20px;
+      }
+      p {
+        font-size: 16px;
+        color: #333;
+        margin-bottom: 15px;
+      }
+      .details {
+        background: #f9f9f9;
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+      }
+      .footer {
+        margin-top: 20px;
+        font-size: 12px;
+        color: #888;
+      }
+  body
+    .container
+      h2 Xin chào #{name},
+      p Rất tiếc! Đặt chỗ của bạn đã bị hủy vì bạn chưa hoàn tất thanh toán trong thời gian quy định.
+      .details
+        p 
+          strong Không gian: 
+          | #{spaceName}
+        p 
+          strong Thời gian: 
+          | #{startTime} - #{endTime}
+      p Nếu bạn vẫn muốn sử dụng dịch vụ, vui lòng thực hiện đặt chỗ lại.
+      .footer
+        p Đây là email tự động, vui lòng không trả lời.

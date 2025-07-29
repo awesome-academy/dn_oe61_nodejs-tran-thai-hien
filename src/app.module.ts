@@ -10,17 +10,19 @@ import * as path from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { BookingModule } from './booking/booking.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
-import { I18nValidationPipe } from './common/pipes/i18n-validation.pipe';
-import { CoreModule } from './core/core.module';
-import { PrismaModule } from './prisma/prisma.module';
-import { UserModule } from './user/user.module';
 import { AuthGuard } from './common/guards/auth.guard';
 import { RoleGuard } from './common/guards/role.guard';
 import { TransformDataInterceptor } from './common/interceptors/transform-data.interceptor';
-import { VenueModule } from './venue/venue.module';
+import { I18nValidationPipe } from './common/pipes/i18n-validation.pipe';
+import { CoreModule } from './core/core.module';
+import { NotificationModule } from './notification/notification.module';
+import { PaymentModule } from './payment/payment.module';
+import { PrismaModule } from './prisma/prisma.module';
 import { SpaceModule } from './space/space.module';
-import { BookingModule } from './booking/booking.module';
+import { UserModule } from './user/user.module';
+import { VenueModule } from './venue/venue.module';
 
 @Module({
   imports: [
@@ -49,12 +51,14 @@ import { BookingModule } from './booking/booking.module';
         },
       ],
     }),
+    CoreModule,
     UserModule,
     AuthModule,
-    CoreModule,
     VenueModule,
     SpaceModule,
     BookingModule,
+    PaymentModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [

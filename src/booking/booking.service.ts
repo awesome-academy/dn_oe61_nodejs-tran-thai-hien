@@ -1,9 +1,11 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   Booking,
   BookingStatus,
@@ -16,7 +18,9 @@ import {
 import { I18nService } from 'nestjs-i18n';
 import { AccessTokenPayload } from 'src/auth/interfaces/access-token-payload';
 import { QueryParamDto } from 'src/common/constants/query-param.dto';
+import { EXPIRE_TIME_PAYMENT_DEFAULT } from 'src/common/constants/time.constant';
 import { SortDirection } from 'src/common/enums/query.enum';
+import { Role } from 'src/common/enums/role.enum';
 import { StatusKey } from 'src/common/enums/status-key.enum';
 import {
   getErrorMessageSendMail,
@@ -34,13 +38,23 @@ import {
 import { OwnerLite, SpaceLite } from 'src/common/interfaces/type';
 import { CustomLogger } from 'src/common/logger/custom-logger.service';
 import { buildBaseResponse } from 'src/common/utils/data.util';
-import { convertTimeToDate, isSameDay } from 'src/common/utils/date.util';
+import {
+  convertTimeToDate,
+  isSameDay,
+  parseExpireTime,
+} from 'src/common/utils/date.util';
 import { BookingStatusPayloadDto } from 'src/mail/dto/booking-confirmed-payload.dto';
+import { BookingRejectedPayloadDto } from 'src/mail/dto/booking-rejected-payload.dto';
 import { BookingRequestPayloadDto } from 'src/mail/dto/booking-request-payload.dto';
 import { MailException } from 'src/mail/exceptions/mail.exception';
 import { MailService } from 'src/mail/mail.service';
+import { PaymentCreationRequestDto } from 'src/payment/dto/requests/payment-creation-request.dto';
+import { PayOSCreatePaymentResponseDto } from 'src/payment/dto/responses/payos-creation-response.dto';
+import { PaymentCreationException } from 'src/payment/exceptions/payment-creation-exception';
+import { PaymentService } from 'src/payment/payment.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SEND_MAIL_STATUS } from 'src/user/constant/email.constant';
+import { BookingPublisher } from './booking-publisher';
 import {
   INCLUDE_BOOKING_INFO,
   INCLUDE_BOOKING_SUMMARY,
@@ -49,17 +63,23 @@ import {
 import { DEFAULT_REJECTION_REASON } from './constants/reason.constant';
 import { BookingCreationRequestDto } from './dto/requests/booking-creation-request.dto';
 import { BookingFilterRequestDto } from './dto/requests/booking-filter-request.dto';
+import { BookingRejectRequestDto } from './dto/requests/booking-reject-request.dto';
+import { PaymentQueuePayloadDto } from './dto/requests/payment-queu-payload.dto';
 import { BookingInfoResponse } from './dto/responses/booking-info.response';
 import { BookingSummaryResponseDto } from './dto/responses/booking-summary-response.dto';
 import { BookingInfoType } from './interfaces/booking-summary.type';
+import { BookingCancelPayloadDto } from './dto/requests/booking-cancel-payload';
 
 @Injectable()
 export class BookingService {
   constructor(
+    private readonly configService: ConfigService,
     private readonly prismaService: PrismaService,
     private readonly loggerService: CustomLogger,
     private readonly i18nService: I18nService,
     private readonly mailService: MailService,
+    private readonly paymentService: PaymentService,
+    private readonly bookingPublisher: BookingPublisher,
   ) {}
   async create(
     currentUser: AccessTokenPayload,
@@ -117,7 +137,7 @@ export class BookingService {
     const overlap = await this.prismaService.booking.findFirst({
       where: {
         spaceId: dto.spaceId,
-        status: BookingStatus.CONFIRMED,
+        status: { in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED] },
         startTime: { lt: dto.endTime },
         endTime: { gt: dto.startTime },
       },
@@ -128,7 +148,7 @@ export class BookingService {
       );
     const bookingData: Prisma.BookingCreateInput = {
       user: { connect: { id: userDetail.id } },
-      space: { connect: { id: userDetail.id } },
+      space: { connect: { id: spaceDetail.id } },
       startTime: start,
       endTime: end,
       totalPrice: totalPrice,
@@ -160,6 +180,9 @@ export class BookingService {
       where: {
         id: bookingId,
       },
+      include: {
+        space: true,
+      },
     });
     if (!bookingDetail)
       throw new NotFoundException(
@@ -167,14 +190,38 @@ export class BookingService {
       );
     if (bookingDetail?.status === BookingStatus.CONFIRMED)
       return buildBaseResponse(StatusKey.UNCHANGED);
+    const expireTime = this.configService.get<string>(
+      'payOS.expireTime',
+      EXPIRE_TIME_PAYMENT_DEFAULT,
+    );
+    const expireSeconds = parseExpireTime(expireTime);
+    const expiredAt = Math.floor(Date.now() / 1000) + expireSeconds;
+    const paymentPayload: PaymentCreationRequestDto = {
+      amount: bookingDetail.totalPrice,
+      bookingId: bookingDetail.id,
+      userId: bookingDetail.userId,
+      description: `PAY BOOKING-${bookingDetail.id} ${bookingDetail.space.name}`,
+      expiredAt: expiredAt,
+    };
+    let paymentData: PayOSCreatePaymentResponseDto;
+    try {
+      paymentData = await this.paymentService.create(paymentPayload);
+    } catch (error) {
+      if (error instanceof PaymentCreationException) {
+        throw new BadRequestException(
+          'Tạo link thanh toán thất bại, vui lòng thử lại',
+        );
+      }
+      throw error;
+    }
     try {
       const { confirmedBooking, overlappingBookings } =
         await this.prismaService.$transaction(async (tx) => {
           const conflictBooking = await tx.booking.findFirst({
-            where: this.buildRequestCheckOverlap(
-              bookingDetail,
+            where: this.buildRequestCheckOverlap(bookingDetail, [
               BookingStatus.CONFIRMED,
-            ),
+              BookingStatus.COMPLETED,
+            ]),
           });
           if (conflictBooking)
             throw new ConflictException(
@@ -192,10 +239,9 @@ export class BookingService {
             include: INCLUDE_PAYLOAD_EMAIL_BOOKING,
           });
           const overlappingBookings = await tx.booking.findMany({
-            where: this.buildRequestCheckOverlap(
-              bookingDetail,
+            where: this.buildRequestCheckOverlap(confirmedBooking, [
               BookingStatus.PENDING,
-            ),
+            ]),
             include: { user: true, space: true },
           });
           await tx.booking.updateMany({
@@ -207,12 +253,14 @@ export class BookingService {
       const payloadConfirmedEmail: BookingStatusPayloadDto = {
         to: confirmedBooking.user.email,
         booking: confirmedBooking,
+        paymentLink: paymentData.data.checkoutUrl,
+        expiredAt: expiredAt,
       };
       await this.sendBookingMail(() =>
         this.mailService.sendBookingConfirmedMail(payloadConfirmedEmail),
       );
       for (const booking of overlappingBookings) {
-        const payloadRejectedEmail: BookingStatusPayloadDto = {
+        const payloadRejectedEmail: BookingRejectedPayloadDto = {
           to: booking.user.email,
           booking: booking,
           reason: DEFAULT_REJECTION_REASON,
@@ -221,6 +269,12 @@ export class BookingService {
           this.mailService.sendBookingRejectedMail(payloadRejectedEmail),
         );
       }
+      const paymentBookingPayload: PaymentQueuePayloadDto = {
+        booking: confirmedBooking,
+        expiredAt: expiredAt,
+        paymentLink: paymentData.data.checkoutUrl,
+      };
+      this.bookingPublisher.publishBookingCofirmed(paymentBookingPayload);
       return buildBaseResponse(
         StatusKey.SUCCESS,
         this.buildBookingSummaryDto(confirmedBooking),
@@ -239,6 +293,7 @@ export class BookingService {
   }
   async rejectBooking(
     bookingId: number,
+    dto: BookingRejectRequestDto,
   ): Promise<BaseResponse<BookingSummaryResponseDto>> {
     const bookingDetail = await this.prismaService.booking.findUnique({
       where: {
@@ -261,10 +316,11 @@ export class BookingService {
         },
         include: INCLUDE_PAYLOAD_EMAIL_BOOKING,
       });
-      const payloadRejectedEmail: BookingStatusPayloadDto = {
+      const reason = dto?.reason ? dto.reason : DEFAULT_REJECTION_REASON;
+      const payloadRejectedEmail: BookingRejectedPayloadDto = {
         to: bookingUpdated.user.email,
         booking: bookingUpdated,
-        reason: DEFAULT_REJECTION_REASON,
+        reason,
       };
       await this.sendBookingMail(() =>
         this.mailService.sendBookingRejectedMail(payloadRejectedEmail),
@@ -289,7 +345,7 @@ export class BookingService {
     currentUser: AccessTokenPayload,
     query: QueryParamDto,
   ): Promise<PaginationResult<BookingInfoResponse>> {
-    const user = await getUserOrFail(
+    const userDetail = await getUserOrFail(
       this.prismaService,
       this.i18nService,
       currentUser.sub,
@@ -310,7 +366,7 @@ export class BookingService {
     };
     const queryOptions = {
       where: {
-        userId: user.id,
+        userId: userDetail.id,
       },
       include: INCLUDE_BOOKING_INFO,
       orderBy: sort,
@@ -383,6 +439,111 @@ export class BookingService {
       'findBookings',
     );
   }
+  async findDetail(
+    currentUser: AccessTokenPayload,
+    bookingId: number,
+  ): Promise<BaseResponse<BookingSummaryResponseDto>> {
+    const userDetail = await getUserOrFail(
+      this.prismaService,
+      this.i18nService,
+      currentUser.sub,
+    );
+    const bookingDetail = await this.prismaService.booking.findUnique({
+      where: {
+        id: bookingId,
+      },
+      include: {
+        ...INCLUDE_BOOKING_SUMMARY,
+        space: {
+          select: {
+            id: true,
+            name: true,
+            spaceManagers: true,
+          },
+        },
+      },
+    });
+    if (!bookingDetail)
+      throw new NotFoundException(
+        this.i18nService.translate('common.booking.notFound'),
+      );
+    const isAdminAction = this.validRoleAction(currentUser.role as Role);
+    const isOwner = bookingDetail?.userId === userDetail.id;
+    const isManager = bookingDetail?.space.spaceManagers.some(
+      (manager) => manager.managerId === userDetail.id,
+    );
+    if (!(isAdminAction || isOwner || isManager))
+      throw new ForbiddenException(
+        this.i18nService.translate('common.auth.forbidden'),
+      );
+    return buildBaseResponse(
+      StatusKey.SUCCESS,
+      this.buildBookingSummaryDto(bookingDetail),
+    );
+  }
+  async cancelBooking(
+    currentUser: AccessTokenPayload,
+    bookingId: number,
+  ): Promise<BaseResponse<BookingSummaryResponseDto>> {
+    const userDetail = await getUserOrFail(
+      this.prismaService,
+      this.i18nService,
+      currentUser.sub,
+    );
+    const bookingDetail = await this.prismaService.booking.findUnique({
+      where: {
+        id: bookingId,
+      },
+    });
+    if (!bookingDetail)
+      throw new NotFoundException(
+        this.i18nService.translate('common.booking.notFound'),
+      );
+    if (bookingDetail?.userId !== userDetail.id)
+      throw new ForbiddenException(
+        this.i18nService.translate('common.auth.forbidden'),
+      );
+    if (!this.isCancel(bookingDetail.status))
+      throw new ConflictException(
+        this.i18nService.translate(
+          'common.booking.action.cancelBooking.notCancel',
+        ),
+      );
+    try {
+      const bookingUpdated = await this.prismaService.booking.update({
+        where: {
+          id: bookingDetail.id,
+        },
+        data: {
+          status: BookingStatus.CANCELED,
+        },
+        include: INCLUDE_PAYLOAD_EMAIL_BOOKING,
+      });
+      const payloadPublisher: BookingCancelPayloadDto = {
+        bookingId: bookingUpdated.id,
+        userEmail: bookingUpdated.user.email,
+        name: bookingUpdated.user.name,
+        spaceName: bookingUpdated.space.name,
+        startTime: bookingUpdated.startTime,
+        endTime: bookingUpdated.endTime,
+      };
+      this.bookingPublisher.publishCanceledBooking(payloadPublisher);
+      return buildBaseResponse(
+        StatusKey.SUCCESS,
+        this.buildBookingSummaryDto(bookingUpdated),
+      );
+    } catch (error) {
+      logAndThrowPrismaClientError(
+        error as Error,
+        BookingService.name,
+        'booking',
+        'cancelBooking',
+        StatusKey.FAILED,
+        this.loggerService,
+        this.i18nService,
+      );
+    }
+  }
   private calculateBookingPrice(
     startTime: Date,
     endTime: Date,
@@ -408,41 +569,13 @@ export class BookingService {
     }
     return blocks * unitPrice;
   }
-  private buildBookingsQuery(
-    filter: BookingFilterRequestDto,
-    sort: Record<string, SortDirection>,
-    conditionExtras: Record<string, unknown> | null,
+  private buildRequestCheckOverlap(
+    booking: Booking,
+    statuses: BookingStatus[],
   ) {
-    const queryFilters = {
-      where: {
-        ...(filter?.spaceName && {
-          space: {
-            name: { contains: filter.spaceName },
-          },
-        }),
-        ...(filter.startDate &&
-          filter.endDate && {
-            startTime: { gte: filter.startDate, lte: filter.endDate },
-          }),
-        ...(!filter.endDate &&
-          filter.startDate && {
-            startTime: { gte: filter.startDate },
-          }),
-        ...(!filter.startDate &&
-          filter.endDate && {
-            startTime: { lte: filter.endDate },
-          }),
-        ...conditionExtras,
-      },
-      include: INCLUDE_BOOKING_INFO,
-      orderBy: sort,
-    };
-    return queryFilters;
-  }
-  private buildRequestCheckOverlap(booking: Booking, status: BookingStatus) {
     return {
       spaceId: booking.spaceId,
-      status: status,
+      status: { in: statuses },
       startTime: { lt: booking.endTime },
       endTime: { gt: booking.startTime },
       NOT: { id: booking.id },
@@ -573,5 +706,46 @@ export class BookingService {
       user: data.user,
       createdAt: data.createdAt,
     };
+  }
+  private buildBookingsQuery(
+    filter: BookingFilterRequestDto,
+    sort: Record<string, SortDirection>,
+    conditionExtras: Record<string, unknown> | null,
+  ) {
+    const queryFilters = {
+      where: {
+        ...(filter?.spaceName && {
+          space: {
+            name: { contains: filter.spaceName },
+          },
+        }),
+        ...(filter.startDate &&
+          filter.endDate && {
+            startTime: { gte: filter.startDate, lte: filter.endDate },
+          }),
+        ...(!filter.endDate &&
+          filter.startDate && {
+            startTime: { gte: filter.startDate },
+          }),
+        ...(!filter.startDate &&
+          filter.endDate && {
+            startTime: { lte: filter.endDate },
+          }),
+        ...conditionExtras,
+      },
+      include: INCLUDE_BOOKING_INFO,
+      orderBy: sort,
+    };
+    return queryFilters;
+  }
+
+  private validRoleAction(role: Role): boolean {
+    const rolesValid = [Role.MODERATOR, Role.ADMIN];
+    return rolesValid.includes(role);
+  }
+  private isCancel(status: BookingStatus): status is 'PENDING' | 'CONFIRMED' {
+    return (
+      status === BookingStatus.PENDING || status === BookingStatus.CONFIRMED
+    );
   }
 }

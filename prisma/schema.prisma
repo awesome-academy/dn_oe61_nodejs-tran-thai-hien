@@ -264,6 +264,7 @@ enum AmenityStatus {
 }
 
 enum BookingStatus {
+  CANCELED
   PENDING
   CONFIRMED
   REJECTED

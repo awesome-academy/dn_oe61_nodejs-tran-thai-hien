@@ -262,20 +262,34 @@
             "confirmBooking":{
               "success":"Xác nhận đặt chỗ thành công.",
               "failed":"Xác nhận đặt chỗ thất bại.",
-              "unChanged":"Đặt chỗ đã được xác nhận"
+              "unChanged":"Đặt chỗ đã được xác nhận."
             },
              "findBookingHistory":{
-                "success":"Lấy lịch sử đặt chỗ thành công",
-                "failed":"Lấy lịch sử đặt chỗ thất bại"
+                "success":"Lấy lịch sử đặt chỗ thành công.",
+                "failed":"Lấy lịch sử đặt chỗ thất bại."
              },
               "findSpaceBookingStates":{
-                "success":"Lấy lịch sử đặt chỗ của các space thành công",
-                "failed":"Lấy lịch sử đặt chỗ của các space thất bại"
+                "success":"Lấy lịch sử đặt chỗ của các space thành công.",
+                "failed":"Lấy lịch sử đặt chỗ của các space thất bại."
              },
             "findBookings":{
-              "success":"Lấy tất cả thông tin đặt chỗ thành công",
-              "failed":"Lấy tất cả thông tin đặt chỗ thất bại"
-            }
+              "success":"Lấy tất cả thông tin đặt chỗ thành công.",
+              "failed":"Lấy tất cả thông tin đặt chỗ thất bại."
+            },
+            "cancelBooking":{
+                "success":"Huỷ đặt chỗ thành công.",
+                "failed":"Huỷ đặt chỗ thất bại.",
+                "notCancel":
+                "Đặt chỗ này đã được thanh toán không được huỷ."
+              }
          }
-    }
+    },
+    "payment":{
+      "action":{
+        "create":{
+          "success":"Tạo thanh toán thành công.",
+          "failed":"Tạo thanh thanh toán thất bại."
+        }
+      }
+  }
 }

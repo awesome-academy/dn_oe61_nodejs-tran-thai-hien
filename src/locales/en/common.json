@@ -279,6 +279,18 @@
        "findBookings":{
         "success":"Find all booking successfully",
         "failed":"Find all booking state failed"
+       },
+      "cancelBooking":{
+        "success":"Booking canceled successfully",
+        "failed":"Failed to cancel booking",
+        "notCancel":"his booking cannot be canceled."
+      }
+    }
+  },
+  "payment":{
+    "action":{
+      "create":{
+        "failed":"Failed to create the payment link. Please try again later."
       }
     }
   }

@@ -54,3 +54,29 @@ export function isSameDay(date1: Date, date2: Date): boolean {
     date1.getDate() === date2.getDate()
   );
 }
+export function parseExpireTime(input: string): number {
+  const regex = /(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?/i;
+  const match = input.match(regex);
+  if (!match) {
+    throw new Error(`Invalid expire time format ${input}`);
+  }
+  const hours = parseInt(match[1] || '0', 10);
+  const minutes = parseInt(match[2] || '0', 10);
+  const seconds = parseInt(match[3] || '0', 10);
+  return hours * 3600 + minutes * 60 + seconds;
+}
+export function getRemainingTime(expiredAt: number): string {
+  const now = Date.now();
+  const remainingMs = expiredAt * 1000 - now;
+
+  if (remainingMs <= 0) return 'Hết hạn';
+
+  const minutes = Math.floor(remainingMs / (1000 * 60));
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+
+  if (hours > 0) {
+    return `Còn ${hours} giờ ${remainingMinutes} phút`;
+  }
+  return `Còn ${minutes} phút`;
+}

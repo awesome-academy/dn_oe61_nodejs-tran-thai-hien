@@ -6,54 +6,76 @@ html
     style.
       body {
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background-color: #f7f7f7;
-        padding: 30px;
+        background-color: #f4f6f8;
+        padding: 40px;
         margin: 0;
       }
       .container {
-        max-width: 600px;
+        max-width: 650px;
         margin: 0 auto;
         background: #ffffff;
-        border-radius: 8px;
-        padding: 30px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        border-radius: 10px;
+        padding: 35px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
       }
       h2 {
         color: #2e7d32;
-        font-size: 22px;
+        font-size: 24px;
         margin-bottom: 20px;
       }
       p {
         font-size: 16px;
-        color: #333;
+        color: #444;
         margin-bottom: 15px;
+        line-height: 1.6;
+      }
+      .highlight {
+        background: #e8f5e9;
+        padding: 12px;
+        border-left: 4px solid #2e7d32;
+        border-radius: 5px;
+        margin-bottom: 20px;
       }
       .btn {
         display: inline-block;
         background: #2e7d32;
         color: #fff;
-        padding: 12px 20px;
+        padding: 14px 22px;
         text-decoration: none;
-        border-radius: 5px;
-        font-size: 15px;
+        border-radius: 6px;
+        font-size: 16px;
         font-weight: bold;
+        margin-top: 10px;
+      }
+      .btn:hover {
+        background: #256428;
       }
       .footer {
-        margin-top: 20px;
-        font-size: 12px;
+        margin-top: 30px;
+        font-size: 13px;
         color: #888;
+        text-align: center;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
       }
   body
     .container
       h2 Xin chào #{name},
-      p Yêu cầu đặt chỗ của bạn đã được xác nhận vui lòng thực hiện thanh toán để hoàn thành việc đặt chỗ!
-      p 
-        strong Không gian: 
-        | #{spaceName}
-      p 
-        strong Thời gian: 
-        | #{startTime} - #{endTime}
-      p Chúc bạn có trải nghiệm tốt nhất với dịch vụ của chúng tôi.
-      a.btn(href=bookingLink) Xem chi tiết đặt chỗ
+      p Yêu cầu đặt chỗ của bạn đã được xác nhận! Vui lòng thanh toán để hoàn tất đặt chỗ.
+      .highlight
+        p 
+          strong Không gian: 
+          | #{spaceName}
+        p 
+          strong Thời gian: 
+          | #{startTime} - #{endTime}
+        p 
+          strong Hạn thanh toán: 
+          | #{expiredAt}
+      p Nhấp vào nút bên dưới để thực hiện thanh toán an toàn:
+      a.btn(href=checkoutUrl target="_blank") Thanh toán ngay
+      p Hoặc xem chi tiết đặt chỗ của bạn tại:
+      a.btn(href=bookingLink target="_blank" style="background:#1565c0") Xem chi tiết đặt chỗ
       .footer
         p Đây là email tự động, vui lòng không trả lời.
+        p &copy; #{new Date().getFullYear()} Booking System. All rights reserved.

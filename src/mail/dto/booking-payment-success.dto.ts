@@ -1,9 +1,9 @@
-import { Booking } from '@prisma/client';
-import { IsEmail, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { Booking, Payment } from '@prisma/client';
+import { IsEmail, IsNotEmpty } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
 import { OwnerLite, SpaceLite } from 'src/common/interfaces/type';
 
-export class BookingStatusPayloadDto {
+export class BookingPaymentSuccessPayloadDto {
   @IsEmail(
     {},
     {
@@ -15,8 +15,6 @@ export class BookingStatusPayloadDto {
   to: string;
   @IsNotEmpty()
   booking: Booking & { space: SpaceLite; user: OwnerLite };
-  @IsString()
-  paymentLink: string;
-  @IsNumber()
-  expiredAt: number;
+  @IsNotEmpty()
+  payment: Payment;
 }
