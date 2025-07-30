@@ -163,7 +163,7 @@
         "success":"Tạo toà nhà thành công",
         "failed": "Tạo toà nhà thất bại"
       },
-      "findVenues":{
+      "findPublicVenues":{
         "success": "Lấy danh sách tất cả toà nhà thành công"
       },
       "findVenuesByOwner":{
@@ -176,8 +176,32 @@
       "delete": {
         "success": "Xóa thông tin toà nhà thành công.",
         "failed": "Xóa toà nhà thất bại."
+      },
+      "findDetailPublicVenue": {
+        "success": "Lấy chi tiết tòa nhà thành công.",
+        "failed": "Lấy chi tiết tòa nhà thất bại."
       }
     }
-  }
+  },
+   "adminvenue": {
+      "action": {
+        "findDetailVenue": {
+          "success": "Lấy chi tiết tòa nhà thành công.",
+          "failed": "Lấy chi tiết tòa nhà thất bại."
+        },
+        "findVenues": {
+          "success": "Lấy danh sách tòa nhà thành công.",
+          "failed": "Lấy danh sách tòa nhà thất bại."
+        },
+        "blockVenue":{
+            "success":"Chặn toà nhà thành công.",
+            "failed": "Chặn toà nhà thất bại."
+          },
+          "approveVenue":{
+            "success":"Duyệt toà nhà thành công.",
+            "failed": "Duyệt toà nhà thất bại."
+          }
+      }
+    }
 
 }

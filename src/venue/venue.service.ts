@@ -3,8 +3,9 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
-import { AmenityStatus, Prisma, Venue } from '@prisma/client';
+import { AmenityStatus, Prisma, Venue, VenueStatus } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { I18nService } from 'nestjs-i18n';
 import { AccessTokenPayload } from 'src/auth/interfaces/access-token-payload';
@@ -20,15 +21,27 @@ import {
   PaginationParams,
   PaginationResult,
 } from 'src/common/interfaces/paginate-type';
-import { AmenityLite, OwnerLite, SpaceLite } from 'src/common/interfaces/type';
+import {
+  AmenityLite,
+  OwnerLite,
+  ProfileLite,
+  SpaceDetail,
+  SpaceLite,
+} from 'src/common/interfaces/type';
 import { CustomLogger } from 'src/common/logger/custom-logger.service';
 import { buildBaseResponse } from 'src/common/utils/data.util';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { VENUE_INCLUDE_SUMMARY } from './constant/include.constant';
+import {
+  VENUE_DETAIL,
+  VENUE_INCLUDE_SUMMARY,
+} from './constant/include.constant';
+import { StatusVenueUpdateRequestDto } from './dto/requests/status-venue-update.request.dto';
 import { VenueCreationRequestDto } from './dto/requests/venue-creation.request.dto';
 import { VenueUpdateRequestDto } from './dto/requests/venue-update.request.dto';
 import { VenueCreationResponseDto } from './dto/responses/venue-creation.response.dto';
+import { VenueDetailResponseDto } from './dto/responses/venue-detail.response.dto';
 import { VenueSummaryResponseDto } from './dto/responses/venue-summary.response.dto';
+import { ActionStatus } from './enums/action-status.enum';
 import { VenueSummaryType } from './interfaces/venue-summary.type';
 @Injectable()
 export class VenueService {
@@ -107,7 +120,7 @@ export class VenueService {
       );
     }
   }
-  async findVenues(
+  async findPublicVenues(
     query: QueryParamDto,
   ): Promise<PaginationResult<VenueSummaryResponseDto>> {
     const { search, page, pageSize, sortBy, direction } = query;
@@ -127,7 +140,7 @@ export class VenueService {
     const queryOptions = {
       where: {
         ...(search ? { name: { contains: search } } : {}),
-        status: AmenityStatus.ACTIVE,
+        status: VenueStatus.APPROVED,
       },
       include: VENUE_INCLUDE_SUMMARY,
       orderBy: sort,
@@ -282,6 +295,128 @@ export class VenueService {
     }
     return buildBaseResponse(StatusKey.SUCCESS);
   }
+  async changeStatusVenue(
+    venueId: number,
+    dto: StatusVenueUpdateRequestDto,
+    action: ActionStatus,
+  ): Promise<BaseResponse<VenueSummaryResponseDto | null>> {
+    const venue = await this.prismaService.venue.findUnique({
+      where: {
+        id: venueId,
+      },
+    });
+    if (!venue)
+      throw new NotFoundException(
+        this.i18nService.translate('common.venue.notFound'),
+      );
+    const { status } = dto;
+    if (venue.status === status)
+      return buildBaseResponse(StatusKey.UNCHANGED, null);
+    const statusUpdate = status as VenueStatus;
+    try {
+      const venueUpdated = await this.prismaService.venue.update({
+        where: {
+          id: venueId,
+        },
+        data: {
+          status: statusUpdate,
+        },
+        include: VENUE_INCLUDE_SUMMARY,
+      });
+      return buildBaseResponse(
+        StatusKey.SUCCESS,
+        this.buildVenueSummaryResponse(venueUpdated),
+      );
+    } catch (error) {
+      this.logAndThrowPrismaClientError(
+        error as Error,
+        VenueService.name,
+        'venue',
+        action,
+        'failed',
+      );
+    }
+  }
+  async findVenues(
+    query: QueryParamDto,
+  ): Promise<PaginationResult<VenueSummaryResponseDto>> {
+    const { search, page, pageSize, sortBy, direction } = query;
+    const fieldsValidEnum = Prisma.VenueOrderByRelevanceFieldEnum;
+    const sortFieldsValid = Object.values(fieldsValidEnum) as readonly string[];
+    const fieldDefault = fieldsValidEnum.name;
+    const sort = ParseSingleSort(
+      sortFieldsValid,
+      fieldDefault,
+      direction,
+      sortBy,
+    );
+    const paginationParams: PaginationParams = {
+      page,
+      pageSize,
+    };
+    const queryOptions = {
+      where: {
+        ...(search ? { name: { contains: search } } : {}),
+      },
+      include: VENUE_INCLUDE_SUMMARY,
+      orderBy: sort,
+    };
+    return this.getPaginatedVenues(paginationParams, queryOptions);
+  }
+  async findDetailPublicVenue(
+    currentUser: AccessTokenPayload,
+    venueId: number,
+  ): Promise<BaseResponse<VenueDetailResponseDto>> {
+    const venue = await this.prismaService.venue.findUnique({
+      where: { id: venueId },
+      include: VENUE_DETAIL,
+    });
+    if (!venue) {
+      throw new NotFoundException(
+        this.i18nService.translate('common.venue.notFound'),
+      );
+    }
+    const user = await getUserOrFail(
+      this.prismaService,
+      this.i18nService,
+      currentUser.sub,
+    );
+    if (venue.status !== VenueStatus.APPROVED && venue.ownerId !== user.id)
+      throw new ForbiddenException(
+        this.i18nService.translate('common.auth.forbidden'),
+      );
+    return buildBaseResponse(
+      StatusKey.SUCCESS,
+      this.buildVenueDetailResponse(venue),
+    );
+  }
+  async findDetailVenue(
+    venueId: number,
+  ): Promise<BaseResponse<VenueDetailResponseDto>> {
+    try {
+      const venue = await this.prismaService.venue.findUnique({
+        where: { id: venueId },
+        include: VENUE_DETAIL,
+      });
+      if (!venue) {
+        throw new NotFoundException(
+          this.i18nService.translate('common.venue.notFound'),
+        );
+      }
+      return buildBaseResponse(
+        StatusKey.SUCCESS,
+        this.buildVenueDetailResponse(venue),
+      );
+    } catch (error) {
+      this.logAndThrowPrismaClientError(
+        error as Error,
+        VenueService.name,
+        'venue',
+        'findDetailVenue',
+        'failed',
+      );
+    }
+  }
   private buildVenueCreationResponse(
     data: Venue & {
       venueAmenities: { amenity: { name: string } }[];
@@ -327,21 +462,61 @@ export class VenueService {
       spaces: data.spaces,
     };
   }
+  private buildVenueDetailResponse(
+    data: Venue & {
+      venueAmenities: { status: AmenityStatus; amenity: AmenityLite }[];
+      owner: { id: number; name: string; profile: ProfileLite | null };
+      spaces: SpaceDetail[];
+    },
+  ): VenueDetailResponseDto {
+    return {
+      id: data.id,
+      name: data.name,
+      city: data.city,
+      street: data.street,
+      latitude: data.latitude,
+      longitude: data.longitude,
+      status: data.status,
+      createdDate: data.createdAt,
+      owner: {
+        id: data.owner.id,
+        name: data.owner.name,
+        address: data.owner.profile?.address ?? null,
+        phone: data.owner.profile?.phone ?? null,
+      },
+      amenities: data.venueAmenities.map((venueAmenity) => ({
+        id: venueAmenity.amenity.id,
+        name: venueAmenity.amenity.name,
+        status: venueAmenity.status,
+      })),
+      spaces: data.spaces,
+    };
+  }
   private async getPaginatedVenues(
     paginationParams: PaginationParams,
     options: FindOptions,
   ): Promise<PaginationResult<VenueSummaryResponseDto>> {
-    const venues = await queryWithPagination(
-      this.prismaService.venue,
-      paginationParams,
-      options,
-    );
-    return {
-      ...venues,
-      data: venues.data.map((v: VenueSummaryType) =>
-        this.buildVenueSummaryResponse(v),
-      ),
-    };
+    try {
+      const venues = await queryWithPagination(
+        this.prismaService.venue,
+        paginationParams,
+        options,
+      );
+      return {
+        ...venues,
+        data: venues.data.map((v: VenueSummaryType) =>
+          this.buildVenueSummaryResponse(v),
+        ),
+      };
+    } catch (exception) {
+      this.logAndThrowPrismaClientError(
+        exception as Error,
+        VenueService.name,
+        'venue',
+        'findVenues',
+        'failed',
+      );
+    }
   }
   private async ensureVenueOwner(venueId: number, userId: number) {
     const venue = await this.prismaService.venue.findUnique({
@@ -402,5 +577,21 @@ export class VenueService {
           value !== undefined && value !== current[key as keyof T],
       ),
     ) as Partial<T>;
+  }
+  logAndThrowPrismaClientError(
+    error: Error,
+    context: string,
+    resource: string,
+    fucntionName: string,
+    statusKey: string,
+  ): never {
+    const errorPrismaClient = error as PrismaClientKnownRequestError;
+    const message = getErrorPrismaClient(errorPrismaClient, fucntionName);
+    this.loggerService.error(message, JSON.stringify(error), context);
+    throw new ConflictException(
+      this.i18nService.translate(
+        `common.${resource}.action.${fucntionName}.${statusKey}`,
+      ),
+    );
   }
 }
