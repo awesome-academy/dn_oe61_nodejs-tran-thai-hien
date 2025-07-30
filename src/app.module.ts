@@ -18,6 +18,7 @@ import { UserModule } from './user/user.module';
 import { AuthGuard } from './common/guards/auth.guard';
 import { RoleGuard } from './common/guards/role.guard';
 import { TransformDataInterceptor } from './common/interceptors/transform-data.interceptor';
+import { VenueModule } from './venue/venue.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { TransformDataInterceptor } from './common/interceptors/transform-data.i
     UserModule,
     AuthModule,
     CoreModule,
+    VenueModule,
   ],
   controllers: [AppController],
   providers: [

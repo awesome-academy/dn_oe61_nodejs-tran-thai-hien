@@ -11,12 +11,12 @@ import { I18nService } from 'nestjs-i18n';
 import { MailErrorCode } from 'src/mail/constants/mail-error.constant';
 import { MailException } from 'src/mail/exceptions/mail.exception';
 import { ValidationErrorResponse } from '../interfaces/type';
+import { CustomLogger } from '../logger/custom-logger.service';
 import {
   HTTP_EXCEPTION_CODE,
   UNKNOWN_ERROR_CODE,
 } from './constant/code-error.constant';
 import { UNKNOWN_MESSAGE } from './constant/message-error.constant';
-import { CustomLogger } from '../logger/custom-logger.service';
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
   constructor(
@@ -29,8 +29,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
     let status = 400;
     let detail: object | string | undefined;
-    let code = UNKNOWN_ERROR_CODE;
-    let message = UNKNOWN_MESSAGE;
+    let code: string | number = UNKNOWN_ERROR_CODE;
+    let message: string | object = UNKNOWN_MESSAGE;
     this.loggerService.error(
       'Error catch by filter',
       JSON.stringify(exception),
@@ -44,15 +44,34 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       detail = exception?.detail;
     }
     if (exception instanceof HttpException) {
-      const errorResponse = exception.getResponse() as ValidationErrorResponse;
       code = HTTP_EXCEPTION_CODE;
       status = exception.getStatus();
       message = exception.message;
+      const errorResponse = exception.getResponse();
       this.loggerService.log(
         'Response error validation:: ',
         JSON.stringify(errorResponse),
       );
-      const validationMessage = errorResponse.message;
+      if (typeof errorResponse === 'string') {
+        message = errorResponse;
+        code = HttpStatus[status];
+      } else if (typeof errorResponse === 'object' && errorResponse !== null) {
+        const {
+          message: msg,
+          error: err,
+          statusCode,
+          ...rest
+        } = errorResponse as Record<string, unknown>;
+        message = (msg as string) ?? HTTP_EXCEPTION_CODE;
+        detail = Object.keys(rest).length > 0 ? rest : undefined;
+        code =
+          (typeof err === 'string' ? err : HttpStatus[status]) ??
+          HTTP_EXCEPTION_CODE;
+        status = typeof statusCode === 'number' ? statusCode : status;
+      }
+      const validationErrorResponse =
+        exception.getResponse() as ValidationErrorResponse;
+      const validationMessage = validationErrorResponse.message;
       if (Array.isArray(validationMessage)) {
         status = HttpStatus.BAD_REQUEST;
         message = this.i18nService.translate('common.validation.error');
