@@ -19,6 +19,7 @@ import { AuthGuard } from './common/guards/auth.guard';
 import { RoleGuard } from './common/guards/role.guard';
 import { TransformDataInterceptor } from './common/interceptors/transform-data.interceptor';
 import { VenueModule } from './venue/venue.module';
+import { SpaceModule } from './space/space.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { VenueModule } from './venue/venue.module';
     AuthModule,
     CoreModule,
     VenueModule,
+    SpaceModule,
   ],
   controllers: [AppController],
   providers: [
