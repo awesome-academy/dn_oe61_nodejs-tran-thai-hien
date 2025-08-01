@@ -48,13 +48,24 @@ export class SpaceFilterRequestDto {
   @IsOptional()
   @Transform(({ value }) => (value != null ? Number(value) : undefined))
   @IsNumber()
+  @Min(0, {
+    message: i18nValidationMessage('common.validation.min', {
+      field: 'minPrice',
+      min: 0,
+    }),
+  })
   minPrice?: number;
 
   @IsOptional()
   @Transform(({ value }) => (value != null ? Number(value) : undefined))
   @IsNumber()
+  @Min(0, {
+    message: i18nValidationMessage('common.validation.min', {
+      field: 'maxPrice',
+      min: 0,
+    }),
+  })
   maxPrice?: number;
-
   @IsOptional()
   @Matches(TIME_REGEX)
   startTime?: string;

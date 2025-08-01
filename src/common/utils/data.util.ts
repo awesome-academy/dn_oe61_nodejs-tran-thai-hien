@@ -46,3 +46,15 @@ export function parseStatusKey(
     return StatusKey.SUCCESS;
   return StatusKey.FAILED;
 }
+
+export function buildDataUpdate<T extends object>(
+  dto: T,
+  current: T,
+): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(dto).filter(
+      ([key, value]) =>
+        value !== undefined && value !== current[key as keyof T],
+    ),
+  ) as Partial<T>;
+}

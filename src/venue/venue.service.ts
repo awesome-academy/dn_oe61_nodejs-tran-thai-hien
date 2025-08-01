@@ -32,7 +32,7 @@ import {
   SpaceLite,
 } from 'src/common/interfaces/type';
 import { CustomLogger } from 'src/common/logger/custom-logger.service';
-import { buildBaseResponse } from 'src/common/utils/data.util';
+import { buildBaseResponse, buildDataUpdate } from 'src/common/utils/data.util';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
   VENUE_DETAIL,
@@ -190,7 +190,7 @@ export class VenueService {
       currentUser.sub,
     );
     const venue = await this.ensureVenueOwner(venueId, owner.id);
-    const venueData: Prisma.VenueUpdateInput = this.buildDataUpdate(dto, venue);
+    const venueData: Prisma.VenueUpdateInput = buildDataUpdate(dto, venue);
     if (Object.values(venueData).length === 0)
       return buildBaseResponse(StatusKey.UNCHANGED);
     if (dto?.amenities) {
@@ -571,14 +571,6 @@ export class VenueService {
         this.i18nService.translate('common.validation.atLeastOneDefined'),
       );
     }
-  }
-  private buildDataUpdate<T extends object>(dto: T, current: T): Partial<T> {
-    return Object.fromEntries(
-      Object.entries(dto).filter(
-        ([key, value]) =>
-          value !== undefined && value !== current[key as keyof T],
-      ),
-    ) as Partial<T>;
   }
   // logAndThrowPrismaClientError(
   //   error: Error,
