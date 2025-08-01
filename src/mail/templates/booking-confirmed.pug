@@ -1,0 +1,59 @@
+doctype html
+html
+  head
+    meta(charset="UTF-8")
+    title Booking Confirmed
+    style.
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f7f7f7;
+        padding: 30px;
+        margin: 0;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background: #ffffff;
+        border-radius: 8px;
+        padding: 30px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      }
+      h2 {
+        color: #2e7d32;
+        font-size: 22px;
+        margin-bottom: 20px;
+      }
+      p {
+        font-size: 16px;
+        color: #333;
+        margin-bottom: 15px;
+      }
+      .btn {
+        display: inline-block;
+        background: #2e7d32;
+        color: #fff;
+        padding: 12px 20px;
+        text-decoration: none;
+        border-radius: 5px;
+        font-size: 15px;
+        font-weight: bold;
+      }
+      .footer {
+        margin-top: 20px;
+        font-size: 12px;
+        color: #888;
+      }
+  body
+    .container
+      h2 Xin chào #{name},
+      p Yêu cầu đặt chỗ của bạn đã được xác nhận vui lòng thực hiện thanh toán để hoàn thành việc đặt chỗ!
+      p 
+        strong Không gian: 
+        | #{spaceName}
+      p 
+        strong Thời gian: 
+        | #{startTime} - #{endTime}
+      p Chúc bạn có trải nghiệm tốt nhất với dịch vụ của chúng tôi.
+      a.btn(href=bookingLink) Xem chi tiết đặt chỗ
+      .footer
+        p Đây là email tự động, vui lòng không trả lời.
