@@ -20,6 +20,7 @@ import { RoleGuard } from './common/guards/role.guard';
 import { TransformDataInterceptor } from './common/interceptors/transform-data.interceptor';
 import { VenueModule } from './venue/venue.module';
 import { SpaceModule } from './space/space.module';
+import { BookingModule } from './booking/booking.module';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { SpaceModule } from './space/space.module';
     CoreModule,
     VenueModule,
     SpaceModule,
+    BookingModule,
   ],
   controllers: [AppController],
   providers: [

@@ -3,6 +3,7 @@ import { PrismaError } from '../enums/prisma-error.enum';
 import { CustomLogger } from '../logger/custom-logger.service';
 import { ConflictException } from '@nestjs/common';
 import { I18nService } from 'nestjs-i18n';
+import { MailErrorCode } from 'src/mail/constants/mail-error.constant';
 
 export function getErrorPrismaClient(
   error: PrismaClientKnownRequestError,
@@ -37,4 +38,19 @@ export function logAndThrowPrismaClientError(
       `common.${resource}.action.${functionName}.${statusKey}`,
     ),
   );
+}
+
+export function getErrorMessageSendMail(code: MailErrorCode): string {
+  switch (code) {
+    case MailErrorCode.TIME_OUT:
+      return 'The email sending request timed out';
+    case MailErrorCode.TEMPLATE_ERROR:
+      return 'The email template could not be loaded.';
+    case MailErrorCode.INVALID_RECIPIENT:
+      return 'The recipient email address is invalid.';
+    case MailErrorCode.INVALID_PAYLOAD:
+      return 'Payload send email invalid';
+    default:
+      return 'An unexpected error occurred while sending the email.';
+  }
 }

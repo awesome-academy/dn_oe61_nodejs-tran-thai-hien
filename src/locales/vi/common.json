@@ -246,6 +246,19 @@
       }
 
     }
-  }
-
+  },
+    "booking":{
+      "invalidTime": "Thời gian bắt đầu phải trước thời gian kết thúc.",
+      "unitPriceNotFound": "Đơn giá được chọn không có cho không gian này.",
+      "timeSlotAlreadyBooked": "Khung giờ này đã có người đặt.",
+      "outOfWorkingHours": "Thời gian đặt phải nằm trong giờ hoạt động của không gian.",  
+      "earliestStartTime": "Thời gian bắt đầu sớm nhất là {{time}}",
+      "latestEndTime": "Thời gian kết thúc muộn nhất là {{time}}",
+      "action": {
+          "create": {
+              "success": "Đặt chỗ thành công.",
+              "failed": "Đặt chỗ thất bại."
+          }
+         }
+    }
 }

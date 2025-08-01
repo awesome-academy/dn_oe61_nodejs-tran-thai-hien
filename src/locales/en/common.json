@@ -250,5 +250,19 @@
         "error":"Find detail space failed"
       }
     }
+  },
+  "booking":{
+    "invalidTime": "The start time must be before the end time.",
+    "unitPriceNotFound": "The selected price unit is not available for this space.",
+    "timeSlotAlreadyBooked": "This time slot is already booked.",
+    "outOfWorkingHours": "Booking time must be within the working hours of the space.",
+    "earliestStartTime":"Earliest start time is {time}",
+    "latestEndTime": "Latest end time is {time}",
+    "action":{
+      "create":{
+        "success": "Booking created successfully.",
+        "failed": "Failed to create booking."
+      }
+    }
   }
 }
