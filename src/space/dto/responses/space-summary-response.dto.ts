@@ -11,6 +11,6 @@ export class SpaceSummaryResponseDto {
   venueId: number;
   venueName: string;
   prices: PriceLite[];
-  amenities: AmenityLite[];
+  amenities?: AmenityLite[];
   managers: OwnerLite[];
 }
