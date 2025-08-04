@@ -18,6 +18,7 @@ import { QueryParamDto } from 'src/common/constants/query-param.dto';
 import { BookingFilterRequestDto } from './dto/requests/booking-filter-request.dto';
 import { HasRole } from 'src/common/decorators/role.decorator';
 import { Role } from 'src/common/enums/role.enum';
+import { BookingRejectRequestDto } from './dto/requests/booking-reject-request.dto';
 
 @Controller('bookings')
 export class BookingController {
@@ -36,8 +37,18 @@ export class BookingController {
   }
   @UseGuards(SpaceOwnerOrManagerGuard)
   @Patch(':bookingId/reject')
-  async rejectBooking(@Param('bookingId', ParseIntPipe) bookingId: number) {
-    return this.bookingService.rejectBooking(bookingId);
+  async rejectBooking(
+    @Param('bookingId') bookingId: number,
+    @Body() dto: BookingRejectRequestDto,
+  ) {
+    return this.bookingService.rejectBooking(bookingId, dto);
+  }
+  @Patch(':bookingId/cancel')
+  async cancelBooking(
+    @Param('bookingId', ParseIntPipe) bookingId: number,
+    @CurrentUser() user: AccessTokenPayload,
+  ) {
+    return this.bookingService.cancelBooking(user, bookingId);
   }
   @Get('/history')
   async findBookingHistory(

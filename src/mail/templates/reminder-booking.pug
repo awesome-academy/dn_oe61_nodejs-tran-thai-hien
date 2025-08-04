@@ -1,0 +1,66 @@
+doctype html
+html
+  head
+    meta(charset="UTF-8")
+    title Nhắc thanh toán đặt chỗ
+    style.
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f7f7f7;
+        padding: 30px;
+        margin: 0;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background: #ffffff;
+        border-radius: 8px;
+        padding: 30px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      }
+      h2 {
+        color: #d35400;
+        font-size: 22px;
+        margin-bottom: 20px;
+      }
+      p {
+        font-size: 16px;
+        color: #333;
+        margin-bottom: 15px;
+      }
+      .btn {
+        display: inline-block;
+        background: #d35400;
+        color: #fff;
+        padding: 12px 20px;
+        text-decoration: none;
+        border-radius: 5px;
+        font-size: 15px;
+        font-weight: bold;
+      }
+      .highlight {
+        font-weight: bold;
+        color: #d35400;
+      }
+      .footer {
+        margin-top: 20px;
+        font-size: 12px;
+        color: #888;
+      }
+  body
+    .container
+      h2 Xin chào #{name},
+      p Đây là email nhắc nhở: bạn còn <span class="highlight">#{remainingTime}</span> để hoàn tất thanh toán cho đặt chỗ của bạn.
+      p 
+        strong Không gian: 
+        | #{spaceName}
+      p 
+        strong Thời gian đặt: 
+        | #{startTime} - #{endTime}
+      p 
+        strong Hạn thanh toán: 
+        | #{expiredAt}
+      p Vui lòng thanh toán ngay để giữ chỗ.
+      a.btn(href=checkoutUrl) Thanh toán ngay
+      .footer
+        p Đây là email tự động, vui lòng không trả lời.
