@@ -267,6 +267,18 @@
         "success":"Booking confirmed successfully.",
         "failed":"Failed to confirm booking",
         "unchanged":"The booking remains unchanged."
+      },
+      "findBookingHistory":{
+        "success":"Find booking history successfully",
+        "failed":"Find booking history failed"
+      },
+       "findSpaceBookingStates":{
+        "success":"Find space booking state successfully",
+        "failed":"Find space booking state failed"
+      },
+       "findBookings":{
+        "success":"Find all booking successfully",
+        "failed":"Find all booking state failed"
       }
     }
   }
