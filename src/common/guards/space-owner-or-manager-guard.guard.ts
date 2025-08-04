@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   CanActivate,
   ExecutionContext,
   ForbiddenException,
@@ -19,7 +20,44 @@ export class SpaceOwnerOrManagerGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
     const user = request['user'] as AccessTokenPayload;
-    const spaceId = parseInt(request.params.id, 10);
+    let spaceId: number | null = null;
+    if (request.params.spaceId) {
+      spaceId = parseInt(request.params.spaceId, 10);
+      if (isNaN(spaceId))
+        throw new BadRequestException(
+          this.i18nService.translate('common.validation.isInt', {
+            args: {
+              field: 'spaceId',
+            },
+          }),
+        );
+    }
+    if (!spaceId && request.params.bookingId) {
+      const bookingId = parseInt(request.params.bookingId, 10);
+      if (isNaN(bookingId))
+        throw new BadRequestException(
+          this.i18nService.translate('common.validation.isInt', {
+            args: {
+              field: 'bookingId',
+            },
+          }),
+        );
+      const booking = await this.prismaService.booking.findUnique({
+        where: { id: bookingId },
+        select: { spaceId: true },
+      });
+      if (!booking) {
+        throw new NotFoundException(
+          this.i18nService.translate('common.booking.notFound'),
+        );
+      }
+      spaceId = booking.spaceId;
+    }
+    if (!spaceId) {
+      throw new NotFoundException(
+        this.i18nService.translate('common.space.notFound'),
+      );
+    }
     const space = await this.prismaService.space.findUnique({
       where: {
         id: spaceId,

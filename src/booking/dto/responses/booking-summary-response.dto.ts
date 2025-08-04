@@ -7,7 +7,7 @@ export class BookingSummaryResponseDto {
   startTime: Date;
   endTime: Date;
   totalPrice: number;
-  unit: SpacePriceUnit;
+  unit?: SpacePriceUnit;
   space: SpaceLite;
   user: OwnerLite;
 }

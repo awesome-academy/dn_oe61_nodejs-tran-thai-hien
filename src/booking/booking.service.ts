@@ -14,7 +14,10 @@ import {
 import { I18nService } from 'nestjs-i18n';
 import { AccessTokenPayload } from 'src/auth/interfaces/access-token-payload';
 import { StatusKey } from 'src/common/enums/status-key.enum';
-import { getErrorMessageSendMail } from 'src/common/helpers/catch-error.helper';
+import {
+  getErrorMessageSendMail,
+  logAndThrowPrismaClientError,
+} from 'src/common/helpers/catch-error.helper';
 import { getUserOrFail } from 'src/common/helpers/user.helper';
 import { BaseResponse } from 'src/common/interfaces/base-response';
 import { OwnerLite, SpaceLite } from 'src/common/interfaces/type';
@@ -26,9 +29,14 @@ import { MailException } from 'src/mail/exceptions/mail.exception';
 import { MailService } from 'src/mail/mail.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SEND_MAIL_STATUS } from 'src/user/constant/email.constant';
-import { INCLUDE_BOOKING_SUMMARY } from './constants/include.constant';
+import {
+  INCLUDE_BOOKING_SUMMARY,
+  INCLUDE_PAYLOAD_EMAIL_BOOKING,
+} from './constants/include.constant';
+import { DEFAULT_REJECTION_REASON } from './constants/reason.constant';
 import { BookingCreationRequestDto } from './dto/requests/booking-creation-request.dto';
 import { BookingSummaryResponseDto } from './dto/responses/booking-summary-response.dto';
+import { BookingStatusPayloadDto } from 'src/mail/dto/booking-confirmed-payload.dto';
 
 @Injectable()
 export class BookingService {
@@ -42,12 +50,12 @@ export class BookingService {
     currentUser: AccessTokenPayload,
     dto: BookingCreationRequestDto,
   ): Promise<BaseResponse<BookingSummaryResponseDto>> {
-    const user = await getUserOrFail(
+    const userDetail = await getUserOrFail(
       this.prismaService,
       this.i18nService,
       currentUser.sub,
     );
-    const space = await this.prismaService.space.findUnique({
+    const spaceDetail = await this.prismaService.space.findUnique({
       where: {
         id: dto.spaceId,
         deletedAt: null,
@@ -62,7 +70,7 @@ export class BookingService {
         spacePrices: true,
       },
     });
-    if (!space)
+    if (!spaceDetail)
       throw new NotFoundException(
         this.i18nService.translate('common.space.notFound'),
       );
@@ -72,15 +80,20 @@ export class BookingService {
       throw new BadRequestException(
         this.i18nService.translate('common.booking.invalidTime'),
       );
-    this.validateBookingHours(start, end, space.openHour, space.closeHour);
-    const priceByUnit = space.spacePrices.find(
+    this.validateBookingHours(
+      start,
+      end,
+      spaceDetail.openHour,
+      spaceDetail.closeHour,
+    );
+    const priceByUnit = spaceDetail.spacePrices.find(
       (sp) => sp.unit == dto.unitPrice,
     );
     if (!priceByUnit)
       throw new NotFoundException(
         this.i18nService.translate('common.booking.unitPriceNotFound'),
       );
-    const totalPrice = this.caculateBookingPrice(
+    const totalPrice = this.calculateBookingPrice(
       start,
       end,
       dto.unitPrice,
@@ -99,8 +112,8 @@ export class BookingService {
         this.i18nService.translate('common.booking.timeSlotAlreadyBooked'),
       );
     const bookingData: Prisma.BookingCreateInput = {
-      user: { connect: { id: user.id } },
-      space: { connect: { id: space.id } },
+      user: { connect: { id: userDetail.id } },
+      space: { connect: { id: userDetail.id } },
       startTime: start,
       endTime: end,
       totalPrice: totalPrice,
@@ -110,10 +123,12 @@ export class BookingService {
       include: INCLUDE_BOOKING_SUMMARY,
     });
     const payloadEmail: BookingRequestPayloadDto = {
-      to: user.email,
+      to: userDetail.email,
       booking: newBooking,
     };
-    const statusSendMail = await this.sendRequestBookingMail(payloadEmail);
+    const statusSendMail = await this.sendBookingMail(() =>
+      this.mailService.sendBookingRequest(payloadEmail),
+    );
     const statusKey =
       statusSendMail === SEND_MAIL_STATUS.SENT
         ? StatusKey.SUCCESS
@@ -123,7 +138,139 @@ export class BookingService {
       this.buildBookingSummaryDto(newBooking, priceByUnit.unit),
     );
   }
-  private caculateBookingPrice(
+  async confirmBooking(
+    bookingId: number,
+  ): Promise<BaseResponse<BookingSummaryResponseDto>> {
+    const bookingDetail = await this.prismaService.booking.findUnique({
+      where: {
+        id: bookingId,
+      },
+    });
+    if (!bookingDetail)
+      throw new NotFoundException(
+        this.i18nService.translate('common.booking.notFound'),
+      );
+    if (bookingDetail?.status === BookingStatus.CONFIRMED)
+      return buildBaseResponse(StatusKey.UNCHANGED);
+    try {
+      const { confirmedBooking, overlappingBookings } =
+        await this.prismaService.$transaction(async (tx) => {
+          const conflictBooking = await tx.booking.findFirst({
+            where: this.buildRequestCheckOverlap(
+              bookingDetail,
+              BookingStatus.CONFIRMED,
+            ),
+          });
+          if (conflictBooking)
+            throw new ConflictException(
+              this.i18nService.translate(
+                'common.booking.timeSlotAlreadyBooked',
+              ),
+            );
+          const confirmedBooking = await this.prismaService.booking.update({
+            where: {
+              id: bookingDetail.id,
+            },
+            data: {
+              status: BookingStatus.CONFIRMED,
+            },
+            include: INCLUDE_PAYLOAD_EMAIL_BOOKING,
+          });
+          const overlappingBookings = await tx.booking.findMany({
+            where: this.buildRequestCheckOverlap(
+              bookingDetail,
+              BookingStatus.PENDING,
+            ),
+            include: { user: true, space: true },
+          });
+          await tx.booking.updateMany({
+            where: { id: { in: overlappingBookings.map((b) => b.id) } },
+            data: { status: 'REJECTED' },
+          });
+          return { confirmedBooking, overlappingBookings };
+        });
+      const payloadConfirmedEmail: BookingStatusPayloadDto = {
+        to: confirmedBooking.user.email,
+        booking: confirmedBooking,
+      };
+      await this.sendBookingMail(() =>
+        this.mailService.sendBookingConfirmedMail(payloadConfirmedEmail),
+      );
+      for (const booking of overlappingBookings) {
+        const payloadRejectedEmail: BookingStatusPayloadDto = {
+          to: booking.user.email,
+          booking: booking,
+          reason: DEFAULT_REJECTION_REASON,
+        };
+        await this.sendBookingMail(() =>
+          this.mailService.sendBookingRejectedMail(payloadRejectedEmail),
+        );
+      }
+      return buildBaseResponse(
+        StatusKey.SUCCESS,
+        this.buildBookingSummaryDto(confirmedBooking),
+      );
+    } catch (error) {
+      logAndThrowPrismaClientError(
+        error as Error,
+        BookingService.name,
+        'booking',
+        'confirmBooking',
+        StatusKey.FAILED,
+        this.loggerService,
+        this.i18nService,
+      );
+    }
+  }
+  async rejectBooking(
+    bookingId: number,
+  ): Promise<BaseResponse<BookingSummaryResponseDto>> {
+    const bookingDetail = await this.prismaService.booking.findUnique({
+      where: {
+        id: bookingId,
+      },
+    });
+    if (!bookingDetail)
+      throw new NotFoundException(
+        this.i18nService.translate('common.booking.notFound'),
+      );
+    if (bookingDetail.status === BookingStatus.REJECTED)
+      return buildBaseResponse(StatusKey.UNCHANGED);
+    try {
+      const bookingUpdated = await this.prismaService.booking.update({
+        where: {
+          id: bookingId,
+        },
+        data: {
+          status: BookingStatus.REJECTED,
+        },
+        include: INCLUDE_PAYLOAD_EMAIL_BOOKING,
+      });
+      const payloadRejectedEmail: BookingStatusPayloadDto = {
+        to: bookingUpdated.user.email,
+        booking: bookingUpdated,
+        reason: DEFAULT_REJECTION_REASON,
+      };
+      await this.sendBookingMail(() =>
+        this.mailService.sendBookingRejectedMail(payloadRejectedEmail),
+      );
+      return buildBaseResponse(
+        StatusKey.SUCCESS,
+        this.buildBookingSummaryDto(bookingUpdated),
+      );
+    } catch (error) {
+      logAndThrowPrismaClientError(
+        error as Error,
+        BookingService.name,
+        'booking',
+        'rejectBooking',
+        StatusKey.FAILED,
+        this.loggerService,
+        this.i18nService,
+      );
+    }
+  }
+  private calculateBookingPrice(
     startTime: Date,
     endTime: Date,
     unit: SpacePriceUnit,
@@ -148,9 +295,18 @@ export class BookingService {
     }
     return blocks * unitPrice;
   }
-  private async sendRequestBookingMail(payload: BookingRequestPayloadDto) {
+  private buildRequestCheckOverlap(booking: Booking, status: BookingStatus) {
+    return {
+      spaceId: booking.spaceId,
+      status: status,
+      startTime: { lt: booking.endTime },
+      endTime: { gt: booking.startTime },
+      NOT: { id: booking.id },
+    };
+  }
+  private async sendBookingMail(mailFn: () => Promise<void>) {
     try {
-      await this.mailService.sendBookingRequest(payload);
+      await mailFn();
       return SEND_MAIL_STATUS.SENT;
     } catch (error) {
       let message: string;
@@ -167,7 +323,7 @@ export class BookingService {
   }
   private buildBookingSummaryDto(
     data: Booking & { user: OwnerLite; space: SpaceLite },
-    unit: SpacePriceUnit,
+    unit?: SpacePriceUnit,
   ): BookingSummaryResponseDto {
     return {
       id: data.id,

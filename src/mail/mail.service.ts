@@ -8,13 +8,16 @@ import { MAIL_TYPE, MailType } from './constants/mail-type.constant';
 import {
   BOOKING_REQUEST,
   SUBJECT_COFINRM_EMAIL,
+  SUBJECT_COFIRMED_BOOKING,
   SUBJECT_FORGOT_PASSWORD,
+  SUBJECT_REJECTED_BOOKING,
 } from './constants/subject-email.constant';
 import { MailPayloadDto } from './dto/mail-payload.dto';
 import { MailException } from './exceptions/mail.exception';
 import { MailerError } from './interfaces/mailer-error.interface';
 import { BookingRequestPayloadDto } from './dto/booking-request-payload.dto';
 import { formatDateTime } from 'src/common/utils/date.util';
+import { BookingStatusPayloadDto } from './dto/booking-confirmed-payload.dto';
 
 @Injectable()
 export class MailService {
@@ -75,6 +78,63 @@ export class MailService {
           spaceName: payload.booking.space.name,
           startTime: startTime,
           endTime: endTime,
+        },
+      });
+    } catch (error) {
+      const err = error as MailerError;
+      this.throwErrorMailer(err.code);
+    }
+  }
+  async sendBookingConfirmedMail(payload: BookingStatusPayloadDto) {
+    try {
+      const dto = Object.assign(new BookingRequestPayloadDto(), payload);
+      await validateOrReject(dto);
+    } catch (error) {
+      const details = this.formatValidationErrors(error as ValidationError[]);
+      throw new MailException(MailErrorCode.INVALID_PAYLOAD, details);
+    }
+    try {
+      const subject = `${SUBJECT_COFIRMED_BOOKING} for ${payload.booking.space.name}`;
+      const startTime = formatDateTime(payload.booking.startTime);
+      const endTime = formatDateTime(payload.booking.endTime);
+      await this.mailerService.sendMail({
+        to: payload.to,
+        subject: subject,
+        template: 'booking-confirmed',
+        context: {
+          name: payload.booking.user.name,
+          spaceName: payload.booking.space.name,
+          startTime: startTime,
+          endTime: endTime,
+        },
+      });
+    } catch (error) {
+      const err = error as MailerError;
+      this.throwErrorMailer(err.code);
+    }
+  }
+  async sendBookingRejectedMail(payload: BookingStatusPayloadDto) {
+    try {
+      const dto = Object.assign(new BookingRequestPayloadDto(), payload);
+      await validateOrReject(dto);
+    } catch (error) {
+      const details = this.formatValidationErrors(error as ValidationError[]);
+      throw new MailException(MailErrorCode.INVALID_PAYLOAD, details);
+    }
+    try {
+      const subject = `${SUBJECT_REJECTED_BOOKING} for ${payload.booking.space.name}`;
+      const startTime = formatDateTime(payload.booking.startTime);
+      const endTime = formatDateTime(payload.booking.endTime);
+      await this.mailerService.sendMail({
+        to: payload.to,
+        subject: subject,
+        template: 'booking-rejected',
+        context: {
+          name: payload.booking.user.name,
+          spaceName: payload.booking.space.name,
+          startTime: startTime,
+          endTime: endTime,
+          reason: payload?.reason,
         },
       });
     } catch (error) {
