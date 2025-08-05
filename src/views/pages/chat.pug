@@ -1,0 +1,12 @@
+extends ../layouts/main
+
+block content
+  h4.mb-3 Chat
+  .row
+    .col-md-3
+      h5 Users
+      input#searchInput.form-control.mb-2(type="text" placeholder="Search user...")
+      ul#userList.list-group
+    .col-md-9
+      #chatBoxes
+  script(src="/js/chat.js" defer)

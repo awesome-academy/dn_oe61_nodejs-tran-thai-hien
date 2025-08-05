@@ -20,14 +20,23 @@ import { AuthService } from 'src/auth/auth.service';
 import { AccessTokenPayload } from 'src/auth/interfaces/access-token-payload';
 import { ForgotPasswordTokenPayload } from 'src/auth/interfaces/forgot-password-token-payload';
 import { VerifyEmailTokenPayload } from 'src/auth/interfaces/verify-email-token-payload';
+import { QueryParamDto } from 'src/common/constants/query-param.dto';
 import { PrismaError } from 'src/common/enums/prisma-error.enum';
 import { Role } from 'src/common/enums/role.enum';
 import { StatusKey } from 'src/common/enums/status-key.enum';
 import {
   getErrorMessageSendMail,
   getErrorPrismaClient,
+  logAndThrowPrismaClientError,
 } from 'src/common/helpers/catch-error.helper';
+import { queryWithPagination } from 'src/common/helpers/paginate.helper';
+import { ParseSingleSort } from 'src/common/helpers/parse-sort';
 import { BaseResponse } from 'src/common/interfaces/base-response';
+import {
+  FindOptions,
+  PaginationParams,
+  PaginationResult,
+} from 'src/common/interfaces/paginate-type';
 import { CustomLogger } from 'src/common/logger/custom-logger.service';
 import {
   buildBaseResponse,
@@ -62,6 +71,8 @@ import { SignupResponseDto } from './dto/responses/signup-response.dto';
 import { UserProfileResponse } from './dto/responses/user-profile.response';
 import { UserSummaryDto } from './dto/responses/user-summary.dto';
 import { VerifyUserResponseDto } from './dto/responses/verify-email.dto';
+import { UserSummaryType } from './interfaces/user-summary.type';
+import { getUserOrFail } from 'src/common/helpers/user.helper';
 @Injectable()
 export class UserService {
   constructor(
@@ -285,6 +296,7 @@ export class UserService {
       return buildBaseResponse(StatusKey.SUCCESS, {
         verifyStatus: VERIFY_USER_STATUS.SUCCESS,
         user: {
+          id: userUpdated.id,
           email: userUpdated.email,
           name: userUpdated.name,
           userName: userUpdated.userName,
@@ -352,6 +364,7 @@ export class UserService {
       return buildBaseResponse(StatusKey.SUCCESS, {
         verifyStatus: VERIFY_USER_STATUS.SUCCESS,
         user: {
+          id: userUpdated.id,
           email: userUpdated.email,
           name: userUpdated.name,
           userName: userUpdated.userName,
@@ -662,30 +675,132 @@ export class UserService {
       return SEND_MAIL_STATUS.FAILED;
     }
   }
+  async findPublicUsers(
+    query: QueryParamDto,
+  ): Promise<PaginationResult<UserSummaryDto>> {
+    const { search, page, pageSize, sortBy, direction } = query;
+    const fieldsValidEnum = Prisma.UserOrderByRelevanceFieldEnum;
+    const sortFieldsValid = Object.values(fieldsValidEnum) as readonly string[];
+    const fieldDefault = fieldsValidEnum.name;
+    const sort = ParseSingleSort(
+      sortFieldsValid,
+      fieldDefault,
+      direction,
+      sortBy,
+    );
+    const paginationParams: PaginationParams = {
+      page,
+      pageSize,
+    };
+    const queryOptions = {
+      where: {
+        name: { contains: search },
+        isVerified: true,
+        status: UserStatus.ACTIVE,
+      },
+    };
+    return this.getPaginatedUsers(
+      paginationParams,
+      queryOptions,
+      'findPublicUsers',
+    );
+  }
+  async findUsers(
+    query: QueryParamDto,
+  ): Promise<PaginationResult<UserSummaryDto>> {
+    const { search, page, pageSize, sortBy, direction } = query;
+    const fieldsValidEnum = Prisma.UserOrderByRelevanceFieldEnum;
+    const sortFieldsValid = Object.values(fieldsValidEnum) as readonly string[];
+    const fieldDefault = fieldsValidEnum.name;
+    const sort = ParseSingleSort(
+      sortFieldsValid,
+      fieldDefault,
+      direction,
+      sortBy,
+    );
+    const paginationParams: PaginationParams = {
+      page,
+      pageSize,
+    };
+    const queryOptions = {};
+    return this.getPaginatedUsers(paginationParams, queryOptions, 'findUsers');
+  }
+  async findUserDetail(
+    currentUser: AccessTokenPayload,
+    userId: number,
+  ): Promise<BaseResponse<UserSummaryDto>> {
+    const currentUserDetail = await getUserOrFail(
+      this.prismaService,
+      this.i18nService,
+      currentUser.sub,
+    );
+    const isSelf = currentUserDetail.id === userId;
+    const isAdmin = this.isAdminAction(currentUser.role as Role);
 
-  // private getErrorPrimsaClient(
-  //   error: PrismaClientKnownRequestError,
-  //   context: string,
-  // ) {
-  //   switch (error.code) {
-  //     case PrismaError.RECORD_NOT_FOUND.toString():
-  //       return `[${context}] Record not found`;
-  //     case PrismaError.FOREIGN_KEY_CONSTRAINT.toString():
-  //       return `[${context}] Invalid foreign key `;
-  //     case PrismaError.UNIQUE_CONSTRAINT.toString():
-  //       return `[${context}] Duplicate value `;
-  //     default:
-  //       return `[${context}] Prisma client error `;
-  //   }
-  // }
+    if (!isSelf && !isAdmin) {
+      throw new ForbiddenException(
+        this.i18nService.translate('common.auth.forbidden'),
+      );
+    }
+    if (isSelf) {
+      return buildBaseResponse(
+        StatusKey.SUCCESS,
+        this.buildUserSummaryResponse(currentUserDetail),
+      );
+    }
+    const userById = await this.prismaService.user.findUnique({
+      where: { id: userId },
+    });
+    if (!userById) throw new NotFoundException('common.user.notFound');
+
+    return buildBaseResponse(
+      StatusKey.SUCCESS,
+      this.buildUserSummaryResponse(userById),
+    );
+  }
+
   private buildUserSummaryResponse(user: User): UserSummaryDto {
     return {
+      id: user.id,
       name: user.name,
       userName: user.userName,
       email: user.email,
       status: user.status,
       isVerified: user.isVerified,
     };
+  }
+  private async getPaginatedUsers(
+    paginationParams: PaginationParams,
+    options: FindOptions,
+    functionName: string,
+  ): Promise<PaginationResult<UserSummaryDto>> {
+    try {
+      const venues = await queryWithPagination(
+        this.prismaService.user,
+        paginationParams,
+        options,
+      );
+      return {
+        ...venues,
+        data: venues.data.map((v: UserSummaryType) =>
+          this.buildUserSummaryResponse(v),
+        ),
+      };
+    } catch (exception) {
+      logAndThrowPrismaClientError(
+        exception as Error,
+        UserService.name,
+        'user',
+        functionName,
+        'failed',
+        this.loggerService,
+        this.i18nService,
+      );
+    }
+  }
+  private isAdminAction(role: Role) {
+    const validRoles = [Role.ADMIN, Role.MODERATOR];
+    return validRoles.includes(role);
   }
   private buildMyProfileResponse(
     userData: User & { profile: Profile | null },

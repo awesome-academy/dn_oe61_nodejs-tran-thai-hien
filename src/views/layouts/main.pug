@@ -1,0 +1,37 @@
+doctype html
+html
+  head
+    title MyApp
+    meta(name="viewport", content="width=device-width, initial-scale=1")
+    link(rel="stylesheet", href="/vendor/bootstrap/bootstrap.min.css")
+    link(rel="stylesheet", href="/css/style.css")
+  body
+    nav.navbar.navbar-dark.bg-dark.px-3
+      a.navbar-brand(href="/dashboard") MyApp
+      ul.navbar-nav.ms-auto.flex-row
+        li.nav-item.me-3
+          a#notificationIcon.nav-link(href="#") Notifications 
+          span#notifBadge.badge.bg-danger.ms-1(style="display:none;") 0
+        li.nav-item
+        if currentUser && currentUser.name
+          span.text-white.me-3= currentUser.name
+        else
+          span.text-white.me-3 Guest
+        li.nav-item
+          a#logoutBtn.nav-link(href="#") Logout
+    .container-fluid
+      .row
+        .col-md-2.sidebar.bg-light.p-0
+          ul.nav.flex-column.mt-3
+            li.nav-item
+              a.nav-link(href="/dashboard") Dashboard
+            li.nav-item
+              a.nav-link(href="/bookings") Bookings
+            li.nav-item
+              a.nav-link(href="/users") Users
+            li.nav-item
+              a.nav-link.active(href="/chat") Chat
+        .col-md-10.p-4.content-area
+          block content
+    script(src="/vendor/bootstrap/bootstrap.bundle.min.js")
+    script(src="/js/app.js")

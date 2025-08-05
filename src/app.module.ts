@@ -23,6 +23,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { SpaceModule } from './space/space.module';
 import { UserModule } from './user/user.module';
 import { VenueModule } from './venue/venue.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -59,6 +60,7 @@ import { VenueModule } from './venue/venue.module';
     BookingModule,
     PaymentModule,
     NotificationModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [

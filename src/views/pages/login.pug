@@ -1,0 +1,55 @@
+doctype html
+html
+  head
+    title Login - MyApp
+    meta(charset="utf-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1")
+    link(rel="stylesheet", href="/vendor/bootstrap/bootstrap.min.css")
+    link(rel="stylesheet", href="/css/style.css")
+    style.
+      body {
+        background-color: #f8f9fa;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+      .login-card {
+        max-width: 400px;
+        width: 100%;
+      }
+  body
+    .card.login-card.shadow
+      .card-body
+        h3.text-center.mb-4 Login
+        form#loginForm
+          .mb-3
+            label.form-label(for="email") Email
+            input#email.form-control(type="email" placeholder="Enter your email" required)
+          .mb-3
+            label.form-label(for="password") Password
+            input#password.form-control(type="password" placeholder="Enter your password" required)
+          button.btn.btn-primary.w-100(type="submit") Login
+        p.text-center.mt-3
+          | Don't have an account? 
+          a(href="/register") Register
+    script(src="/vendor/bootstrap/bootstrap.bundle.min.js")
+    script.
+      document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        const res = await fetch('/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          localStorage.setItem('token', data.token);
+          window.location.href = '/dashboard';
+        } else {
+          alert(data.message || 'Login failed');
+        }
+      });

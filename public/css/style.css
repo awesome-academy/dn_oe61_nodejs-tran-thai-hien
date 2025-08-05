@@ -1,0 +1,39 @@
+html,
+body {
+  height: 100%;
+  margin: 0;
+  background: #f8f9fa;
+}
+.login-card {
+  max-width: 400px;
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  background: #fff;
+  padding: 20px;
+}
+
+.login-card h3 {
+  font-weight: 600;
+  color: #333;
+}
+
+.login-card .btn-primary {
+  font-size: 16px;
+  font-weight: 500;
+  padding: 10px;
+}
+
+.container-fluid {
+  height: calc(100vh - 56px); /* trừ chiều cao navbar */
+}
+
+.sidebar {
+  height: 100%;
+  border-right: 1px solid #ddd;
+}
+
+.content-area {
+  background: #fff;
+  min-height: 100%;
+}
