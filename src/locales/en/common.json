@@ -321,6 +321,10 @@
         "success":"Booking canceled successfully",
         "failed":"Failed to cancel booking",
         "notCancel":"his booking cannot be canceled."
+      },
+      "getBookingStatusCount":{
+        "success":"Get count status booking successfully",
+        "failed":"Failed to get count status booking"
       }
     }
   },

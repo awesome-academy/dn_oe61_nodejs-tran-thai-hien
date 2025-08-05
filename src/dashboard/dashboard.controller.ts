@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { ApiExcludeEndpoint } from '@nestjs/swagger';
 import { AccessTokenPayload } from 'src/auth/interfaces/access-token-payload';
 import { SOCKET_URL_DEFAULT } from 'src/common/constants/socket.constant';
+import { BOOKING_STATUSES } from 'src/common/constants/status-template.constant';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { IsPublicRoute } from 'src/common/decorators/public-route.decorator';
 
@@ -71,6 +72,20 @@ export class DashboardController {
       SOCKET_URL_DEFAULT,
     );
     return {
+      socketUrl: socketUrl,
+      currentUser: user,
+    };
+  }
+  @ApiExcludeEndpoint()
+  @Get('bookings')
+  @Render('pages/manage-booking')
+  manageBookings(@CurrentUser() user: AccessTokenPayload) {
+    const socketUrl = this.configService.get<string>(
+      'socket.url',
+      SOCKET_URL_DEFAULT,
+    );
+    return {
+      statuses: BOOKING_STATUSES,
       socketUrl: socketUrl,
       currentUser: user,
     };

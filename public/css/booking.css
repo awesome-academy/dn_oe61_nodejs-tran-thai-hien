@@ -1,0 +1,21 @@
+.date-filter-group {
+  display: flex;
+  gap: 1rem;
+  max-width: 350px;
+}
+.date-filter-group .form-group {
+  flex: 1 1 140px;
+  display: flex;
+  flex-direction: column;
+}
+.date-filter-group label {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  font-size: 0.875rem;
+}
+@media (max-width: 576px) {
+  .date-filter-group {
+    max-width: 100%;
+    flex-direction: column;
+  }
+}

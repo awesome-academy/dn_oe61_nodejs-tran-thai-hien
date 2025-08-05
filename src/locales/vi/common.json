@@ -315,7 +315,11 @@
                 "failed":"Huỷ đặt chỗ thất bại.",
                 "notCancel":
                 "Đặt chỗ này đã được thanh toán không được huỷ."
-              }
+              },
+             "getBookingStatusCount":{
+              "success":"Lấy số lượng theo trạng thái đặt chỗ thành công",
+              "failed":"Lấy số lượng theo trạng thái đặt chỗ thất bại"
+            }
          }
     },
     "payment":{

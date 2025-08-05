@@ -27,6 +27,7 @@ import { ApiResponseCancelBookingExample } from 'src/swagger/examples/bookings/c
 import { ApiResponseGetHistoryExample } from 'src/swagger/examples/bookings/get-history-booking.example';
 import { ApiResponseGetBookingManagedExample } from 'src/swagger/examples/bookings/get-booking-managed.example';
 import { ApiResponseGetBookingExample } from 'src/swagger/examples/bookings/get-booking-example';
+import { ApiResponseGetBookingStatusCount } from 'src/swagger/examples/bookings/get-booking-status-count.example';
 @ApiTags('bookings')
 @Controller('bookings')
 export class BookingController {
@@ -90,5 +91,12 @@ export class BookingController {
   @Get('')
   async findBookings(@Query() filter: BookingFilterRequestDto) {
     return this.bookingService.findBookings(filter);
+  }
+  @ApiBearerAuth('access-token')
+  @ApiResponseGetBookingStatusCount()
+  @HasRole(Role.MODERATOR, Role.ADMIN)
+  @Get('/status')
+  async getBookingStatusCount(@Query() filter: BookingFilterRequestDto) {
+    return this.bookingService.getBookingStatusCount(filter);
   }
 }
