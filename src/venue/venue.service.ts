@@ -56,6 +56,7 @@ import { SortAndPaginationParamDto } from 'src/common/constants/sort-pagination.
 import { NotificationPublisher } from 'src/notification/notification-publisher';
 import { CreateVenuePayload } from 'src/notification/dto/payloads/create-venue-payload';
 import { VenueStatusNotiPayload } from 'src/notification/dto/payloads/status-venue-payload';
+import { VenueResponseDto } from './dto/responses/venue-response.dto';
 @Injectable()
 export class VenueService {
   constructor(
@@ -459,7 +460,7 @@ export class VenueService {
   }
   async findNearByVenues(
     query: VenueMapFilterDto,
-  ): Promise<PaginationResult<Venue>> {
+  ): Promise<PaginationResult<VenueResponseDto>> {
     const { latitude, longitude, maxDistance, page, pageSize } = query;
     const distanceFormula = `
     (6371 * acos(
@@ -484,7 +485,9 @@ export class VenueService {
     const paginationData = getPaginationData(itemsCount, page, pageSize);
     const { totalItems, totalPages, safePage, safePageSize, skip } =
       paginationData;
-    const venues = await this.prismaService.$queryRawUnsafe<Venue[]>(`
+    const venues = await this.prismaService.$queryRawUnsafe<
+      VenueResponseDto[]
+    >(`
     SELECT *,
       ${distanceFormula} AS distance
     FROM venues

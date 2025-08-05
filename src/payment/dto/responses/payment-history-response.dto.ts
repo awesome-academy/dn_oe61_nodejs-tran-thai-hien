@@ -3,7 +3,7 @@ export class PaymentHistoryResponseDto {
   amount: number;
   method: string;
   status: string;
-  paidAt: Date;
+  paidAt: Date | null;
   booking: {
     id: number;
     startTime: Date;
