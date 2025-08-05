@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Get,
@@ -14,25 +13,33 @@ import {
   Res,
   UnauthorizedException,
 } from '@nestjs/common';
-import { UserService } from './user.service';
-import { SignupDto } from './dto/requests/signup.dto';
-import { LoginDto } from './dto/requests/login.dto';
-import { extractTokenFromHeader } from 'src/common/utils/jwt.util';
-import { Request, Response } from 'express';
-import { IsPublicRoute } from 'src/common/decorators/public-route.decorator';
-import { ResetPasswordDto } from './dto/requests/reset-password';
-import { I18nService } from 'nestjs-i18n';
-import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { AccessTokenPayload } from 'src/auth/interfaces/access-token-payload';
-import { ProfileUpdateRequestDto } from './dto/requests/profile-update.dto';
-import { StatusUpdateRequestDto } from './dto/requests/status-update.dto';
-import { HasRole } from 'src/common/decorators/role.decorator';
-import { Role } from 'src/common/enums/role.enum';
-import { VerifyUpdateRequestDto } from './dto/requests/verify-update.dto';
-import { RoleUpdateRequestDto } from './dto/requests/role-update.dto';
-import { MessageResource } from 'src/common/decorators/resource.decorator';
-import { QueryParamDto } from 'src/common/constants/query-param.dto';
 import { ConfigService } from '@nestjs/config';
+import { ApiBearerAuth, ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
+import { Request, Response } from 'express';
+import { I18nService } from 'nestjs-i18n';
+import { AccessTokenPayload } from 'src/auth/interfaces/access-token-payload';
+import { QueryParamDto } from 'src/common/constants/query-param.dto';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { IsPublicRoute } from 'src/common/decorators/public-route.decorator';
+import { MessageResource } from 'src/common/decorators/resource.decorator';
+import { extractTokenFromHeader } from 'src/common/utils/jwt.util';
+import { ApiResponseForgotPasword } from 'src/swagger/examples/users/forgot-password.example';
+import { ApiResponseGetPorfileExample } from 'src/swagger/examples/users/get-profile.example';
+import { ApiResponseGetPublicDetailExample } from 'src/swagger/examples/users/get-public-detail.example';
+import { ApiResponseGetPublicUser } from 'src/swagger/examples/users/get-public-user.example';
+import { ApiResponseLogin } from 'src/swagger/examples/users/login-response.example';
+import { ApiResponseLogoutExample } from 'src/swagger/examples/users/logout-response.example';
+import { ApiResponseResendVerifyEmaiLExample } from 'src/swagger/examples/users/resend-verify-email-response.example';
+import { ApiResponseSignup } from 'src/swagger/examples/users/signup-response.example';
+import { ApiResponseUpdateUserExample } from 'src/swagger/examples/users/update-user.example';
+import { ApiResponseVerifyEmailExample } from 'src/swagger/examples/users/verify-email.example';
+import { LoginDto } from './dto/requests/login.dto';
+import { ProfileUpdateRequestDto } from './dto/requests/profile-update.dto';
+import { ResetPasswordDto } from './dto/requests/reset-password';
+import { SignupDto } from './dto/requests/signup.dto';
+import { UserService } from './user.service';
+import { ApiResponseResetPasswordExample } from 'src/swagger/examples/users/reset-password.example';
+@ApiTags('users')
 @Controller('users')
 export class UserController {
   constructor(
@@ -40,12 +47,14 @@ export class UserController {
     private readonly i18nService: I18nService,
     private readonly configService: ConfigService,
   ) {}
+  @ApiResponseSignup()
   @Post('/signup')
   @IsPublicRoute()
   @MessageResource('user', 'signup')
   async signup(@Body() dto: SignupDto) {
     return this.userService.signup(dto);
   }
+  @ApiResponseLogin()
   @Post('/login')
   @IsPublicRoute()
   async login(@Body() dto: LoginDto, @Res() res: Response) {
@@ -63,10 +72,13 @@ export class UserController {
       },
     });
   }
+  @ApiExcludeEndpoint()
   @IsPublicRoute()
   @Get('/login')
   @Render('pages/login')
   getLoginForm() {}
+  @ApiResponseLogoutExample()
+  @ApiBearerAuth('access-token')
   @Post('/logout')
   async logout(@Req() req: Request) {
     const token = extractTokenFromHeader(req);
@@ -77,42 +89,50 @@ export class UserController {
     return this.userService.logout(token);
   }
   @MessageResource('user', 'sendVerifyEmail')
+  @ApiResponseResendVerifyEmaiLExample()
   @Get('/resend-verify-email')
   @IsPublicRoute()
   async resendVerifyEmail(@Query('email') email: string) {
     if (!email)
       throw new NotFoundException(
-        this.i18nService.translate('common.request.errors.email_not_found'),
+        this.i18nService.translate('common.request.errors.emailNotfound'),
       );
     return this.userService.resendVerifyEmail(email);
   }
+  @ApiResponseVerifyEmailExample()
   @Get('/verify-email')
   @IsPublicRoute()
   async verifyEmail(@Query('token') token: string) {
     if (!token)
-      throw new BadRequestException(
-        this.i18nService.translate('common.request.errors.token_not_found'),
+      throw new NotFoundException(
+        this.i18nService.translate('common.request.errors.tokenNotFound'),
       );
     return this.userService.verifyEmail(token);
   }
+  @ApiResponseForgotPasword()
   @Get('/forgot-password')
   @IsPublicRoute()
   async forgotPassword(@Query('email') email: string) {
     if (!email)
       throw new NotFoundException(
-        this.i18nService.translate('common.request.errors.email_not_found'),
+        this.i18nService.translate('common.request.errors.emailNotFound'),
       );
     return this.userService.forgotPassword(email);
   }
+  @ApiResponseResetPasswordExample()
   @Post('/reset-password')
   @IsPublicRoute()
   async resetPassword(@Body() dto: ResetPasswordDto) {
     return this.userService.resetPassword(dto);
   }
+  @ApiResponseGetPorfileExample()
+  @ApiBearerAuth('access-token')
   @Get('/profile')
   async myProfile(@CurrentUser() user: AccessTokenPayload) {
     return this.userService.myProfile(user);
   }
+  @ApiResponseUpdateUserExample()
+  @ApiBearerAuth('access-token')
   @Patch('/profile')
   async updateProfile(
     @CurrentUser() user: AccessTokenPayload,
@@ -120,40 +140,14 @@ export class UserController {
   ) {
     return this.userService.updateMyProfile(user, dto);
   }
-  @HasRole(Role.MODERATOR, Role.ADMIN)
-  @Patch('/:id/status')
-  @MessageResource('user', 'changeStatus')
-  async changeStatus(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: StatusUpdateRequestDto,
-  ) {
-    return this.userService.changeStatus(id, dto);
-  }
-  @HasRole(Role.MODERATOR, Role.ADMIN)
-  @Patch('/:id/verify')
-  async changeVerify(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: VerifyUpdateRequestDto,
-  ) {
-    return this.userService.changeVerify(id, dto);
-  }
-  @HasRole(Role.ADMIN)
-  @Patch('/:id/role')
-  async changeRole(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: RoleUpdateRequestDto,
-  ) {
-    return this.userService.changeRole(id, dto);
-  }
+  @ApiResponseGetPublicUser()
+  @ApiBearerAuth('access-token')
   @Get('')
   async findPublicUsers(@Query() query: QueryParamDto) {
     return this.userService.findPublicUsers(query);
   }
-  @HasRole(Role.MODERATOR, Role.ADMIN)
-  @Get('/admin')
-  async findUsers(@Query() query: QueryParamDto) {
-    return this.userService.findUsers(query);
-  }
+  @ApiResponseGetPublicDetailExample()
+  @ApiBearerAuth('access-token')
   @Get(':userId')
   async findDetail(
     @CurrentUser() user: AccessTokenPayload,

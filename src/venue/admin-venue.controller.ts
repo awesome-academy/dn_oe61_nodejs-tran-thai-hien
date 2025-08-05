@@ -15,15 +15,21 @@ import { ActionStatus } from './enums/action-status.enum';
 import { QueryParamDto } from 'src/common/constants/query-param.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { AccessTokenPayload } from 'src/auth/interfaces/access-token-payload';
-
+import { ApiTags } from '@nestjs/swagger';
+import { ApiResponseGetVenue } from 'src/swagger/examples/venues/get-venue.example';
+import { ApiResponseUpdateStatusVenue } from 'src/swagger/examples/venues/update-status-venue.example';
+import { ApiResponseGetDetailVenues } from 'src/swagger/examples/venues/get-detail-venue.example';
+@ApiTags('admin-venues')
 @Controller('admin/venues')
 export class AdminVenueController {
   constructor(private readonly venueService: VenueService) {}
+  @ApiResponseGetVenue()
   @HasRole(Role.MODERATOR, Role.ADMIN)
   @Get()
   async findVenues(@Query() query: QueryParamDto) {
     return await this.venueService.findVenues(query);
   }
+  @ApiResponseUpdateStatusVenue()
   @HasRole(Role.MODERATOR, Role.ADMIN)
   @Patch(':id/block')
   async blockVenue(
@@ -38,6 +44,7 @@ export class AdminVenueController {
       ActionStatus.BLOCK,
     );
   }
+  @ApiResponseUpdateStatusVenue()
   @HasRole(Role.MODERATOR, Role.ADMIN)
   @Patch(':id/approve')
   async approveVenue(
@@ -52,6 +59,7 @@ export class AdminVenueController {
       ActionStatus.APPROVE,
     );
   }
+  @ApiResponseUpdateStatusVenue()
   @HasRole(Role.MODERATOR, Role.ADMIN)
   @Patch(':id/reject')
   async rejectedVenue(
@@ -66,6 +74,7 @@ export class AdminVenueController {
       ActionStatus.REJECTED,
     );
   }
+  @ApiResponseGetDetailVenues()
   @HasRole(Role.MODERATOR, Role.ADMIN)
   @Get(':id')
   async findDetailVenue(@Param('id', ParseIntPipe) venueId: number) {

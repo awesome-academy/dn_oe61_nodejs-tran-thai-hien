@@ -11,21 +11,21 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { BookingModule } from './booking/booking.module';
+import { ChatModule } from './chat/chat.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { AuthGuard } from './common/guards/auth.guard';
 import { RoleGuard } from './common/guards/role.guard';
 import { TransformDataInterceptor } from './common/interceptors/transform-data.interceptor';
 import { I18nValidationPipe } from './common/pipes/i18n-validation.pipe';
 import { CoreModule } from './core/core.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 import { NotificationModule } from './notification/notification.module';
 import { PaymentModule } from './payment/payment.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { SpaceModule } from './space/space.module';
+import { StatisticModule } from './statistic/statistic.module';
 import { UserModule } from './user/user.module';
 import { VenueModule } from './venue/venue.module';
-import { ChatModule } from './chat/chat.module';
-import { DashboardModule } from './dashboard/dashboard.module';
-import { StatisticModule } from './statistic/statistic.module';
 
 @Module({
   imports: [
