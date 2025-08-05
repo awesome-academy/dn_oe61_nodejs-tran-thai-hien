@@ -57,6 +57,7 @@ import { NotificationPublisher } from 'src/notification/notification-publisher';
 import { CreateVenuePayload } from 'src/notification/dto/payloads/create-venue-payload';
 import { VenueStatusNotiPayload } from 'src/notification/dto/payloads/status-venue-payload';
 import { VenueResponseDto } from './dto/responses/venue-response.dto';
+import { StatusVenueUpdateBulkRequest } from './dto/requests/status-venue-update-bulk.request';
 @Injectable()
 export class VenueService {
   constructor(
@@ -353,7 +354,7 @@ export class VenueService {
         statusUpdate,
         venueUpdated,
         userDetail.name,
-        '',
+        dto?.reason,
       );
       return buildBaseResponse(
         StatusKey.SUCCESS,
@@ -507,6 +508,66 @@ export class VenueService {
         totalPages,
       },
     };
+  }
+  async changeStatusVenueBulk(
+    user: AccessTokenPayload,
+    dto: StatusVenueUpdateBulkRequest,
+  ): Promise<BaseResponse<VenueSummaryResponseDto[]>> {
+    const userDetail = await getUserOrFail(
+      this.prismaService,
+      this.i18nService,
+      user.sub,
+    );
+    const venueIds = dto.venues.map((venue) => venue.id);
+    const venueExists = await this.prismaService.venue.findMany({
+      where: {
+        id: { in: venueIds },
+      },
+    });
+    const venueExistingIds = venueExists.map((venue) => venue.id);
+    const venueMissingIds = venueIds.filter(
+      (venueId) => !venueExistingIds.includes(venueId),
+    );
+    if (venueMissingIds.length > 0) {
+      const details = venueMissingIds.join(', ');
+      const message = `${this.i18nService.translate('common.venue.missingVenues')}: ${details}`;
+      throw new NotFoundException(message);
+    }
+    const venueUpdateds = await this.prismaService.$transaction(async (tx) => {
+      const results: VenueSummaryResponseDto[] = [];
+      for (const venue of dto.venues) {
+        try {
+          const venueUpdated = await tx.venue.update({
+            where: {
+              id: venue.id,
+            },
+            data: {
+              status: venue.status,
+            },
+            include: VENUE_INCLUDE_SUMMARY,
+          });
+          this.publisherChangeStatusVenue(
+            venue.status,
+            venueUpdated,
+            userDetail.name,
+            venue.reason,
+          );
+          results.push(this.buildVenueSummaryResponse(venueUpdated));
+        } catch (error) {
+          logAndThrowPrismaClientError(
+            error as Error,
+            VenueService.name,
+            'venue',
+            'changeStatusVenueBulk',
+            StatusKey.FAILED,
+            this.loggerService,
+            this.i18nService,
+          );
+        }
+      }
+      return results;
+    });
+    return buildBaseResponse(StatusKey.SUCCESS, venueUpdateds);
   }
   private buildVenueCreationResponse(
     data: Venue & {

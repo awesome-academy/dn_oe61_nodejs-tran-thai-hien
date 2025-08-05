@@ -191,6 +191,7 @@
    "venue":{
     "nameExists":"Tên của toà nhà đã tồn tại",
     "missingAmenities":"Một vài tiện ích không tồn tại",
+    "missingVenues":"Một vài toà nhầ không tồn tại",
     "notFound":"Không tìm thấy toà nhà",
      "action":{
       "create":{
