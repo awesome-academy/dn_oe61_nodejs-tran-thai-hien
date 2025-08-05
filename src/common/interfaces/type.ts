@@ -2,6 +2,7 @@ import { ValidationError } from '@nestjs/common';
 import {
   Amenity,
   AmenityStatus,
+  Booking,
   Profile,
   Space,
   SpacePrice,
@@ -11,6 +12,7 @@ import {
 
 export type ValidationErrorResponse = { message: ValidationError[] };
 export type OwnerLite = Pick<User, 'id' | 'name'>;
+export type BookingLite = Pick<Booking, 'id' | 'startTime' | 'endTime'>;
 export type AmenityLite = Pick<Amenity, 'id' | 'name'>;
 export type SpaceLite = Pick<Space, 'id' | 'name'>;
 export type ProfileLite = Pick<Profile, 'address' | 'phone'>;

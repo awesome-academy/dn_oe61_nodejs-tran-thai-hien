@@ -25,6 +25,7 @@ import { UserModule } from './user/user.module';
 import { VenueModule } from './venue/venue.module';
 import { ChatModule } from './chat/chat.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { StatisticModule } from './statistic/statistic.module';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
     NotificationModule,
     ChatModule,
     DashboardModule,
+    StatisticModule,
   ],
   controllers: [AppController],
   providers: [

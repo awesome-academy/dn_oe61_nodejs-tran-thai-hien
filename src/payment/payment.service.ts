@@ -1,16 +1,33 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Payment, PaymentMethod, Prisma } from '@prisma/client';
 import axios, { AxiosResponse } from 'axios';
 import { instanceToPlain } from 'class-transformer';
 import * as crypto from 'crypto';
+import { I18nService } from 'nestjs-i18n';
 import { BookingPublisher } from 'src/booking/booking-publisher';
+import { PaymentPaidPayloadDto } from 'src/booking/dto/requests/payment-paid-payload';
+import { SortAndPaginationParamDto } from 'src/common/constants/sort-pagination.dto';
+import { logAndThrowPrismaClientError } from 'src/common/helpers/catch-error.helper';
+import { queryWithPagination } from 'src/common/helpers/paginate.helper';
+import { ParseSingleSort } from 'src/common/helpers/parse-sort';
+import { buildDataRange } from 'src/common/helpers/prisma.helper';
+import {
+  FindOptions,
+  PaginationParams,
+  PaginationResult,
+} from 'src/common/interfaces/paginate-type';
+import { BookingLite, OwnerLite } from 'src/common/interfaces/type';
 import { CustomLogger } from 'src/common/logger/custom-logger.service';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { INCLUDE_BOOKING_HISTORY } from './constants/include.constant.dto';
+import { PaymentHistoryType } from './constants/payment-history.type';
 import { PaymentCreationRequestDto } from './dto/requests/payment-creation-request.dto';
+import { PaymentFilterRequestDto } from './dto/requests/payment-filter-request.dto';
 import { PayOSPayloadDto } from './dto/requests/payos-payload.dto';
+import { PaymentHistoryResponseDto } from './dto/responses/payment-history-response.dto';
 import { PayOSCreatePaymentResponseDto } from './dto/responses/payos-creation-response.dto';
 import { PayOSWebhookDTO } from './dto/responses/payos-webhook.dto';
-import { PaymentPaidPayloadDto } from 'src/booking/dto/requests/payment-paid-payload';
-import { PaymentMethod } from '@prisma/client';
 import { PaymentCreationException } from './exceptions/payment-creation-exception';
 @Injectable()
 export class PaymentService {
@@ -18,6 +35,8 @@ export class PaymentService {
     private readonly configService: ConfigService,
     private readonly loggerService: CustomLogger,
     private readonly bookingPublisher: BookingPublisher,
+    private readonly prismaService: PrismaService,
+    private readonly i18nService: I18nService,
   ) {}
   async create(dto: PaymentCreationRequestDto) {
     try {
@@ -82,6 +101,24 @@ export class PaymentService {
       );
     }
   }
+  async history(
+    query: PaymentFilterRequestDto,
+  ): Promise<PaginationResult<PaymentHistoryResponseDto>> {
+    const { sort, paginationParams } =
+      this.getBuildSortAndPaginationParamPayments(query);
+    const { startDate, endDate, status, method } = query;
+    const dateFilter = buildDataRange(startDate, endDate);
+    const queryOptions = {
+      where: {
+        ...(dateFilter ? { createdAt: dateFilter } : {}),
+        ...(status ? { status: status } : {}),
+        ...(method ? { method: method } : {}),
+      },
+      orderBy: sort,
+      include: INCLUDE_BOOKING_HISTORY,
+    };
+    return this.getPaginatedPayments(paginationParams, queryOptions);
+  }
   private signPayload(payload: PayOSPayloadDto): string {
     const rawData =
       `amount=${payload.amount}` +
@@ -145,5 +182,76 @@ export class PaymentService {
         return `${key}=${stringValue}`;
       })
       .join('&');
+  }
+  private getBuildSortAndPaginationParamPayments(
+    query: PaymentFilterRequestDto,
+  ): SortAndPaginationParamDto {
+    const { page, pageSize, sortBy, direction } = query;
+    const fieldsValidEnum = Prisma.PaymentScalarFieldEnum;
+    const sortFieldsValid = Object.values(fieldsValidEnum) as readonly string[];
+    const fieldDefault = fieldsValidEnum.paidAt;
+    const sort = ParseSingleSort(
+      sortFieldsValid,
+      fieldDefault,
+      direction,
+      sortBy,
+    );
+    const paginationParams: PaginationParams = {
+      page,
+      pageSize,
+    };
+    return {
+      sort,
+      paginationParams,
+    };
+  }
+  private async getPaginatedPayments(
+    paginationParams: PaginationParams,
+    options: FindOptions,
+  ): Promise<PaginationResult<PaymentHistoryResponseDto>> {
+    try {
+      const payments = await queryWithPagination(
+        this.prismaService.payment,
+        paginationParams,
+        options,
+      );
+      return {
+        ...payments,
+        data: payments.data.map((v: PaymentHistoryType) =>
+          this.buildPaymentHistoryResponse(v),
+        ),
+      };
+    } catch (exception) {
+      logAndThrowPrismaClientError(
+        exception as Error,
+        PaymentService.name,
+        'payment',
+        'findPaymentHistory',
+        'failed',
+        this.loggerService,
+        this.i18nService,
+      );
+    }
+  }
+  private buildPaymentHistoryResponse(
+    data: Payment & { booking: BookingLite & { user: OwnerLite } },
+  ): PaymentHistoryResponseDto {
+    return {
+      id: data.id,
+      amount: data.amount,
+      method: data.method,
+      status: data.status,
+      paidAt: data.paidAt,
+      booking: {
+        id: data.booking.id,
+        startTime: data.booking.startTime,
+        endTime: data.booking.endTime,
+      },
+      user: {
+        id: data.booking.user.id,
+        name: data.booking.user.name,
+      },
+      createdAt: data.createdAt,
+    };
   }
 }

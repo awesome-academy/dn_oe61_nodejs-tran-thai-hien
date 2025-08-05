@@ -308,7 +308,11 @@
         "create":{
           "success":"Tạo thanh toán thành công.",
           "failed":"Tạo thanh thanh toán thất bại."
-        }
+        },
+         "findPaymentsHistory":{
+          "success":"Lấy tất cả lịch sử thanh toán thành công.",
+           "failed":"Lấy tất cả lịch sử thanh toán thất bại."
+          }
       }
   },
     "chat":{
@@ -317,8 +321,24 @@
      "errorSaveMessage":"Gửi tin nhắn thất bại. Vui lòng thử lại sau.",
      "action":{
       "getHistory":{
-        "success":"Lấy lịch sử tin nhắn thành công",
-        "failed":"Lấy lịch sử tin nhắn thất bại"
+        "success":"Lấy lịch sử tin nhắn thành công.",
+        "failed":"Lấy lịch sử tin nhắn thất bại."
+      }
+    }
+  },
+    "statistic":{
+    "action":{
+      "findStatisticBookings":{
+        "success":"Lấy thống kê theo đặt chỗ thành công.",
+        "failed":"Lấy thống kê theo đặt chỗ thất bại."
+      },
+      "findTopBookingUsers":{
+        "success":"Lấy thông tin các người dùng có nhiều đặt chỗ nhất thành công.",
+        "failed":"Lấy thông tin các người dùng có nhiều đặt chỗ thất bại."
+      },
+       "findTopVenues":{
+        "success":"Lấy thông tin các toà nhà có nhiều đặt chỗ nhất thành công.",
+        "failed":"Lấy thông tin các toà nhà có nhiều đặt chỗ nhất thất bại."
       }
     }
   }

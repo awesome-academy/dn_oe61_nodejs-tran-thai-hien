@@ -311,6 +311,10 @@
     "action":{
       "create":{
         "failed":"Failed to create the payment link. Please try again later."
+      },
+      "findPaymentsHistory":{
+        "success":"Find all payments history successfully.",
+        "failed":"Failed to find payments history."
       }
     }
   },
@@ -320,9 +324,53 @@
     "errorSaveMessage":"Failed to send message. Please try again later.",
     "action":{
       "getHistory":{
-        "success":"Find messages history successfully",
-        "failed":"Failed to find history messages"
+        "success":"Find messages history successfully.",
+        "failed":"Failed to find history messages."
       }
+    }
+  },
+  "statistic":{
+    "action":{
+      "findStatisticBookings":{
+        "success":"Find all statistic bookings successfully.",
+        "failed":"Failed to find all statistic bookings."
+      },
+      "findTopBookingUsers":{
+        "success":"Find top booking user successfully.",
+        "failed":"Failed to find top booking user."
+      },
+      "findTopVenues":{
+        "success":"Find top booking venue successfully.",
+        "failed":"Failed to find top booking venue."
+      },
+      "findStatisticRevenues":{
+        "success":"Find statistics revenue successfully.",
+        "failed":"Failed to find statistics revenue"
+      }
+    }
+  },
+  "notification":{
+    "action":{
+      "create":{
+        "success":"Created notification successfully",
+        "failed":"Failed to create notification"
+      },
+      "getMyNotification":{
+        "success":"Find notification user successfully",
+        "failed":"Failed to find notification user"
+      },
+      "markAsRead":{
+        "success":"Mark as read notification successfully",
+        "failed":"Failed to mark as read notification"
+      }
+    }
+    ,"message":{
+      "createVenue":"Venue named {venueName} (ID: {venueId}) has been created by {creatorName} at {createdAt}",
+      "rejectedVenue": "Your venue named {venueName} (ID: {venueId}) was rejected by {actionBy} at {time}. Reason: {reason}.",
+      "approvedVenue": "Your venue named {venueName} (ID: {venueId}) has been approved by {actionBy} at {time}.",
+      "blockedVenue": "Your venue named {venueName} (ID: {venueId}) was blocked by {actionBy} at {time}. Reason: {reason}.",
+      "createdBooking":"User {ownerName} has successfully booked the space {spaceName} from {startDate} to {endDate}. Booking (ID: {bookingId})",
+      "canceledBooking":"User ${ownerName} has canceled the reservation (ID: {bookingId}) for space {spaceName} from {startDate} to {endDate} ."
     }
   }
 }

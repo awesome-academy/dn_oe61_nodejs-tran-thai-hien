@@ -18,11 +18,8 @@ export class DashboardController {
       'socket.url',
       'http://localhost:3000',
     );
-    console.log('socket:: ', socketUrl);
     return {
       socketUrl: socketUrl,
-      abc: 123,
-      bcd: 235,
     };
   }
 }
