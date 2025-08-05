@@ -53,12 +53,16 @@ import { VenueSummaryType } from './interfaces/venue-summary.type';
 import { VenueMapResponseDto } from './dto/responses/venue-map.response.dto';
 import { VenueMapFilterDto } from './dto/requests/venue-filter-map.request.dto';
 import { SortAndPaginationParamDto } from 'src/common/constants/sort-pagination.dto';
+import { NotificationPublisher } from 'src/notification/notification-publisher';
+import { CreateVenuePayload } from 'src/notification/dto/payloads/create-venue-payload';
+import { VenueStatusNotiPayload } from 'src/notification/dto/payloads/status-venue-payload';
 @Injectable()
 export class VenueService {
   constructor(
     private readonly i18nService: I18nService,
     private readonly prismaService: PrismaService,
     private readonly loggerService: CustomLogger,
+    private readonly notificationPublisher: NotificationPublisher,
   ) {}
   async create(
     currentUser: AccessTokenPayload,
@@ -117,6 +121,13 @@ export class VenueService {
           },
         }),
       );
+      const createVenueNotiPayload: CreateVenuePayload = {
+        id: venueCreated.id,
+        venueName: venueCreated.name,
+        ownerName: venueCreated.owner.name,
+        createdAt: venueCreated.createdAt,
+      };
+      this.notificationPublisher.publishVenueCreated(createVenueNotiPayload);
       return buildBaseResponse(
         StatusKey.SUCCESS,
         this.buildVenueCreationResponse(venueCreated),
@@ -304,10 +315,16 @@ export class VenueService {
     return buildBaseResponse(StatusKey.SUCCESS);
   }
   async changeStatusVenue(
+    user: AccessTokenPayload,
     venueId: number,
     dto: StatusVenueUpdateRequestDto,
     action: ActionStatus,
   ): Promise<BaseResponse<VenueSummaryResponseDto | null>> {
+    const userDetail = await getUserOrFail(
+      this.prismaService,
+      this.i18nService,
+      user.sub,
+    );
     const venue = await this.prismaService.venue.findUnique({
       where: {
         id: venueId,
@@ -331,6 +348,12 @@ export class VenueService {
         },
         include: VENUE_INCLUDE_SUMMARY,
       });
+      this.publisherChangeStatusVenue(
+        statusUpdate,
+        venueUpdated,
+        userDetail.name,
+        '',
+      );
       return buildBaseResponse(
         StatusKey.SUCCESS,
         this.buildVenueSummaryResponse(venueUpdated),
@@ -655,6 +678,42 @@ export class VenueService {
       throw new BadRequestException(
         this.i18nService.translate('common.validation.atLeastOneDefined'),
       );
+    }
+  }
+  private publisherChangeStatusVenue(
+    statusUpdate: VenueStatus,
+    data: Venue,
+    actionBy: string,
+    reason?: string,
+  ) {
+    const payload: VenueStatusNotiPayload = {
+      actionBy,
+      ownerId: data.ownerId,
+      updatedAt: data.updatedAt,
+      venueId: data.id,
+      venueName: data.name,
+      reason,
+    };
+    console.log('Dô:: ', JSON.stringify(payload));
+    switch (statusUpdate) {
+      case VenueStatus.APPROVED:
+        this.notificationPublisher.publishStatusVenue(
+          payload,
+          VenueStatus.APPROVED,
+        );
+        break;
+      case VenueStatus.REJECTED:
+        this.notificationPublisher.publishStatusVenue(
+          payload,
+          VenueStatus.REJECTED,
+        );
+        break;
+      case VenueStatus.BLOCKED:
+        this.notificationPublisher.publishStatusVenue(
+          payload,
+          VenueStatus.BLOCKED,
+        );
+        break;
     }
   }
   private getBuildSortAndPaginationParamVenues(

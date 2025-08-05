@@ -69,6 +69,8 @@ import { BookingInfoResponse } from './dto/responses/booking-info.response';
 import { BookingSummaryResponseDto } from './dto/responses/booking-summary-response.dto';
 import { BookingInfoType } from './interfaces/booking-summary.type';
 import { BookingCancelPayloadDto } from './dto/requests/booking-cancel-payload';
+import { NotificationPublisher } from 'src/notification/notification-publisher';
+import { BookingStatusNotiPayload } from 'src/notification/dto/payloads/create-booking-noti-payload';
 
 @Injectable()
 export class BookingService {
@@ -80,6 +82,7 @@ export class BookingService {
     private readonly mailService: MailService,
     private readonly paymentService: PaymentService,
     private readonly bookingPublisher: BookingPublisher,
+    private readonly notificationPublisher: NotificationPublisher,
   ) {}
   async create(
     currentUser: AccessTokenPayload,
@@ -168,6 +171,18 @@ export class BookingService {
       statusSendMail === SEND_MAIL_STATUS.SENT
         ? StatusKey.SUCCESS
         : StatusKey.SEND_MAIL_FAILED;
+    const payloadCreatedBookingNotify: BookingStatusNotiPayload = {
+      bookingId: newBooking.id,
+      ownerName: newBooking.user.name,
+      spaceName: newBooking.space.name,
+      startDate: newBooking.startTime,
+      endDate: newBooking.endTime,
+      createdAt: newBooking.createdAt,
+      type: BookingStatus.PENDING,
+    };
+    this.notificationPublisher.publishBookingCreated(
+      payloadCreatedBookingNotify,
+    );
     return buildBaseResponse(
       statusKey,
       this.buildBookingSummaryDto(newBooking, priceByUnit.unit),
@@ -528,6 +543,18 @@ export class BookingService {
         endTime: bookingUpdated.endTime,
       };
       this.bookingPublisher.publishCanceledBooking(payloadPublisher);
+      const payloadCanceledBookingNotify: BookingStatusNotiPayload = {
+        bookingId: bookingUpdated.id,
+        ownerName: bookingUpdated.user.name,
+        spaceName: bookingUpdated.space.name,
+        startDate: bookingUpdated.startTime,
+        endDate: bookingUpdated.endTime,
+        createdAt: bookingUpdated.createdAt,
+        type: BookingStatus.CANCELED,
+      };
+      this.notificationPublisher.publishBookingCreated(
+        payloadCanceledBookingNotify,
+      );
       return buildBaseResponse(
         StatusKey.SUCCESS,
         this.buildBookingSummaryDto(bookingUpdated),
@@ -543,6 +570,38 @@ export class BookingService {
         this.i18nService,
       );
     }
+  }
+  async getOwnersAndManagersId(bookingId: number) {
+    const bookingById = await this.prismaService.booking.findUnique({
+      where: {
+        id: bookingId,
+      },
+      include: {
+        space: {
+          select: {
+            spaceManagers: {
+              select: {
+                managerId: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!bookingById) {
+      this.loggerService.error(
+        `Fetch OwnerManager Spaces for Notification Failed`,
+        `Caused by Booking not found`,
+      );
+      return null;
+    }
+    const ownerAndManagersSet = new Set<number>();
+    ownerAndManagersSet.add(bookingById.userId);
+    bookingById.space.spaceManagers.forEach((m) =>
+      ownerAndManagersSet.add(m.managerId),
+    );
+    return Array.from(ownerAndManagersSet);
   }
   private calculateBookingPrice(
     startTime: Date,

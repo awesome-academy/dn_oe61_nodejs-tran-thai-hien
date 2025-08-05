@@ -41,6 +41,14 @@ export function formatDateTime(
     .locale(lang)
     .format(lang === 'vi' ? 'DD/MM/YY HH:mm' : 'MMM D,YYYY, h:mm A');
 }
+export function formatTime(
+  date: Date,
+  lang: SupportedLocalesType = 'vi',
+): string {
+  return dayjs(date)
+    .locale(lang)
+    .format(lang === 'vi' ? 'HH:mm' : 'h:mm A');
+}
 export function convertTimeToDate(baseDate: Date, timeStr: string): Date {
   const [hours, minutes] = timeStr.split(':').map(Number);
   const date = new Date(baseDate);

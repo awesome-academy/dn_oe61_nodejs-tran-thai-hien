@@ -72,6 +72,7 @@ export class PaymentService {
       }
       return response.data;
     } catch (error) {
+      console.error('Error Link:: ', (error as Error).stack);
       const err = error as PaymentCreationException;
       throw new PaymentCreationException(err.message);
     }
@@ -81,7 +82,6 @@ export class PaymentService {
     // if (payload.code == '00') {
     //   return { code: '00', desc: 'success' };
     // }
-    console.log('PAYLOAD:: ', payload);
     const plaintData = instanceToPlain(payload.data) as Record<string, unknown>;
     const verified = this.isValidData(plaintData, payload.signature);
     if (!verified) throw new BadRequestException('Invalid Signature');

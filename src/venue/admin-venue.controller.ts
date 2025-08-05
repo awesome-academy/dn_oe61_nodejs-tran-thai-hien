@@ -13,6 +13,8 @@ import { StatusVenueUpdateRequestDto } from './dto/requests/status-venue-update.
 import { VenueService } from './venue.service';
 import { ActionStatus } from './enums/action-status.enum';
 import { QueryParamDto } from 'src/common/constants/query-param.dto';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { AccessTokenPayload } from 'src/auth/interfaces/access-token-payload';
 
 @Controller('admin/venues')
 export class AdminVenueController {
@@ -25,10 +27,12 @@ export class AdminVenueController {
   @HasRole(Role.MODERATOR, Role.ADMIN)
   @Patch(':id/block')
   async blockVenue(
+    @CurrentUser() user: AccessTokenPayload,
     @Param('id', ParseIntPipe) venueId: number,
     @Body() dto: StatusVenueUpdateRequestDto,
   ) {
     return await this.venueService.changeStatusVenue(
+      user,
       venueId,
       dto,
       ActionStatus.BLOCK,
@@ -37,13 +41,29 @@ export class AdminVenueController {
   @HasRole(Role.MODERATOR, Role.ADMIN)
   @Patch(':id/approve')
   async approveVenue(
+    @CurrentUser() user: AccessTokenPayload,
     @Param('id', ParseIntPipe) venueId: number,
     @Body() dto: StatusVenueUpdateRequestDto,
   ) {
     return await this.venueService.changeStatusVenue(
+      user,
       venueId,
       dto,
       ActionStatus.APPROVE,
+    );
+  }
+  @HasRole(Role.MODERATOR, Role.ADMIN)
+  @Patch(':id/reject')
+  async rejectedVenue(
+    @CurrentUser() user: AccessTokenPayload,
+    @Param('id', ParseIntPipe) venueId: number,
+    @Body() dto: StatusVenueUpdateRequestDto,
+  ) {
+    return await this.venueService.changeStatusVenue(
+      user,
+      venueId,
+      dto,
+      ActionStatus.REJECTED,
     );
   }
   @HasRole(Role.MODERATOR, Role.ADMIN)
