@@ -6,21 +6,28 @@ import { SortDirection } from '../enums/query.enum';
 export class QueryParamDto {
   @IsOptional()
   @IsString({
-    message: i18nValidationMessage('common.validation.isString'),
+    message: i18nValidationMessage('common.validation.isString', {
+      field: 'search',
+    }),
   })
   search?: string;
+  @IsOptional()
   @Type(() => Number)
   @IsInt({
-    message: i18nValidationMessage('common.validation.isInt'),
+    message: i18nValidationMessage('common.validation.isInt', {
+      field: 'page',
+    }),
   })
-  @Min(1, {
+  @Min(0, {
     message: i18nValidationMessage('common.validation.min'),
   })
   page: number = 1;
-
+  @IsOptional()
   @Type(() => Number)
   @IsInt({
-    message: i18nValidationMessage('common.validation.isInt'),
+    message: i18nValidationMessage('common.validation.isInt', {
+      field: 'pageSize',
+    }),
   })
   @Min(1, {
     message: i18nValidationMessage('common.validation.min'),

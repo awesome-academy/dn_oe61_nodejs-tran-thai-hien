@@ -12,6 +12,7 @@ import { QueryParamDto } from 'src/common/constants/query-param.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { VenueCreationRequestDto } from './dto/requests/venue-creation.request.dto';
 import { VenueService } from './venue.service';
+import { VenueMapFilterDto } from './dto/requests/venue-filter-map.request.dto';
 
 @Controller('venues')
 export class VenueController {
@@ -21,24 +22,32 @@ export class VenueController {
     @CurrentUser() user: AccessTokenPayload,
     @Body() dto: VenueCreationRequestDto,
   ) {
-    return await this.venueService.create(user, dto);
+    return this.venueService.create(user, dto);
   }
   @Get()
   async findPublicVenues(@Query() query: QueryParamDto) {
-    return await this.venueService.findVenues(query);
+    return this.venueService.findVenues(query);
+  }
+  @Get('/map')
+  async findVenuesMap(@Query() query: QueryParamDto) {
+    return this.venueService.findVenuesForMap(query);
+  }
+  @Get('/nearby')
+  async findNearByVenues(@Query() query: VenueMapFilterDto) {
+    return this.venueService.findNearByVenues(query);
   }
   @Get('/me')
   async findVenuesByOwner(
     @CurrentUser() user: AccessTokenPayload,
     @Query() query: QueryParamDto,
   ) {
-    return await this.venueService.findVenuesByOwner(user, query);
+    return this.venueService.findVenuesByOwner(user, query);
   }
   @Get(':id')
   async findDetailPublicVenue(
     @CurrentUser() user: AccessTokenPayload,
     @Param('id', ParseIntPipe) venueId: number,
   ) {
-    return await this.venueService.findDetailPublicVenue(user, venueId);
+    return this.venueService.findDetailPublicVenue(user, venueId);
   }
 }
