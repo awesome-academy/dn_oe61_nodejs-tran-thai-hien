@@ -66,7 +66,6 @@ export class VenueCreationRequestDto {
     }),
   })
   longitude: number;
-
   @IsOptional()
   amenities?: number[];
 }

@@ -1,0 +1,45 @@
+doctype html
+html(lang="en")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport" content="width=device-width, initial-scale=1.0")
+    title Modern Login Template
+    // Bootstrap 5 CSS (local)
+    link(rel="stylesheet", href="/vendor/bootstrap/bootstrap.min.css")
+    // Font Awesome (local)
+    link(rel="stylesheet", href="/vendor/fontawesome/css/all.min.css")
+    // Custom CSS
+    link(rel="stylesheet", href="/css/login.css")
+
+  body
+    .container.login-container
+      .login-card
+        .login-header
+          h2
+            i.fas.fa-lock.me-2
+            | LOGIN  #{socketUrl}
+        .login-body
+          form#loginForm
+            .mb-3.position-relative
+              span.input-group-text
+                i.fas.fa-user
+              input#username.form-control(type="text" placeholder="Username" required)
+            .mb-4.position-relative
+              span.input-group-text
+                i.fas.fa-lock
+              input#password.form-control(type="password" placeholder="Password" required)
+              span#togglePassword.password-toggle
+                i.far.fa-eye
+            .d-flex.justify-content-between.align-items-center.mb-3
+              .form-check
+                input#remember.form-check-input(type="checkbox")
+                label.form-check-label(for="remember") Remember me
+              a.forgot-password(href="#") Forgot password?
+            button.btn.btn-primary.btn-login.w-100.mb-3(type="submit") LOGIN
+            .divider
+            .signup-link
+              p Don't have an account?
+                a.forgot-password(href="/signup") Sign up
+    script(src="/vendor/bootstrap/bootstrap.bundle.min.js")
+    script(src="/js/login.js")
+

@@ -31,4 +31,10 @@ export default () => ({
     host: process.env.REDIS_HOST,
     port: process.env.REDIS_PORT,
   },
+  socket: {
+    url: process.env.SOCKET_URL,
+  },
+  cookie: {
+    accessTokenTTL: process.env.COOKIE_ACCESSTOKEN_TTL,
+  },
 });

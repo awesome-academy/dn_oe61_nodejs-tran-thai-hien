@@ -1,0 +1,27 @@
+doctype html
+html(lang="en")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1.0")
+    title #{title || 'Admin Dashboard'}
+    // Bootstrap & Font Awesome (local)
+    link(rel="stylesheet", href="/vendor/bootstrap/bootstrap.min.css")
+    link(rel="stylesheet", href="/vendor/fontawesome/css/all.min.css")
+    link(rel="stylesheet", href="/css/style.css")
+    link(rel="stylesheet", href="/css/chat.css")
+  body
+    // Sidebar
+    include ../partials/sidebar.pug
+
+    // Main content
+    .main-content
+      // Header
+      include ../partials/header.pug
+
+      // Dynamic page content
+      .container-fluid.py-4
+        block content
+
+    // JS
+    script(src="/vendor/bootstrap/bootstrap.bundle.min.js")
+    script(src="/js/app.js")

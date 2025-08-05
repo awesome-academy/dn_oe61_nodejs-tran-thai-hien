@@ -24,7 +24,10 @@ export class AuthGuard implements CanActivate {
       request['public_route'] = true;
       return true;
     }
-    const token = extractTokenFromHeader(request);
+    let token = extractTokenFromHeader(request);
+    if (!token && request.cookies) {
+      token = request.cookies['accessToken'] as string;
+    }
     if (!token)
       throw new UnauthorizedException(
         this.i18nService.translate('common.token.missing'),

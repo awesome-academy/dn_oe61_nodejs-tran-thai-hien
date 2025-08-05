@@ -11,13 +11,14 @@ import {
   Query,
   Render,
   Req,
+  Res,
   UnauthorizedException,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { SignupDto } from './dto/requests/signup.dto';
 import { LoginDto } from './dto/requests/login.dto';
 import { extractTokenFromHeader } from 'src/common/utils/jwt.util';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { IsPublicRoute } from 'src/common/decorators/public-route.decorator';
 import { ResetPasswordDto } from './dto/requests/reset-password';
 import { I18nService } from 'nestjs-i18n';
@@ -31,11 +32,13 @@ import { VerifyUpdateRequestDto } from './dto/requests/verify-update.dto';
 import { RoleUpdateRequestDto } from './dto/requests/role-update.dto';
 import { MessageResource } from 'src/common/decorators/resource.decorator';
 import { QueryParamDto } from 'src/common/constants/query-param.dto';
+import { ConfigService } from '@nestjs/config';
 @Controller('users')
 export class UserController {
   constructor(
     private readonly userService: UserService,
     private readonly i18nService: I18nService,
+    private readonly configService: ConfigService,
   ) {}
   @Post('/signup')
   @IsPublicRoute()
@@ -45,8 +48,21 @@ export class UserController {
   }
   @Post('/login')
   @IsPublicRoute()
-  async login(@Body() dto: LoginDto) {
-    return this.userService.login(dto);
+  async login(@Body() dto: LoginDto, @Res() res: Response) {
+    const result = await this.userService.login(dto);
+    res.cookie('accessToken', result.data?.accessToken, {
+      httpOnly: true,
+      maxAge:
+        this.configService.get<number>('cookie.accessTokenTTL', 3600) * 1000,
+      sameSite: 'strict',
+    });
+    return res.send({
+      success: true,
+      data: {
+        ...result.data,
+        accessToken: undefined,
+      },
+    });
   }
   @IsPublicRoute()
   @Get('/login')
