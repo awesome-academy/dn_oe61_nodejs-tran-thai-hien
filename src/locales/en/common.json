@@ -156,6 +156,18 @@
          "changeRole":{
           "success": "User role updated successfully.",
           "unChanged":"The user role remains unchanged."
+        },
+        "findPublicUsers": {
+          "success":"Find all users successfully",
+          "failed":"Failed to find all users"
+        },
+        "findUsers": {
+          "success":"Find all users successfully",
+          "failed":"Failed to find all users"
+        },
+        "findDetail":{
+          "success":"Find detail user successfully",
+          "failed":"Failed to find detail user"
         }
     }
   },

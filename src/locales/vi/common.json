@@ -115,8 +115,20 @@
             "changeRole": {
               "success": "Vai trò của người dùng đã được cập nhật thành công.",
               "unChanged": "Vai trò của người dùng không có thay đổi."
-            }
-  },
+            },
+             "findPublicUsers": {
+                "success":"Lấy tất cả người dùng thành công",
+                "failed":"Lấy tất cả user thất bại"
+              },
+              "findUsers": {
+                "success":"Lấy tất cả người dùng thành công",
+                "failed":"Lấy tất cả người dùng thất bại"
+              },
+              "findDetail":{
+                "success":"Lấy thông tin chi tiết người dùng thanh công",
+                "failed":"Lấy thông tin chi tiết người dùng thất bại"
+              }
+        },
   "profile":{
     "action":{
       "updateSuccess":"Cập nhập thông tin profile thành công",

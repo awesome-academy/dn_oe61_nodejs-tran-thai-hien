@@ -9,6 +9,7 @@ import {
   Patch,
   Post,
   Query,
+  Render,
   Req,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -29,6 +30,7 @@ import { Role } from 'src/common/enums/role.enum';
 import { VerifyUpdateRequestDto } from './dto/requests/verify-update.dto';
 import { RoleUpdateRequestDto } from './dto/requests/role-update.dto';
 import { MessageResource } from 'src/common/decorators/resource.decorator';
+import { QueryParamDto } from 'src/common/constants/query-param.dto';
 @Controller('users')
 export class UserController {
   constructor(
@@ -39,13 +41,17 @@ export class UserController {
   @IsPublicRoute()
   @MessageResource('user', 'signup')
   async signup(@Body() dto: SignupDto) {
-    return await this.userService.signup(dto);
+    return this.userService.signup(dto);
   }
   @Post('/login')
   @IsPublicRoute()
   async login(@Body() dto: LoginDto) {
-    return await this.userService.login(dto);
+    return this.userService.login(dto);
   }
+  @IsPublicRoute()
+  @Get('/login')
+  @Render('pages/login')
+  getLoginForm() {}
   @Post('/logout')
   async logout(@Req() req: Request) {
     const token = extractTokenFromHeader(req);
@@ -53,7 +59,7 @@ export class UserController {
       throw new UnauthorizedException(
         this.i18nService.translate('common.request.errors.token_invalid'),
       );
-    return await this.userService.logout(token);
+    return this.userService.logout(token);
   }
   @MessageResource('user', 'sendVerifyEmail')
   @Get('/resend-verify-email')
@@ -63,7 +69,7 @@ export class UserController {
       throw new NotFoundException(
         this.i18nService.translate('common.request.errors.email_not_found'),
       );
-    return await this.userService.resendVerifyEmail(email);
+    return this.userService.resendVerifyEmail(email);
   }
   @Get('/verify-email')
   @IsPublicRoute()
@@ -72,7 +78,7 @@ export class UserController {
       throw new BadRequestException(
         this.i18nService.translate('common.request.errors.token_not_found'),
       );
-    return await this.userService.verifyEmail(token);
+    return this.userService.verifyEmail(token);
   }
   @Get('/forgot-password')
   @IsPublicRoute()
@@ -81,23 +87,23 @@ export class UserController {
       throw new NotFoundException(
         this.i18nService.translate('common.request.errors.email_not_found'),
       );
-    return await this.userService.forgotPassword(email);
+    return this.userService.forgotPassword(email);
   }
   @Post('/reset-password')
   @IsPublicRoute()
   async resetPassword(@Body() dto: ResetPasswordDto) {
-    return await this.userService.resetPassword(dto);
+    return this.userService.resetPassword(dto);
   }
   @Get('/profile')
   async myProfile(@CurrentUser() user: AccessTokenPayload) {
-    return await this.userService.myProfile(user);
+    return this.userService.myProfile(user);
   }
   @Patch('/profile')
   async updateProfile(
     @CurrentUser() user: AccessTokenPayload,
     @Body() dto: ProfileUpdateRequestDto,
   ) {
-    return await this.userService.updateMyProfile(user, dto);
+    return this.userService.updateMyProfile(user, dto);
   }
   @HasRole(Role.MODERATOR, Role.ADMIN)
   @Patch('/:id/status')
@@ -106,7 +112,7 @@ export class UserController {
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: StatusUpdateRequestDto,
   ) {
-    return await this.userService.changeStatus(id, dto);
+    return this.userService.changeStatus(id, dto);
   }
   @HasRole(Role.MODERATOR, Role.ADMIN)
   @Patch('/:id/verify')
@@ -114,7 +120,7 @@ export class UserController {
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: VerifyUpdateRequestDto,
   ) {
-    return await this.userService.changeVerify(id, dto);
+    return this.userService.changeVerify(id, dto);
   }
   @HasRole(Role.ADMIN)
   @Patch('/:id/role')
@@ -122,6 +128,22 @@ export class UserController {
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: RoleUpdateRequestDto,
   ) {
-    return await this.userService.changeRole(id, dto);
+    return this.userService.changeRole(id, dto);
+  }
+  @Get('')
+  async findPublicUsers(@Query() query: QueryParamDto) {
+    return this.userService.findPublicUsers(query);
+  }
+  @HasRole(Role.MODERATOR, Role.ADMIN)
+  @Get('/admin')
+  async findUsers(@Query() query: QueryParamDto) {
+    return this.userService.findUsers(query);
+  }
+  @Get(':userId')
+  async findDetail(
+    @CurrentUser() user,
+    @Param('userId', ParseIntPipe) userId: number,
+  ) {
+    return this.userService.findUserDetail(user, userId);
   }
 }
