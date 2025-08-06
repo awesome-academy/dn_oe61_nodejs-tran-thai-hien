@@ -204,6 +204,14 @@
       "findDetailPublicVenue": {
         "success": "Find detail venues successfully.",
         "failed": "Find detail venues failed."
+      },
+      "findVenuesMap":{
+        "success":"Find venues for map successfully",
+        "failed":"Failed to find venues for map"
+      },
+      "findNearByVenues":{
+        "success":"Find all venues nearby successfully",
+        "failed":"Failed to find all venues nearby"
       }
     }
   },

@@ -11,11 +11,15 @@ import { I18nService } from 'nestjs-i18n';
 import { AccessTokenPayload } from 'src/auth/interfaces/access-token-payload';
 import { QueryParamDto } from 'src/common/constants/query-param.dto';
 import { StatusKey } from 'src/common/enums/status-key.enum';
+import { validateAmenities } from 'src/common/helpers/amenity.helper';
 import {
   getErrorPrismaClient,
   logAndThrowPrismaClientError,
 } from 'src/common/helpers/catch-error.helper';
-import { queryWithPagination } from 'src/common/helpers/paginate.helper';
+import {
+  getPaginationData,
+  queryWithPagination,
+} from 'src/common/helpers/paginate.helper';
 import { ParseSingleSort } from 'src/common/helpers/parse-sort';
 import { getUserOrFail } from 'src/common/helpers/user.helper';
 import { BaseResponse } from 'src/common/interfaces/base-response';
@@ -46,7 +50,9 @@ import { VenueDetailResponseDto } from './dto/responses/venue-detail.response.dt
 import { VenueSummaryResponseDto } from './dto/responses/venue-summary.response.dto';
 import { ActionStatus } from './enums/action-status.enum';
 import { VenueSummaryType } from './interfaces/venue-summary.type';
-import { validateAmenities } from 'src/common/helpers/amenity.helper';
+import { VenueMapResponseDto } from './dto/responses/venue-map.response.dto';
+import { VenueMapFilterDto } from './dto/requests/venue-filter-map.request.dto';
+import { SortAndPaginationParamDto } from 'src/common/constants/sort-pagination.dto';
 @Injectable()
 export class VenueService {
   constructor(
@@ -131,24 +137,14 @@ export class VenueService {
   async findPublicVenues(
     query: QueryParamDto,
   ): Promise<PaginationResult<VenueSummaryResponseDto>> {
-    const { search, page, pageSize, sortBy, direction } = query;
-    const fieldsValidEnum = Prisma.VenueOrderByRelevanceFieldEnum;
-    const sortFieldsValid = Object.values(fieldsValidEnum) as readonly string[];
-    const fieldDefault = fieldsValidEnum.name;
-    const sort = ParseSingleSort(
-      sortFieldsValid,
-      fieldDefault,
-      direction,
-      sortBy,
-    );
-    const paginationParams: PaginationParams = {
-      page,
-      pageSize,
-    };
+    const { search } = query;
+    const { sort, paginationParams } =
+      this.getBuildSortAndPaginationParamVenues(query);
     const queryOptions = {
       where: {
         ...(search ? { name: { contains: search } } : {}),
         status: VenueStatus.APPROVED,
+        deletedAt: null,
       },
       include: VENUE_INCLUDE_SUMMARY,
       orderBy: sort,
@@ -354,20 +350,9 @@ export class VenueService {
   async findVenues(
     query: QueryParamDto,
   ): Promise<PaginationResult<VenueSummaryResponseDto>> {
-    const { search, page, pageSize, sortBy, direction } = query;
-    const fieldsValidEnum = Prisma.VenueOrderByRelevanceFieldEnum;
-    const sortFieldsValid = Object.values(fieldsValidEnum) as readonly string[];
-    const fieldDefault = fieldsValidEnum.name;
-    const sort = ParseSingleSort(
-      sortFieldsValid,
-      fieldDefault,
-      direction,
-      sortBy,
-    );
-    const paginationParams: PaginationParams = {
-      page,
-      pageSize,
-    };
+    const { search } = query;
+    const { sort, paginationParams } =
+      this.getBuildSortAndPaginationParamVenues(query);
     const queryOptions = {
       where: {
         ...(search ? { name: { contains: search } } : {}),
@@ -433,6 +418,70 @@ export class VenueService {
       );
     }
   }
+  async findVenuesForMap(
+    query: QueryParamDto,
+  ): Promise<PaginationResult<VenueMapResponseDto>> {
+    const { search } = query;
+    const { sort, paginationParams } =
+      this.getBuildSortAndPaginationParamVenues(query);
+    const queryOptions = {
+      where: {
+        ...(search ? { name: { contains: search } } : {}),
+        status: VenueStatus.APPROVED,
+        deletedAt: null,
+      },
+      orderBy: sort,
+    };
+    return this.getPaginatedVenuesMap(paginationParams, queryOptions);
+  }
+  async findNearByVenues(
+    query: VenueMapFilterDto,
+  ): Promise<PaginationResult<Venue>> {
+    const { latitude, longitude, maxDistance, page, pageSize } = query;
+    const distanceFormula = `
+    (6371 * acos(
+      cos(radians(${latitude})) * cos(radians(latitude)) *
+      cos(radians(longitude) - radians(${longitude})) +
+      sin(radians(${latitude})) * sin(radians(latitude))
+    ))
+  `;
+    const totalCountResult = await this.prismaService.$queryRawUnsafe<
+      { count: number }[]
+    >(`
+    SELECT CAST(COUNT(*) AS SIGNED) as count
+    FROM (
+      SELECT ${distanceFormula} AS distance
+      FROM venues
+      WHERE status = 'APPROVED'
+      AND deletedAt is null
+      ${maxDistance !== undefined ? `AND ${distanceFormula} <= ${maxDistance}` : ''}
+    ) AS sub
+  `);
+    const itemsCount = Number(totalCountResult[0]?.count || 0);
+    const paginationData = getPaginationData(itemsCount, page, pageSize);
+    const { totalItems, totalPages, safePage, safePageSize, skip } =
+      paginationData;
+    const venues = await this.prismaService.$queryRawUnsafe<Venue[]>(`
+    SELECT *,
+      ${distanceFormula} AS distance
+    FROM venues
+    WHERE status = 'APPROVED'
+    AND deletedAt is null
+    ${maxDistance !== undefined ? `AND ${distanceFormula} <= ${maxDistance}` : ''}
+    ORDER BY distance ASC
+    LIMIT ${safePageSize} OFFSET ${skip}
+  `);
+    return {
+      data: venues,
+      meta: {
+        itemCount: venues.length,
+        currentPage: safePage,
+        itemsPerPage: safePageSize,
+        totalItems,
+        totalPages,
+      },
+    };
+  }
   private buildVenueCreationResponse(
     data: Venue & {
       venueAmenities: { amenity: { name: string } }[];
@@ -476,6 +525,16 @@ export class VenueService {
         status: venueAmenity.status,
       })),
       spaces: data.spaces,
+    };
+  }
+  private buildVenueMapResponse(data: Venue): VenueMapResponseDto {
+    return {
+      id: data.id,
+      name: data.name,
+      latitude: data.latitude,
+      longitude: data.longitude,
+      street: data.street,
+      city: data.city,
     };
   }
   private buildVenueDetailResponse(
@@ -536,6 +595,32 @@ export class VenueService {
       );
     }
   }
+  private async getPaginatedVenuesMap(
+    paginationParams: PaginationParams,
+    options: FindOptions,
+  ): Promise<PaginationResult<VenueMapResponseDto>> {
+    try {
+      const venues = await queryWithPagination(
+        this.prismaService.venue,
+        paginationParams,
+        options,
+      );
+      return {
+        ...venues,
+        data: venues.data.map((v: Venue) => this.buildVenueMapResponse(v)),
+      };
+    } catch (exception) {
+      logAndThrowPrismaClientError(
+        exception as Error,
+        VenueService.name,
+        'venue',
+        'findVenuesMap',
+        'failed',
+        this.loggerService,
+        this.i18nService,
+      );
+    }
+  }
   private async ensureVenueOwner(venueId: number, userId: number) {
     const venue = await this.prismaService.venue.findUnique({
       where: {
@@ -571,6 +656,28 @@ export class VenueService {
         this.i18nService.translate('common.validation.atLeastOneDefined'),
       );
     }
+  }
+  private getBuildSortAndPaginationParamVenues(
+    query: QueryParamDto,
+  ): SortAndPaginationParamDto {
+    const { page, pageSize, sortBy, direction } = query;
+    const fieldsValidEnum = Prisma.VenueOrderByRelevanceFieldEnum;
+    const sortFieldsValid = Object.values(fieldsValidEnum) as readonly string[];
+    const fieldDefault = fieldsValidEnum.name;
+    const sort = ParseSingleSort(
+      sortFieldsValid,
+      fieldDefault,
+      direction,
+      sortBy,
+    );
+    const paginationParams: PaginationParams = {
+      page,
+      pageSize,
+    };
+    return {
+      sort,
+      paginationParams,
+    };
   }
   // logAndThrowPrismaClientError(
   //   error: Error,

@@ -32,3 +32,5 @@ TestResults.xml
 .tmp
 #config file
 /configuration.ts
+# Public file
+/public/

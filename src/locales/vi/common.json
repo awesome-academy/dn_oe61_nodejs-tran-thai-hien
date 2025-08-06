@@ -200,6 +200,14 @@
       "findDetailPublicVenue": {
         "success": "Lấy chi tiết tòa nhà thành công.",
         "failed": "Lấy chi tiết tòa nhà thất bại."
+      },
+       "findVenuesMap":{
+        "success":"Lấy thông số toạ độ toà nhà thành công.",
+        "failed":"Lấy thông số toạ độ toà nhà thất bại."
+      },
+      "findNearByVenues":{
+        "success":"Lấy thông tin tất cả toàn nhà gần đây thành công",
+        "failed":"Lấy thông tin tất cả toà nhà gần đây thất bại"
       }
     }
   },
@@ -256,7 +264,6 @@
         "success":"Lấy thông tin chi tiết không gian thành công",
         "error":"Lấy thông tin chi tiết không gian thất bại"
       }
-
     }
   },
     "booking":{
