@@ -1,0 +1,19 @@
+nav.navbar.navbar-expand-lg.navbar-custom
+  .container-fluid
+    button#sidebarToggle.btn.btn-primary.d-md-none(type="button")
+      i.fas.fa-bars
+    .navbar-nav.ms-auto.d-flex.align-items-center
+      // Notification Bell
+      a#notificationBell.nav-link.position-relative.me-3(href="#")
+        i.fas.fa-bell
+        span.position-absolute.top-10.start-120.translate-middle.badge.rounded-pill.bg-danger 3
+      // User Dropdown
+      .nav-item.dropdown
+        a.nav-link.dropdown-toggle(href="#", role="button", data-bs-toggle="dropdown")
+          i.fas.fa-user-circle.me-1
+          | Admin User
+        ul.dropdown-menu.dropdown-menu-end
+          li: a.dropdown-item(href="#") Profile
+          li: a.dropdown-item(href="#") Settings
+          li: hr.dropdown-divider
+          li: a.dropdown-item(href="#") Logout

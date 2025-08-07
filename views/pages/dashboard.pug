@@ -1,0 +1,63 @@
+extends ../layouts/layout.pug
+
+block content
+  h4.mb-4 Dashboard Overview
+
+  // Stats cards
+  .row.mb-4
+    .col-md-6.col-lg-3
+      .stat-card.bg-primary
+        .d-flex.justify-content-between
+          div
+            i.fas.fa-building
+            .stat-value 124
+            .stat-title Venues
+          i.fas.fa-ellipsis-h.opacity-5
+
+    .col-md-6.col-lg-3
+      .stat-card.bg-success
+        .d-flex.justify-content-between
+          div
+            i.fas.fa-th-large
+            .stat-value 342
+            .stat-title Spaces
+          i.fas.fa-ellipsis-h.opacity-5
+
+    .col-md-6.col-lg-3
+      .stat-card.bg-warning
+        .d-flex.justify-content-between
+          div
+            i.fas.fa-calendar-check
+            .stat-value 876
+            .stat-title Bookings
+          i.fas.fa-ellipsis-h.opacity-5
+
+    .col-md-6.col-lg-3
+      .stat-card.bg-info
+        .d-flex.justify-content-between
+          div
+            i.fas.fa-dollar-sign
+            .stat-value $24,567
+            .stat-title Revenue
+          i.fas.fa-ellipsis-h.opacity-5
+
+  // Chart & activities
+  .row
+    .col-lg-8.mb-4
+      .card.card-custom
+        .card-header Booking Statistics
+        .card-body
+          .chart-container
+            canvas#bookingChart
+
+    .col-lg-4.mb-4
+      .card.card-custom
+        .card-header Recent Activities
+        .card-body
+          ul.list-group.list-group-flush
+            li.list-group-item.d-flex.justify-content-between.align-items-center
+              | New booking received
+              span.badge.bg-primary.rounded-pill Just now
+            li.list-group-item.d-flex.justify-content-between.align-items-center
+              | Payment completed
+              span.badge.bg-success.rounded-pill 5 min ago

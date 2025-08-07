@@ -310,5 +310,16 @@
           "failed":"Tạo thanh thanh toán thất bại."
         }
       }
+  },
+    "chat":{
+    "senderNotFound":"Không tìm thấy người gửi",
+    "receiverNotFound":"Không tìm thấy người nhận",
+     "errorSaveMessage":"Gửi tin nhắn thất bại. Vui lòng thử lại sau.",
+     "action":{
+      "getHistory":{
+        "success":"Lấy lịch sử tin nhắn thành công",
+        "failed":"Lấy lịch sử tin nhắn thất bại"
+      }
+    }
   }
 }

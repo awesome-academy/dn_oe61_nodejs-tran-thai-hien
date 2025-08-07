@@ -313,5 +313,16 @@
         "failed":"Failed to create the payment link. Please try again later."
       }
     }
+  },
+  "chat":{
+    "senderNotFound":"The message sender does not exist",
+    "receiverNotFound":"The message receiver does not exist",
+    "errorSaveMessage":"Failed to send message. Please try again later.",
+    "action":{
+      "getHistory":{
+        "success":"Find messages history successfully",
+        "failed":"Failed to find history messages"
+      }
+    }
   }
 }

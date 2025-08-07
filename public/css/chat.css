@@ -1,0 +1,141 @@
+.chat-wrapper {
+  height: calc(100vh - 120px);
+}
+
+.chat-user-list {
+  background: #fff;
+  border-right: 1px solid #eaeaea;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.chat-user-search {
+  padding: 10px 15px;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fafafa;
+}
+.chat-user-search .input-group-text {
+  background: transparent;
+  border: none;
+}
+.chat-user-search input {
+  border-radius: 20px;
+  font-size: 14px;
+}
+
+.chat-users {
+  flex: 1;
+  overflow-y: auto;
+}
+.user-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 15px;
+  cursor: pointer;
+  border: none;
+  transition:
+    background 0.3s,
+    color 0.3s;
+}
+.user-item:hover {
+  background: #f0f6ff;
+}
+.user-item.active {
+  background: #2c3e50;
+  color: #fff;
+}
+.user-item.active .name {
+  color: #fff;
+}
+.user-item img.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+.user-item .name {
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+}
+
+.chat-box {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.chat-container {
+  flex: 1;
+  max-height: calc(100vh - 250px);
+  background: #f8f9fa;
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chat-message {
+  display: flex;
+  flex-direction: column;
+  align-self: flex-start;
+}
+.chat-message .sender {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: #555;
+}
+.chat-message .message {
+  padding: 10px 15px;
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  word-wrap: break-word;
+  display: inline-block;
+  max-width: 100%;
+}
+
+.chat-message.own {
+  align-self: flex-end;
+}
+.chat-message.own .message {
+  background: var(--primary-color);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+.chat-message.own .sender {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: #555;
+}
+
+.chat-message:not(.own) .message {
+  border-bottom-left-radius: 4px;
+}
+.chat-message .time {
+  font-size: 11px;
+  color: #999;
+  margin-top: 4px;
+}
+.chat-message.own .time {
+  color: #999;
+}
+
+.card-footer {
+  background: #fff;
+  border-top: 1px solid #eee;
+}
+#chatInput {
+  border-radius: 20px;
+}
+
+.online-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  background: #ccc;
+}

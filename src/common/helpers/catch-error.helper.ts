@@ -39,7 +39,6 @@ export function logAndThrowPrismaClientError(
     ),
   );
 }
-
 export function getErrorMessageSendMail(code: MailErrorCode): string {
   switch (code) {
     case MailErrorCode.TIME_OUT:
