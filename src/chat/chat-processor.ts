@@ -4,6 +4,9 @@ import { I18nService } from 'nestjs-i18n';
 import { StatusKey } from 'src/common/enums/status-key.enum';
 import { logAndThrowPrismaClientError } from 'src/common/helpers/catch-error.helper';
 import { CustomLogger } from 'src/common/logger/custom-logger.service';
+import { NewMessageNotiPayload } from 'src/notification/dto/payloads/new-message-noti-payload';
+import { NotificationPublisher } from 'src/notification/notification-publisher';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { ChatGateway } from './chat-gateway';
 import { ChatService } from './chat.service';
 import { MessageCreationRequestDto } from './dto/requests/message-creation-request.dto';
@@ -17,6 +20,8 @@ export class ChatProcessor extends WorkerHost {
     private readonly loggerService: CustomLogger,
     private readonly chatService: ChatService,
     private readonly i18nService: I18nService,
+    private readonly notificationPublisher: NotificationPublisher,
+    private readonly prismaService: PrismaService,
   ) {
     super();
   }
@@ -24,8 +29,23 @@ export class ChatProcessor extends WorkerHost {
     const { name, data } = job;
     switch (name) {
       case ChatQueueEvent.SAVE_MESSAGE.toString(): {
-        if (this.chatGateway.isUserOnline(data.receiverId)) {
-          // Send notification
+        if (!this.chatGateway.isUserOnline(data.receiverId)) {
+          console.log('abc');
+          const sender = await this.prismaService.user.findUnique({
+            where: {
+              id: data.senderId,
+            },
+            select: {
+              name: true,
+            },
+          });
+          const senderName = sender?.name ?? 'Unknow';
+          const notifyPayload: NewMessageNotiPayload = {
+            receiverId: data.receiverId,
+            senderName,
+            sentAt: data.sentAt,
+          };
+          this.notificationPublisher.publishNewMessage(notifyPayload);
         }
         try {
           const dto: MessageCreationRequestDto = {

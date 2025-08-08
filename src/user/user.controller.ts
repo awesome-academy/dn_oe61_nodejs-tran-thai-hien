@@ -60,7 +60,6 @@ export class UserController {
       success: true,
       data: {
         ...result.data,
-        accessToken: undefined,
       },
     });
   }
@@ -157,7 +156,7 @@ export class UserController {
   }
   @Get(':userId')
   async findDetail(
-    @CurrentUser() user,
+    @CurrentUser() user: AccessTokenPayload,
     @Param('userId', ParseIntPipe) userId: number,
   ) {
     return this.userService.findUserDetail(user, userId);
