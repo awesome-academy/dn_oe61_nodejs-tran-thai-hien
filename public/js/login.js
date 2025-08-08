@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       } catch (err) {
         console.error(err);
-        alert('Có lỗi xảy ra. Vui lòng thử lại.');
+        alert('Internal Server Error');
       }
     });
 });

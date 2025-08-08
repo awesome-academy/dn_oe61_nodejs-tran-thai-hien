@@ -80,3 +80,13 @@ export function getRemainingTime(expiredAt: number): string {
   }
   return `Còn ${minutes} phút`;
 }
+export function formatDateToSql(
+  date: string | Date | undefined,
+): string | undefined {
+  if (date === undefined) return undefined;
+  const dateFormat = typeof date === 'string' ? new Date(date) : date;
+  if (isNaN(dateFormat.getTime())) {
+    throw new Error(`Invalid date: ${date.toString()}`);
+  }
+  return dateFormat.toISOString().slice(0, 10);
+}

@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let activeUserId = null;
   let activeUserName = '';
-  let currentUserId = localStorage.getItem('currentUserId');
+  let currentUserId = parseInt(localStorage.getItem('currentUserId'), 10);
   let socket = null;
   let debounceTimer = null;
   let onlineUsers = [];
@@ -34,21 +34,34 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await fetch(`/users?search=${encodeURIComponent(search)}`, {
         credentials: 'include',
       });
+
+      const data = await res.json();
+
       if (res.status === 401) {
         window.location.href = '/login';
         return;
+      } else if (res.status === 409) {
+        alert(data.message || 'Không lấy được dữ liệu users');
+        return;
+      } else if (res.status === 500) {
+        alert(data.message || 'Internal Server Error');
+        return;
       }
-      const data = await res.json();
+
       if (data.success) {
         const filteredUsers = data.payload.data.filter(
           (u) => u.id != currentUserId,
         );
         renderUsers(filteredUsers);
+
         if (!activeUserId && filteredUsers.length > 0) {
           selectUser(filteredUsers[0]);
         } else if (filteredUsers.length === 0) {
           chatWith.textContent = 'No users available';
         }
+      } else {
+        chatWith.textContent =
+          data.message || 'Không thể tải danh sách người dùng';
       }
     } catch (err) {
       console.error(err);
@@ -106,7 +119,6 @@ document.addEventListener('DOMContentLoaded', () => {
   ) {
     if (isLoading || page > totalPages) return;
     isLoading = true;
-
     try {
       const res = await fetch(
         `/chats/${otherUserId}/history?page=${page}&pageSize=20`,
@@ -115,7 +127,16 @@ document.addEventListener('DOMContentLoaded', () => {
         },
       );
       const data = await res.json();
-
+      if (res.status === 401) {
+        window.location.href = '/login';
+        return;
+      } else if (res.status === 409) {
+        alert(data.message || 'Không tải được tin nhắn');
+        return;
+      } else if (res.status === 500) {
+        alert(data.message || 'Internal Server Error');
+        return;
+      }
       if (data.success) {
         const messages = data.payload.data;
         totalPages = data.payload.meta.totalPages;
@@ -123,35 +144,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (scrollToBottomFlag) {
           messages.forEach((msg) => {
-            const div = createMessageDiv(msg);
-            chatMessages.appendChild(div); // append
+            renderMessage(msg, true); // append
           });
           scrollToBottom();
         } else {
           const previousHeight = chatMessages.scrollHeight;
           messages.reverse().forEach((msg) => {
-            const div = createMessageDiv(msg);
-            chatMessages.insertBefore(div, chatMessages.firstChild);
+            renderMessage(msg, false);
           });
           const newHeight = chatMessages.scrollHeight;
           chatMessages.scrollTop += newHeight - previousHeight;
         }
       }
     } catch (err) {
-      console.error(err);
+      alert('Internal Server Error');
     }
 
     isLoading = false;
-  }
-  function createMessageDiv(msg) {
-    const div = document.createElement('div');
-    div.className = `chat-message ${msg.senderId === currentUserId ? 'own' : ''}`;
-    div.innerHTML = `
-    <div class="sender">${msg.senderId === currentUserId ? 'You' : msg.senderName}</div>
-    <div class="message">${msg.content}</div>
-    <div class="time">${new Date(msg.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-  `;
-    return div;
   }
   chatMessages.addEventListener('scroll', async () => {
     if (chatMessages.scrollTop <= 50 && currentPage < totalPages) {
@@ -177,18 +186,25 @@ document.addEventListener('DOMContentLoaded', () => {
     scrollToBottom();
   });
 
-  function renderMessage({ senderId, content, sentAt }) {
+  function renderMessage({ senderId, content, sentAt }, append = true) {
+    currentUserId = parseInt(currentUserId, 10);
+    senderId = parseInt(senderId, 10);
+    const isOwnMessage = senderId === currentUserId;
     const div = document.createElement('div');
-    div.className = `chat-message ${senderId === currentUserId ? 'own' : ''}`;
+    div.className = `chat-message ${isOwnMessage ? 'own' : ''}`;
     div.innerHTML = `
-      <div class="sender">${senderId === currentUserId ? 'You' : activeUserName}</div>
-      <div class="message">${content}</div>
-      <div class="time">${new Date(sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-    `;
-    const wasNearBottom = isNearBottom(chatMessages);
-    chatMessages.appendChild(div);
-    if (wasNearBottom) {
-      scrollToBottom();
+    <div class="sender">${isOwnMessage ? 'You' : activeUserName}</div>
+    <div class="message">${content}</div>
+    <div class="time">${new Date(sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+  `;
+    if (append) {
+      const wasNearBottom = isNearBottom(chatMessages);
+      chatMessages.appendChild(div);
+      if (wasNearBottom) {
+        scrollToBottom();
+      }
+    } else {
+      chatMessages.insertBefore(div, chatMessages.firstChild);
     }
   }
   function updateOnlineStatus() {
@@ -202,13 +218,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-
   function connectSocket() {
     socket = io(`${socketUrl}/chat`, { withCredentials: true });
     socket.on('connect', () => {
       currentUserId = localStorage.getItem('currentUserId');
-      socket.emit('join', { userId: currentUserId });
+      socket.emit('join');
       fetchUsers();
+      showSocketStatus(true);
     });
     socket.on('newMessage', (msg) => {
       if (msg.senderId === activeUserId || msg.receiverId === activeUserId) {
@@ -220,12 +236,32 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log('Calll online users!!!::', onlineUsers);
       updateOnlineStatus();
     });
+    socket.on('disconnect', (reason) => {
+      console.warn('Socket disconected:: ', reason);
+      showSocketStatus(false, reason);
+    });
   }
-
   connectSocket();
   window.addEventListener('beforeunload', () => {
     if (socket && socket.connected) {
       socket.disconnect();
     }
   });
+  function showSocketStatus(isConnected, reason = '') {
+    const statusBar = document.getElementById('socketStatus');
+    if (!statusBar) return;
+    if (isConnected) {
+      statusBar.textContent = 'Kết nối thành công..';
+      statusBar.style.background = '#d4edda';
+    } else {
+      statusBar.textContent = `Mất kết nối với server:: ${reason || 'Không rõ'}`;
+      statusBar.style.background = '#f8d7da';
+    }
+    statusBar.style.display = 'inline-block';
+    if (isConnected) {
+      setTimeout(() => {
+        statusBar.style.display = 'none';
+      }, 5000);
+    }
+  }
 });
