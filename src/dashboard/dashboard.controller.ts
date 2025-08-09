@@ -1,11 +1,13 @@
 import { Controller, Get, Render } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { ApiExcludeEndpoint } from '@nestjs/swagger';
 import { SOCKET_URL_DEFAULT } from 'src/common/constants/socket.constant';
 import { IsPublicRoute } from 'src/common/decorators/public-route.decorator';
 
 @Controller('dashboard')
 export class DashboardController {
   constructor(private readonly configService: ConfigService) {}
+  @ApiExcludeEndpoint()
   @IsPublicRoute()
   @Get('')
   @Render('pages/dashboard')
@@ -20,6 +22,7 @@ export class DashboardController {
   }
   statistics() {}
   @IsPublicRoute()
+  @ApiExcludeEndpoint()
   @Get('chat')
   @Render('pages/chat')
   chat() {

@@ -12,7 +12,7 @@ import { VenueCreationRequestDto } from 'src/venue/dto/requests/venue-creation.r
 import { VenueCreationResponseDto } from 'src/venue/dto/responses/venue-creation.response.dto';
 
 export function ApiResponseCreateVenue() {
-  const path = '/venues/create';
+  const path = '/venues';
   return applyDecorators(
     ApiOperation({
       summary: 'Create Venue',
