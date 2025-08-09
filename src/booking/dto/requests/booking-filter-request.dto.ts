@@ -9,8 +9,13 @@ import {
 } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
 import { SortDirection } from 'src/common/enums/query.enum';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class BookingFilterRequestDto {
+  @ApiPropertyOptional({
+    description: 'Filter by space name',
+    example: 'Conference Room A',
+  })
   @IsOptional()
   @IsString({
     message: i18nValidationMessage('common.validation.isString', {
@@ -18,6 +23,13 @@ export class BookingFilterRequestDto {
     }),
   })
   spaceName?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter bookings starting from this date',
+    example: '2025-08-01',
+    type: String,
+    format: 'date-time',
+  })
   @IsOptional()
   @Type(() => Date)
   @IsDate({
@@ -26,6 +38,13 @@ export class BookingFilterRequestDto {
     }),
   })
   startDate?: Date;
+
+  @ApiPropertyOptional({
+    description: 'Filter bookings ending before this date',
+    example: '2025-08-31',
+    type: String,
+    format: 'date-time',
+  })
   @IsOptional()
   @Type(() => Date)
   @IsDate({
@@ -34,6 +53,12 @@ export class BookingFilterRequestDto {
     }),
   })
   endDate?: Date;
+
+  @ApiPropertyOptional({
+    description: 'Page number for pagination (min 1)',
+    example: 1,
+    default: 1,
+  })
   @IsOptional()
   @Type(() => Number)
   @IsInt({
@@ -43,6 +68,12 @@ export class BookingFilterRequestDto {
     message: i18nValidationMessage('common.validation.min'),
   })
   page: number = 1;
+
+  @ApiPropertyOptional({
+    description: 'Number of items per page (min 1)',
+    example: 10,
+    default: 10,
+  })
   @IsOptional()
   @Type(() => Number)
   @IsInt({
@@ -52,11 +83,23 @@ export class BookingFilterRequestDto {
     message: i18nValidationMessage('common.validation.min'),
   })
   pageSize: number = 10;
+
+  @ApiPropertyOptional({
+    description: 'Field name to sort by',
+    example: 'startTime',
+  })
   @IsOptional()
   @IsString({
     message: i18nValidationMessage('common.validation.isString'),
   })
   sortBy?: string;
+
+  @ApiPropertyOptional({
+    description: 'Sort direction',
+    enum: SortDirection,
+    example: SortDirection.ASC,
+    default: SortDirection.ASC,
+  })
   @IsOptional()
   @Transform(({ value }): string | undefined =>
     typeof value === 'string' ? value.toLowerCase() : undefined,
