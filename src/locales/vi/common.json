@@ -341,5 +341,37 @@
         "failed":"Lấy thông tin các toà nhà có nhiều đặt chỗ nhất thất bại."
       }
     }
+  },
+    "notification":{
+    "action":{
+      "create":{
+        "success":"Tạo thông báo thành công",
+        "failed":"Tạo thông báo thất bại"
+      },
+      "getMyNotification":{
+        "success":"Lấy thông báo thành công",
+        "failed":"Lấy thông báo thất bại"
+      },
+      "markAsRead":{
+        "success":"Đánh dấu đã đọc thông báo thành công",
+        "failed":"Đánh dấu đã đọc thông báo thất bại"
+      },
+       "countUnRead":{
+        "success":"Lấy số lượng thông báo chưa đọc của người dùng thành công",
+        "failed":"Lấy số lượng thông báo chưa đọc của người dùng thất bại"
+      }
+    },
+    "message":{
+      "createVenue":"Tòa nhà tên {venueName} (ID: {venueId}) vừa được tạo bởi {creatorName} vào lúc {createdAt}",
+      "rejectedVenue": "Tòa nhà có tên {venueName} (ID: {venueId}) của bạn đã bị từ chối bởi {actionBy} vào lúc {time}. Lý do: {reason}.",
+      "approvedVenue": "Tòa nhà có tên {venueName} (ID: {venueId}) của bạn đã được phê duyệt bởi {actionBy} vào lúc {time}.",
+      "blockedVenue": "Tòa nhà có tên {venueName} (ID: {venueId}) của bạn đã bị khoá bởi {actionBy} vào lúc {time}. Lý do: {reason}.",
+      "createdBooking":"Người dùng {ownerName} đã đặt chỗ thành công cho không gian {spaceName} từ ngày {startDate} đến ngày {endDate}. Mã đặt chỗ (ID: {bookingId})"
+      ,"canceledBooking":"Người dùng ${ownerName} đã huỷ đặt chỗ (ID: {bookingId}) cho không gian {spaceName} từ ${startDate} đến ngày {endDate}.",
+      "newMessage":"Bạn có một tin nhắn mới từ {name} lúc {time}.",
+      "paymentSuccess":"Booking (ID: {bookingId}) đã được thanh toán thành công bởi {payerName} với số tiền {amount} qua {method} vào lúc {time}.",
+      "paymentFailed": "Booking (ID: {bookingId}) thuộc về người dùng {payerName} thanh toán không thành công. Lý do: {reason} vào lúc {time}.",
+      "expiredPayment": "Thanh toán cho booking (ID: {bookingId}) đã hết hạn vào lúc {time}."
+    }
   }
 }
