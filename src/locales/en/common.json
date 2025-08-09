@@ -362,6 +362,10 @@
       "markAsRead":{
         "success":"Mark as read notification successfully",
         "failed":"Failed to mark as read notification"
+      },
+      "countUnRead":{
+        "success":"Count notifications un read successfully",
+        "failed":"Failed to count notifications un read"
       }
     }
     ,"message":{
@@ -370,7 +374,11 @@
       "approvedVenue": "Your venue named {venueName} (ID: {venueId}) has been approved by {actionBy} at {time}.",
       "blockedVenue": "Your venue named {venueName} (ID: {venueId}) was blocked by {actionBy} at {time}. Reason: {reason}.",
       "createdBooking":"User {ownerName} has successfully booked the space {spaceName} from {startDate} to {endDate}. Booking (ID: {bookingId})",
-      "canceledBooking":"User ${ownerName} has canceled the reservation (ID: {bookingId}) for space {spaceName} from {startDate} to {endDate} ."
+      "canceledBooking":"User ${username} has canceled the reservation (ID: {bookingId}) for space ${spaceName} from ${startDate} to ${endDate} .",
+      "newMessage":"You have a new message from {name} at {time}.",
+      "paymentSuccess": "Booking (ID: {bookingId}) was successfully paid by {payerName} with the amount of {amount} via {method} at {time}.",
+      "paymentFailed": "Booking (ID: {bookingId}) made by user {payerName} failed to process the payment. Reason: {reason} at {time}.",
+      "expiredPayment": "The payment for booking (ID: {bookingId}) expired at {time}."
     }
   }
 }

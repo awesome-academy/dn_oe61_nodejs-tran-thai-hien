@@ -1,7 +1,12 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
 
 export class VenueCreationRequestDto {
+  @ApiProperty({
+    description: 'Name of the venue',
+    example: 'Sunshine Coworking Space',
+  })
   @IsString({
     message: i18nValidationMessage('common.validation.isString', {
       field: 'name',
@@ -9,6 +14,10 @@ export class VenueCreationRequestDto {
   })
   name: string;
 
+  @ApiProperty({
+    description: 'Street address of the venue',
+    example: '123 Main St',
+  })
   @IsString({
     message: i18nValidationMessage('common.validation.isString', {
       field: 'street',
@@ -16,6 +25,10 @@ export class VenueCreationRequestDto {
   })
   street: string;
 
+  @ApiProperty({
+    description: 'City where the venue is located',
+    example: 'Ho Chi Minh City',
+  })
   @IsString({
     message: i18nValidationMessage('common.validation.isString', {
       field: 'city',
@@ -23,6 +36,12 @@ export class VenueCreationRequestDto {
   })
   city: string;
 
+  @ApiProperty({
+    description: 'Latitude of the venue (between -90 and 90)',
+    example: 10.762622,
+    minimum: -90,
+    maximum: 90,
+  })
   @IsNumber(
     {},
     {
@@ -45,6 +64,12 @@ export class VenueCreationRequestDto {
   })
   latitude: number;
 
+  @ApiProperty({
+    description: 'Longitude of the venue (between -180 and 180)',
+    example: 106.660172,
+    minimum: -180,
+    maximum: 180,
+  })
   @IsNumber(
     {},
     {
@@ -66,6 +91,12 @@ export class VenueCreationRequestDto {
     }),
   })
   longitude: number;
+
+  @ApiPropertyOptional({
+    description: 'List of amenity IDs associated with the venue',
+    type: [Number],
+    example: [1, 2, 5],
+  })
   @IsOptional()
   amenities?: number[];
 }

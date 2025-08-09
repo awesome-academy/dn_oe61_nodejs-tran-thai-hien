@@ -18,7 +18,10 @@ import { ChatPublisher } from './chat-publisher';
 import { MessagePayloadDto } from './dto/requests/message-payload.dto';
 import { ChatMessageResponse } from './dto/responses/chat-message-response.dto';
 import { SendMessageDto } from './dto/send-message.dto';
-import { AuthedSocket, SocketAuth } from './interfaces/socket-auth.interface';
+import {
+  AuthedSocket,
+  SocketAuth,
+} from 'src/common/interfaces/socket-auth.interface';
 @WebSocketGateway({ namespace: 'chat', cors: { origin: '*' } })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(

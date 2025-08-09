@@ -1,5 +1,6 @@
 import { Controller, Get, Render } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { SOCKET_URL_DEFAULT } from 'src/common/constants/socket.constant';
 import { IsPublicRoute } from 'src/common/decorators/public-route.decorator';
 
 @Controller('dashboard')
@@ -8,7 +9,15 @@ export class DashboardController {
   @IsPublicRoute()
   @Get('')
   @Render('pages/dashboard')
-  getDashboard() {}
+  getDashboard() {
+    const socketUrl = this.configService.get<string>(
+      'socket.url',
+      SOCKET_URL_DEFAULT,
+    );
+    return {
+      socketUrl: socketUrl,
+    };
+  }
   statistics() {}
   @IsPublicRoute()
   @Get('chat')
@@ -16,7 +25,7 @@ export class DashboardController {
   chat() {
     const socketUrl = this.configService.get<string>(
       'socket.url',
-      'http://localhost:3000',
+      SOCKET_URL_DEFAULT,
     );
     return {
       socketUrl: socketUrl,

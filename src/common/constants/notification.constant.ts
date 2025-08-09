@@ -1,0 +1,11 @@
+export const CREATE_VENUE_TITLE = 'Create Venue';
+export const REJECTED_VENUE_TITLE = 'Rejected Venue';
+export const APPROVED_VENUE_TITLE = 'Approved Venue';
+export const BLOCKED_VENUE_TITLE = 'Blocked Venue';
+export const CREATE_BOOKING_TITLE = 'Create Booking';
+export const CANCEL_BOOKING_TITLE = 'User Cancel Booking';
+export const PAYMENT_SUCCESS = 'Payment Booking Success';
+export const PAYMENT_FAILED = 'Payment Booking Failed';
+export const TITLE_NEW_MESSAGE = 'Your Have A New Message';
+export const SUCCESS_PAYMENT_TITLE = 'Payment Success';
+export const FAILED_PAYMENT_TITLE = 'Payment Failed';
