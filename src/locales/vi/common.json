@@ -127,8 +127,20 @@
               "findDetail":{
                 "success":"Lấy thông tin chi tiết người dùng thanh công",
                 "failed":"Lấy thông tin chi tiết người dùng thất bại"
+              },
+               "updateStatusUserBulk":{
+                "success":"Cập nhập thông tin trạng thái người dùng thành công",
+                "failed":"Cập nhập thông tin trạng thái người dùng thất bại"
               }
         },
+"adminuser":{
+    "action":{
+        "updateStatusUserBulk":{
+                "success":"Cập nhập thông tin trạng thái người dùng thành công",
+                "failed":"Cập nhập thông tin trạng thái người dùng thất bại"
+          }
+    }
+  },
   "profile":{
     "action":{
       "updateSuccess":"Cập nhập thông tin profile thành công",
@@ -170,6 +182,8 @@
     "isBoolean": "Trường {field} phải là giá trị đúng/sai.",
     "isDate": "Trường {field} phải là ngày hợp lệ.",
     "isInt": "Trường {field} phải là số nguyên",
+    "isArray": "{field} phải là một mảng",
+    "arrayMinSize": "{field} phải chứa ít nhất {minSize} phần tử",
     "min": "Trường {field} phải lớn hơn hoặc bằng {min}",
     "max": "Trường {field} phải nhỏ hơn hoặc bằng {max}",
     "atLeastOneDefined": "Cần cung cấp ít nhất một trường."

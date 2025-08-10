@@ -134,6 +134,31 @@ export function SwaggerUpdatedResponse<T extends Type<unknown>>(
     }),
   );
 }
+export function SwaggerUpdatedArrayResponse<T extends Type<unknown>>(
+  model: T,
+  description = '',
+  message = '',
+  example?: object,
+) {
+  return applyDecorators(
+    ApiExtraModels(BaseResponseApi, model),
+    ApiOkResponse({
+      description,
+      schema: {
+        allOf: [
+          { $ref: getSchemaPath(BaseResponseApi) },
+          {
+            properties: {
+              message: { type: 'string', example: message },
+              payload: { type: 'array', items: { $ref: getSchemaPath(model) } },
+            },
+            ...(example && { example }),
+          },
+        ],
+      },
+    }),
+  );
+}
 export function SwaggerBaseResponsePrimitive(
   type: 'number' | 'string' | 'boolean',
   description = '',

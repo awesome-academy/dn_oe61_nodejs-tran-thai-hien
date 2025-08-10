@@ -31,7 +31,6 @@ import {
 } from 'src/common/helpers/catch-error.helper';
 import { queryWithPagination } from 'src/common/helpers/paginate.helper';
 import { ParseSingleSort } from 'src/common/helpers/parse-sort';
-import { getUserOrFail } from 'src/common/helpers/user.helper';
 import { BaseResponse } from 'src/common/interfaces/base-response';
 import {
   FindOptions,
@@ -57,6 +56,7 @@ import { MailService } from 'src/mail/mail.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SEND_MAIL_STATUS, SendMailStatus } from './constant/email.constant';
 import { REGISTER_TYPE } from './constant/register.constant';
+import { INCLUDE_USER_SUMMARY } from './constant/user-summary-include';
 import { VERIFY_USER_STATUS } from './constant/verify-email.constant';
 import { LoginDto } from './dto/requests/login.dto';
 import { ProfileUpdateRequestDto } from './dto/requests/profile-update.dto';
@@ -64,7 +64,9 @@ import { ResetPasswordDto } from './dto/requests/reset-password';
 import { RoleUpdateRequestDto } from './dto/requests/role-update.dto';
 import { SignupDto } from './dto/requests/signup.dto';
 import { StatusUpdateRequestDto } from './dto/requests/status-update.dto';
+import { UpdateStatusUserBulkRequest } from './dto/requests/update-status-user-bulk.dto';
 import { VerifyUpdateRequestDto } from './dto/requests/verify-update.dto';
+import { AdminModeratorSummaryResponseDto } from './dto/responses/admin-moderator-summary-response.dto';
 import { ForgotPasswordResponse } from './dto/responses/forgot-password-response';
 import { LoginResponseDto } from './dto/responses/login-response.dto';
 import { ResendVerifyEmailResponseDto } from './dto/responses/resend-verify-email.dto';
@@ -73,7 +75,6 @@ import { UserProfileResponse } from './dto/responses/user-profile.response';
 import { UserSummaryDto } from './dto/responses/user-summary.dto';
 import { VerifyUserResponseDto } from './dto/responses/verify-email.dto';
 import { UserSummaryType } from './interfaces/user-summary.type';
-import { AdminModeratorSummaryResponseDto } from './dto/responses/admin-moderator-summary-response.dto';
 @Injectable()
 export class UserService {
   constructor(
@@ -150,6 +151,7 @@ export class UserService {
           },
         },
       },
+      include: INCLUDE_USER_SUMMARY,
     });
     const verifyEmailTokenPayload: VerifyEmailTokenPayload = {
       sub: user.id,
@@ -293,6 +295,7 @@ export class UserService {
       const userUpdated = await this.prismaService.user.update({
         where: { id: user.id },
         data: { isVerified: true, status: UserStatus.ACTIVE },
+        include: INCLUDE_USER_SUMMARY,
       });
       return buildBaseResponse(StatusKey.SUCCESS, {
         verifyStatus: VERIFY_USER_STATUS.SUCCESS,
@@ -302,6 +305,7 @@ export class UserService {
           name: userUpdated.name,
           userName: userUpdated.userName,
           status: userUpdated.status,
+          role: userUpdated.role.name,
           isVerified: userUpdated.isVerified,
         },
       });
@@ -361,6 +365,7 @@ export class UserService {
       const userUpdated = await this.prismaService.user.update({
         where: { id: user.id },
         data: { password: hashedPassword },
+        include: INCLUDE_USER_SUMMARY,
       });
       return buildBaseResponse(StatusKey.SUCCESS, {
         verifyStatus: VERIFY_USER_STATUS.SUCCESS,
@@ -370,6 +375,7 @@ export class UserService {
           name: userUpdated.name,
           userName: userUpdated.userName,
           status: userUpdated.status,
+          role: userUpdated.role.name,
           isVerified: userUpdated.isVerified,
         },
       });
@@ -504,6 +510,7 @@ export class UserService {
       data: {
         status: newStatus,
       },
+      include: INCLUDE_USER_SUMMARY,
     });
     return {
       statusKey: StatusKey.SUCCESS,
@@ -533,6 +540,7 @@ export class UserService {
       data: {
         isVerified: isVerify,
       },
+      include: INCLUDE_USER_SUMMARY,
     });
     return buildBaseResponse(
       StatusKey.SUCCESS,
@@ -583,7 +591,7 @@ export class UserService {
     );
   }
   private buildSignupResponse(
-    userData: User,
+    userData: User & { role: RoleEntity },
     status: SendMailStatus,
   ): SignupResponseDto {
     return {
@@ -703,6 +711,7 @@ export class UserService {
         isVerified: true,
         status: UserStatus.ACTIVE,
       },
+      include: INCLUDE_USER_SUMMARY,
       orderBy: sort,
     };
     return this.getPaginatedUsers(
@@ -732,6 +741,7 @@ export class UserService {
       where: {
         ...(search ? { name: { contains: search } } : {}),
       },
+      include: INCLUDE_USER_SUMMARY,
       orderBy: sort,
     };
     return this.getPaginatedUsers(paginationParams, queryOptions, 'findUsers');
@@ -740,11 +750,13 @@ export class UserService {
     currentUser: AccessTokenPayload,
     userId: number,
   ): Promise<BaseResponse<UserSummaryDto>> {
-    const currentUserDetail = await getUserOrFail(
-      this.prismaService,
-      this.i18nService,
-      currentUser.sub,
-    );
+    const currentUserDetail = await this.prismaService.user.findUnique({
+      where: {
+        id: currentUser.sub,
+      },
+      include: INCLUDE_USER_SUMMARY,
+    });
+    if (!currentUserDetail) throw new NotFoundException('common.user.notFound');
     const isSelf = currentUserDetail.id === userId;
     const isAdmin = this.isAdminAction(currentUser.role as Role);
 
@@ -761,6 +773,7 @@ export class UserService {
     }
     const userById = await this.prismaService.user.findUnique({
       where: { id: userId },
+      include: INCLUDE_USER_SUMMARY,
     });
     if (!userById) throw new NotFoundException('common.user.notFound');
 
@@ -794,13 +807,86 @@ export class UserService {
       );
     }
   }
-  private buildUserSummaryResponse(user: User): UserSummaryDto {
+  async updateStatusUserBulk(
+    dto: UpdateStatusUserBulkRequest,
+  ): Promise<BaseResponse<UserSummaryDto[]>> {
+    const userIds = dto.users.map((u) => u.id);
+    const existingUsers = await this.prismaService.user.findMany({
+      where: {
+        id: { in: userIds },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    const existingUserIds = existingUsers.map((u) => u.id);
+    const missingIds = userIds.filter((id) => !existingUserIds.includes(id));
+    if (missingIds.length > 0) {
+      const details = missingIds.join(', ');
+      const message = `${this.i18nService.translate('common.validation.missingUsers')}: ${details}`;
+      throw new NotFoundException(message);
+    }
+    const updatedUsers = await this.prismaService.$transaction(async (tx) => {
+      const result: UserSummaryDto[] = [];
+      const roleNames = dto.users
+        .map((u) => u.role)
+        .filter((role): role is Role => !!role);
+      let roleMap = new Map<string, number>();
+      if (roleNames.length > 0) {
+        const roles = await tx.role.findMany({
+          where: { name: { in: roleNames } },
+          select: { id: true, name: true },
+        });
+        roleMap = new Map(roles.map((r) => [r.name, r.id]));
+      }
+      const missingRoles = roleNames.filter((name) => !roleMap.has(name));
+      if (missingRoles.length > 0) {
+        const details = missingRoles.join(', ');
+        const message = `${this.i18nService.translate('common.user.missingRoles')}: ${details}`;
+        throw new NotFoundException(message);
+      }
+      for (const u of dto.users) {
+        const roleId = u.role ? roleMap.get(u.role) : undefined;
+        try {
+          const userUpdated = await tx.user.update({
+            where: { id: u.id },
+            data: {
+              ...(u?.status ? { status: u.status } : {}),
+              ...(roleId ? { role: { connect: { id: roleId } } } : {}),
+              ...(u?.isVerified !== undefined
+                ? { isVerified: u.isVerified }
+                : {}),
+            },
+            include: INCLUDE_USER_SUMMARY,
+          });
+          result.push(this.buildUserSummaryResponse(userUpdated));
+        } catch (error) {
+          logAndThrowPrismaClientError(
+            error as Error,
+            UserService.name,
+            'user',
+            'updateStatusUserBulk',
+            StatusKey.FAILED,
+            this.loggerService,
+            this.i18nService,
+          );
+        }
+        return result;
+      }
+    });
+    return buildBaseResponse(StatusKey.SUCCESS, updatedUsers);
+  }
+  private buildUserSummaryResponse(
+    user: User & { role: RoleEntity },
+  ): UserSummaryDto {
     return {
       id: user.id,
       name: user.name,
       userName: user.userName,
       email: user.email,
       status: user.status,
+      role: user.role.name,
       isVerified: user.isVerified,
     };
   }

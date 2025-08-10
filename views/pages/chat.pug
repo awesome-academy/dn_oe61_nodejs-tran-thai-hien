@@ -12,11 +12,13 @@ block content
                 i.fas.fa-search
               input#userSearch.form-control(type="text", placeholder="Search users...")
           ul#userList.list-group.list-group-flush.chat-users
+
+      // Chat Area
       .col-md-8.col-lg-9
         .chat-box.card
           .card-header.d-flex.justify-content-between.align-items-center
-            span#chatWith 
-            button.btn.btn-light.btn-sm
+            span#chatWith
+            button.btn.btn-light.btn-sm(type="button")
               i.fas.fa-ellipsis-h
           .card-body.chat-container.p-3#chatMessages
           .card-footer
@@ -24,9 +26,9 @@ block content
               input#chatInput.form-control(type="text", placeholder="Type your message...")
               button.btn.btn-primary.ms-2(type="submit")
                 i.fas.fa-paper-plane
-            div#socketStatus(style="display:none padding:8px; font-size:14px; margin-top:10px;")
-  <div id="socketConfig" data-socket-url=#{payload.socketUrl} style="display: none"></div>    
+            #socketStatus(style="display:none; padding:8px; font-size:14px; margin-top:10px;")
 
-
+    // Hidden socket config
+    #socketConfig(data-socket-url=payload.socketUrl style="display:none;")
   script(src="/vendor/socketio/socket.io.min.js")
   script(src="/js/chat.js")

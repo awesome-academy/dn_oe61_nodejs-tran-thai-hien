@@ -43,6 +43,8 @@
     "isBoolean": "The field {field} must be a boolean value.",
     "isDate": "The field {field} must be a valid date.",
     "isInt": "The field {field} must be an integer",
+    "isArray": "{field} must be an array",
+    "arrayMinSize": "{field} must contain at least {minSize} item(s)",
     "max": "The field {field} must be less than or equal to {max}",
     "min": "The field {field} must be at least {min}",
     "atLeastOneDefined":"At least one field must be provided.",
@@ -95,6 +97,7 @@
     "notVerified": "Account not verified",
     "roleNotFound":"Role not found",
     "missingUsers":"Some user do not exist.",
+    "missingRoles":"Some role do not exist",
     "status": {
       "pending": "Pending",
       "active": "Active",
@@ -168,6 +171,19 @@
         "findDetail":{
           "success":"Find detail user successfully",
           "failed":"Failed to find detail user"
+        },
+        "updateStatusUserBulk":{
+          "success":"Update status user successfully",
+          "failed":"Failed to update status user"
+        }
+        
+    }
+  },
+  "adminuser":{
+    "action":{
+           "updateStatusUserBulk":{
+          "success":"Update status user successfully",
+          "failed":"Failed to update status user"
         }
     }
   },

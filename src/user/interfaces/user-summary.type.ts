@@ -1,3 +1,3 @@
-import { User } from '@prisma/client';
+import { Role, User } from '@prisma/client';
 
-export type UserSummaryType = User;
+export type UserSummaryType = User & { role: Role };
