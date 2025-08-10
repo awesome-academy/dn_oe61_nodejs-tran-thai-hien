@@ -20,10 +20,14 @@ document.addEventListener('DOMContentLoaded', () => {
     direction: '',
   };
   function showLoading() {
-    loadingOverlay.style.display = 'flex';
+    if (loadingOverlay) {
+      loadingOverlay.style.display = 'flex';
+    }
   }
   function hideLoading() {
-    loadingOverlay.style.display = 'none';
+    if (loadingOverlay) {
+      loadingOverlay.style.display = 'none';
+    }
   }
 
   function showErrorToast(message) {
@@ -44,11 +48,12 @@ document.addEventListener('DOMContentLoaded', () => {
       timeoutid = setTimeout(() => fn.apply(this, args), delay);
     };
   }
-  const triggerUpdate = debounce(updateData, 300);
+  const triggerUpdate = debounce(updateData, 600);
 
   async function fetchAndRenderStatusCounts(keySearch, startDate, endDate) {
     try {
       showLoading();
+      if (!statusContainer) throw Error('Status container is not defined');
       const params = new URLSearchParams();
       if (keySearch) params.append('spaceName', keySearch);
       if (startDate) params.append('startDate', startDate);
@@ -62,8 +67,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const counts = json.payload.counts;
 
       const allStatuses = ['PAID', 'PENDING', 'FAILED', 'REFUNDED'];
-      statusContainer.innerHTML = '';
 
+      statusContainer.innerHTML = '';
       for (const status of allStatuses) {
         const count = counts[status] ?? 0;
 
@@ -174,8 +179,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (err) {
       console.error('Fetch payments error', err);
-      tableBody.innerHTML =
-        '<tr><td colspan="9" class="text-center text-danger">Unable to load payment list</td></tr>';
+      if (tableBody) {
+        tableBody.innerHTML =
+          '<tr><td colspan="9" class="text-center text-danger">Unable to load payment list</td></tr>';
+      }
     } finally {
       hideLoading();
     }
@@ -197,8 +204,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderTable(payments) {
+    if (!tableBody) {
+      alert('Table is not defined');
+      return;
+    }
     tableBody.innerHTML = '';
-
     if (payments.length === 0) {
       tableBody.innerHTML =
         '<tr><td colspan="9" class="text-center">There are no payments</td></tr>';
@@ -285,21 +295,21 @@ document.addEventListener('DOMContentLoaded', () => {
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
   }
-
-  pageSizeSelect.addEventListener('change', () => {
-    paymentState.pageSize = parseInt(pageSizeSelect.value, 10);
-    fetchPayments(
-      paymentState.currentPage,
-      paymentState.pageSize,
-      paymentState.keySearch,
-      paymentState.startDate,
-      paymentState.endDate,
-      paymentState.selectedStatuses,
-      paymentState.sortBy,
-      paymentState.direction,
-    );
-  });
-
+  if (pageSizeSelect) {
+    pageSizeSelect.addEventListener('change', () => {
+      paymentState.pageSize = parseInt(pageSizeSelect.value, 10);
+      fetchPayments(
+        paymentState.currentPage,
+        paymentState.pageSize,
+        paymentState.keySearch,
+        paymentState.startDate,
+        paymentState.endDate,
+        paymentState.selectedStatuses,
+        paymentState.sortBy,
+        paymentState.direction,
+      );
+    });
+  }
   if (sortBySelect) {
     sortBySelect.addEventListener('change', (e) => {
       const val = e.target.value || '';

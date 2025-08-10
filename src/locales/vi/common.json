@@ -396,5 +396,10 @@
       "paymentFailed": "Booking (ID: {bookingId}) thuộc về người dùng {payerName} thanh toán không thành công. Lý do: {reason} vào lúc {time}.",
       "expiredPayment": "Thanh toán cho booking (ID: {bookingId}) đã hết hạn vào lúc {time}."
     }
+  },
+   "sms":{
+    "message":{
+      "confirmedBooking":"Booking (Id: {bookingId}) cho space {spaceName} của bạn đã được xác nhận. Thời hạn thanh toán {expiredAt}"
+    }
   }
 }

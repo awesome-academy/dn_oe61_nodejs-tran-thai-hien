@@ -26,6 +26,7 @@ import { SpaceModule } from './space/space.module';
 import { StatisticModule } from './statistic/statistic.module';
 import { UserModule } from './user/user.module';
 import { VenueModule } from './venue/venue.module';
+import { SmsModule } from './sms/sms.module';
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { VenueModule } from './venue/venue.module';
     ChatModule,
     DashboardModule,
     StatisticModule,
+    SmsModule,
   ],
   controllers: [AppController],
   providers: [

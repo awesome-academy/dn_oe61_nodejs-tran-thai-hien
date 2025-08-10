@@ -73,6 +73,8 @@ import { NotificationPublisher } from 'src/notification/notification-publisher';
 import { BookingStatusNotiPayload } from 'src/notification/dto/payloads/create-booking-noti-payload';
 import { buildDataRange } from 'src/common/helpers/prisma.helper';
 import { BookingStatusCountDto } from './dto/responses/bookig-status-count.response';
+import { ConfirmBookingSmsPayload } from 'src/sms/dto/requests/confirm-booking-sms-payload';
+import { SmsPublisher } from 'src/sms/sms-publisher';
 
 @Injectable()
 export class BookingService {
@@ -84,6 +86,7 @@ export class BookingService {
     private readonly mailService: MailService,
     private readonly paymentService: PaymentService,
     private readonly bookingPublisher: BookingPublisher,
+    private readonly smsPublisher: SmsPublisher,
     private readonly notificationPublisher: NotificationPublisher,
   ) {}
   async create(
@@ -292,6 +295,13 @@ export class BookingService {
         paymentLink: paymentData.data.checkoutUrl,
       };
       this.bookingPublisher.publishBookingCofirmed(paymentBookingPayload);
+      const confirmedBookingSms: ConfirmBookingSmsPayload = {
+        bookingId: confirmedBooking.id,
+        nameSpace: confirmedBooking.space.name,
+        userId: confirmedBooking.userId,
+        expiredAt: expiredAt,
+      };
+      this.smsPublisher.publishConfirmedBookingSms(confirmedBookingSms);
       return buildBaseResponse(
         StatusKey.SUCCESS,
         this.buildBookingSummaryDto(confirmedBooking),

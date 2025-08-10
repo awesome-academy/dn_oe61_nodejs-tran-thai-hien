@@ -8,7 +8,7 @@ import {
 import { SwaggerGetResponse } from 'src/swagger/decorators/swagger-response.decorator';
 
 export function ApiResponseViewStatisticRevenue() {
-  const path = '/statistics/revenuues';
+  const path = '/statistics/revenues';
   return applyDecorators(
     ApiOperation({
       summary: 'Get statistics revenues',

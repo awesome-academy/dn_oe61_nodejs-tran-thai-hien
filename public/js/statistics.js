@@ -145,7 +145,12 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Load top venues error:', err);
     }
   }
-
+  function generateColors(count) {
+    return Array.from(
+      { length: count },
+      (_, i) => `hsl(${(i * 360) / count}, 70%, 50%)`,
+    );
+  }
   async function loadStatistics() {
     try {
       const start = startDateInput.value;
@@ -175,26 +180,29 @@ document.addEventListener('DOMContentLoaded', () => {
       totalBookingsEl.textContent = bookings.total || 0;
       totalRevenueEl.textContent = revenues.total || 0;
       totalUsersEl.textContent = users.total || 0;
-
       // Render charts
       if (bookings.byStatus?.length > 0) {
+        const colors = generateColors(bookings.byStatus.length);
         renderChart(
           'bookingsByStatus',
           'pie',
           bookings.byStatus.map((s) => s.status),
           bookings.byStatus.map((s) => s.total),
-          ['#4CAF50', '#FFC107', '#F44336', '#2196F3'],
+          colors,
         );
       }
       if (bookings.byType?.length > 0) {
+        const colors = generateColors(bookings.byType.length);
         renderChart(
           'bookingsByType',
           'pie',
           bookings.byType.map((s) => s.type),
           bookings.byType.map((s) => s.total),
-          ['#3F51B5', '#009688', '#E91E63'],
+          // ['#3F51B5', '#009688', '#E91E63'],
+          colors,
         );
       }
+
       renderChart(
         'bookingsByMonth',
         'bar',
@@ -209,13 +217,17 @@ document.addEventListener('DOMContentLoaded', () => {
         revenues.byMonth?.map((m) => m.total) || [],
         ['#FF9800'],
       );
-      renderChart(
-        'usersByStatus',
-        'pie',
-        users.byStatus?.map((s) => s.status) || [],
-        users.byStatus?.map((s) => s.total) || [],
-        ['#4CAF50', '#F44336'],
-      );
+      if (users.byStatus?.length > 0) {
+        const colors = generateColors(users.byStatus.length);
+        renderChart(
+          'usersByStatus',
+          'pie',
+          users.byStatus?.map((s) => s.status) || [],
+          users.byStatus?.map((s) => s.total) || [],
+          // ['#4CAF50', '#F44336'],
+          colors,
+        );
+      }
       renderChart(
         'usersByMonth',
         'line',
