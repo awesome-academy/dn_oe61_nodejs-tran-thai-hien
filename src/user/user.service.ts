@@ -231,8 +231,9 @@ export class UserService {
       userByUserName.password,
     );
     if (
-      !userByUserName.isVerified &&
-      userByUserName.status == UserStatus.PENDING
+      (!userByUserName.isVerified &&
+        userByUserName.status == UserStatus.PENDING) ||
+      !userByUserName.isVerified
     ) {
       throw new ForbiddenException(
         this.i18nService.translate('common.auth.login.notVerified'),
@@ -266,15 +267,14 @@ export class UserService {
       await this.prismaService.tokenBlackList.create({
         data,
       });
-      return buildBaseResponse(StatusKey.SUCCESS);
     } catch (err) {
       const error = err as Prisma.PrismaClientKnownRequestError;
-      if (error.code === PrismaError.UNIQUE_CONSTRAINT.toString()) {
-        throw new ConflictException('Token already exists');
+      if (error.code !== PrismaError.UNIQUE_CONSTRAINT.toString()) {
+        this.loggerService.error('Logout failed', JSON.stringify(error));
+        throw err;
       }
-      this.loggerService.error('Logout failed', JSON.stringify(error));
-      throw err;
     }
+    return buildBaseResponse(StatusKey.SUCCESS);
   }
   async verifyEmail(
     token: string,

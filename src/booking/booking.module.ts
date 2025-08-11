@@ -10,6 +10,7 @@ import { BookingProcessor } from './booking.processor';
 import { BookingService } from './booking.service';
 import { NotificationModule } from 'src/notification/notification.module';
 import { SmsModule } from 'src/sms/sms.module';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { SmsModule } from 'src/sms/sms.module';
     MailModule,
     PaymentModule,
     SmsModule,
+    AuthModule,
     forwardRef(() => NotificationModule),
   ],
   providers: [

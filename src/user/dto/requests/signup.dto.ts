@@ -24,6 +24,10 @@ export class SignupDto {
     description: 'Email address',
   })
   email: string;
+  @ApiProperty({
+    example: 'leo123',
+    description: 'Username',
+  })
   @IsNotEmpty({
     message: i18nValidationMessage(
       'common.auth.signup.validation.userNameNotEmpty',
@@ -31,7 +35,7 @@ export class SignupDto {
   })
   userName: string;
   @ApiProperty({
-    example: 'trana',
+    example: 'password123',
     description: 'Password',
   })
   @MinLength(MIN_PASSWORD, {

@@ -1,4 +1,7 @@
 nav.navbar.navbar-expand-lg.navbar-custom
+  #loading-overlay
+      .spinner-border.text-primary(role="status")
+          span.visually-hidden Loading...  
   .container-fluid
     button#sidebarToggle.btn.btn-primary.d-md-none(type="button")
       i.fas.fa-bars
@@ -19,9 +22,10 @@ nav.navbar.navbar-expand-lg.navbar-custom
           li: a.dropdown-item(href="#") Profile
           li: a.dropdown-item(href="#") Settings
           li: hr.dropdown-divider
-          li: a.dropdown-item(href="#") Logout
+          li: a#logoutBtn.dropdown-item(href="#") Logout
 
 
   // Hidden socket URL config
   #socketConfig(data-socket-url=payload.socketUrl style="display:none")
+  script(src="/vendor/toastify/toastify.js") 
 

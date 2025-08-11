@@ -4,6 +4,41 @@ let isLoading = false;
 let totalPages = 1;
 let socketInstance = null;
 const socketUrl = document.getElementById('socketConfig')?.dataset.socketUrl;
+function showToast(message, type = 'info') {
+  Toastify({
+    text: message,
+    duration: 3000,
+    close: true,
+    gravity: 'top',
+    position: 'right',
+    backgroundColor:
+      type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#007bff',
+    stopOnFocus: true,
+  }).showToast();
+}
+document.querySelector('#logoutBtn').addEventListener('click', async (e) => {
+  e.preventDefault();
+  LoadingOverlay.show();
+  try {
+    const res = await fetch('/users/logout', {
+      method: 'POST',
+      credentials: 'include',
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+      showToast(data.message || 'Logout successfully', 'success');
+    } else {
+      showToast(data.message || 'Logout failed', 'error');
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('Logout error, please try again', 'error');
+  } finally {
+    LoadingOverlay.hide();
+    setTimeout(() => (window.location.href = '/login'), 1500);
+  }
+});
 
 async function loadUserProfile() {
   try {
@@ -176,7 +211,7 @@ function connectSocket(userId) {
     showSocketStatus('connected');
     socketInstance.emit('join');
   });
-  socketInstance.on(`notification:${userId}`, (notif) => {
+  socketInstance.on(`newNotification`, (notif) => {
     prependNotification(notif);
   });
   socketInstance.on('reconnect_attempt', (attempt) => {

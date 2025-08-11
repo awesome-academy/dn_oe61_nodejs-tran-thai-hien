@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { join } from 'path';
 import { PugAdapter } from '@nestjs-modules/mailer/dist/adapters/pug.adapter';
 import { MailService } from './mail.service';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { MailService } from './mail.service';
       }),
       inject: [ConfigService],
     }),
+    AuthModule,
   ],
   providers: [MailService],
   exports: [MailService],

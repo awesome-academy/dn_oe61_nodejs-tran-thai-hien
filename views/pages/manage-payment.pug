@@ -1,9 +1,7 @@
 extends ../layouts/layout.pug
 
 block content
-  #loading-overlay(
-      style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.7);z-index:9999;display:flex;justify-content:center;align-items:center;"
-  )
+  #loading-overlay
       .spinner-border.text-primary(role="status")
           span.visually-hidden Loading...
   .container-fluid.py-4

@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const endDateInput = document.getElementById('endDate');
   const sortBySelect = document.getElementById('sortBySelect');
   const statusContainer = document.getElementById('statusFilterContainer');
-  const loadingOverlay = document.getElementById('loading-overlay');
   const paymentState = {
     currentPage: 1,
     pageSize: parseInt(pageSizeSelect?.value, 10) || 10,
@@ -19,16 +18,6 @@ document.addEventListener('DOMContentLoaded', () => {
     sortBy: '',
     direction: '',
   };
-  function showLoading() {
-    if (loadingOverlay) {
-      loadingOverlay.style.display = 'flex';
-    }
-  }
-  function hideLoading() {
-    if (loadingOverlay) {
-      loadingOverlay.style.display = 'none';
-    }
-  }
 
   function showErrorToast(message) {
     Toastify({
@@ -52,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function fetchAndRenderStatusCounts(keySearch, startDate, endDate) {
     try {
-      showLoading();
+      LoadingOverlay.show();
       if (!statusContainer) throw Error('Status container is not defined');
       const params = new URLSearchParams();
       if (keySearch) params.append('spaceName', keySearch);
@@ -108,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Error fetching status counts:', err);
       statusContainer.textContent = 'Failed to load status data';
     } finally {
-      hideLoading();
+      LoadingOverlay.hide();
     }
   }
   async function fetchPayments(
@@ -122,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
     direction,
   ) {
     try {
-      showLoading();
+      LoadingOverlay.show();
       const params = new URLSearchParams();
       params.append('page', page);
       params.append('pageSize', size);
@@ -184,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
           '<tr><td colspan="9" class="text-center text-danger">Unable to load payment list</td></tr>';
       }
     } finally {
-      hideLoading();
+      LoadingOverlay.hide();
     }
   }
 

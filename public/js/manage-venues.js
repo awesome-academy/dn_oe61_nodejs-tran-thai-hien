@@ -23,10 +23,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   let pageSize = parseInt(pageSizeSelect?.value, 10) || 10;
   let venues = [];
   let keySearch = '';
-
   const rawData = {};
   const pendingChanges = new Map();
-
   const updatePreviewButtonVisibility = () => {
     const previewBtn = document.getElementById('previewUpdatesBtn');
     if (!previewBtn) return;
@@ -64,6 +62,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       timeoutid = setTimeout(() => fn.apply(this, args), delay);
     };
   }
+  function updateData() {
+    fetchVenues(currentPage, pageSize, keySearch);
+  }
+  const triggerUpdate = debounce(updateData, 600);
   document.addEventListener('click', function (e) {
     if (e.target.classList.contains('view-venue-btn')) {
       const venueId = e.target.getAttribute('data-venue-id');
@@ -102,6 +104,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
   async function fetchVenues(currentPage, pageSize, search) {
     try {
+      LoadingOverlay.show();
       const res = await fetch(
         `/admin/venues?page=${currentPage}&pageSize=${pageSize}&search=${encodeURIComponent(search)}`,
         { credentials: 'include' },
@@ -138,6 +141,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.error('Fetch venues error', err);
       tableBody.innerHTML =
         '<tr><td colspan="8" class="text-center text-danger">Không thể tải danh sách venues</td></tr>';
+    } finally {
+      LoadingOverlay.hide();
     }
   }
 
@@ -145,18 +150,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   pageSizeSelect.addEventListener('change', () => {
     pageSize = parseInt(pageSizeSelect.value, 10);
-    fetchVenues(currentPage, pageSize, keySearch);
+    triggerUpdate();
   });
 
   if (searchInput) {
-    searchInput.addEventListener(
-      'input',
-      debounce((e) => {
-        const searchTerm = e.target.value.trim();
-        keySearch = searchTerm;
-        fetchVenues(currentPage, pageSize, searchTerm);
-      }, 300),
-    );
+    searchInput.addEventListener('input', (e) => {
+      const searchTerm = e.target.value.trim();
+      keySearch = searchTerm;
+      triggerUpdate();
+    });
   }
 
   clearChangesBtn.addEventListener('click', () => {

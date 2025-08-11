@@ -104,7 +104,7 @@ export class NotificationListener {
     try {
       const dataPayload = this.buildNotiStatusVenueData(
         payload,
-        VenueStatus.APPROVED,
+        VenueStatus.BLOCKED,
       );
       await this.addNotificationJobSingle(
         NotificationEvent.VENUE_BLOCKED,
@@ -400,6 +400,7 @@ export class NotificationListener {
           },
         );
       case MessageKeyStatusPayment.FAILED:
+        console.log('Payload:: ', JSON.stringify(payload));
         return this.i18nService.translate(
           'common.notification.message.paymentFailed',
           {

@@ -5,7 +5,7 @@ import { i18nValidationMessage } from 'nestjs-i18n';
 export class VenueUpdateRequestDto {
   @ApiPropertyOptional({
     description: 'Name of the venue',
-    example: 'Sunrise Event Hall',
+    example: 'Sunshine Coworking Space',
   })
   @IsOptional()
   @IsString({

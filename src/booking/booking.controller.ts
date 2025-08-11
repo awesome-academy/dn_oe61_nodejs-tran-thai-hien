@@ -7,27 +7,33 @@ import {
   Patch,
   Post,
   Query,
+  Req,
+  Res,
+  UseFilters,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Request, Response } from 'express';
 import { AccessTokenPayload } from 'src/auth/interfaces/access-token-payload';
-import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { SpaceOwnerOrManagerGuard } from 'src/common/guards/space-owner-or-manager-guard.guard';
-import { BookingService } from './booking.service';
-import { BookingCreationRequestDto } from './dto/requests/booking-creation-request.dto';
 import { QueryParamDto } from 'src/common/constants/query-param.dto';
-import { BookingFilterRequestDto } from './dto/requests/booking-filter-request.dto';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { HasRole } from 'src/common/decorators/role.decorator';
 import { Role } from 'src/common/enums/role.enum';
-import { BookingRejectRequestDto } from './dto/requests/booking-reject-request.dto';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { ApiResponseCreateBookingExample } from 'src/swagger/examples/bookings/create-booking.example';
-import { ApiResponseConfirmBookingExample } from 'src/swagger/examples/bookings/confirm-booking.example';
-import { ApiResponseRejectBookingExample } from 'src/swagger/examples/bookings/reject-booking.example';
+import { SpaceOwnerOrManagerGuard } from 'src/common/guards/space-owner-or-manager-guard.guard';
 import { ApiResponseCancelBookingExample } from 'src/swagger/examples/bookings/cancel-booking.example';
-import { ApiResponseGetHistoryExample } from 'src/swagger/examples/bookings/get-history-booking.example';
-import { ApiResponseGetBookingManagedExample } from 'src/swagger/examples/bookings/get-booking-managed.example';
+import { ApiResponseConfirmBookingExample } from 'src/swagger/examples/bookings/confirm-booking.example';
+import { ApiResponseCreateBookingExample } from 'src/swagger/examples/bookings/create-booking.example';
 import { ApiResponseGetBookingExample } from 'src/swagger/examples/bookings/get-booking-example';
+import { ApiResponseGetBookingManagedExample } from 'src/swagger/examples/bookings/get-booking-managed.example';
 import { ApiResponseGetBookingStatusCount } from 'src/swagger/examples/bookings/get-booking-status-count.example';
+import { ApiResponseGetHistoryExample } from 'src/swagger/examples/bookings/get-history-booking.example';
+import { ApiResponseRejectBookingExample } from 'src/swagger/examples/bookings/reject-booking.example';
+import { BookingService } from './booking.service';
+import { BookingCreationRequestDto } from './dto/requests/booking-creation-request.dto';
+import { BookingFilterRequestDto } from './dto/requests/booking-filter-request.dto';
+import { BookingRejectRequestDto } from './dto/requests/booking-reject-request.dto';
+import { IsPublicRoute } from 'src/common/decorators/public-route.decorator';
+import { RedirectUnauthorizedFilter } from 'src/common/filters/redirect-unauthorized-exception.filter';
 @ApiTags('bookings')
 @Controller('bookings')
 export class BookingController {
@@ -98,5 +104,19 @@ export class BookingController {
   @Get('/status')
   async getBookingStatusCount(@Query() filter: BookingFilterRequestDto) {
     return this.bookingService.getBookingStatusCount(filter);
+  }
+  @Get(':bookingId')
+  @UseFilters(RedirectUnauthorizedFilter)
+  @IsPublicRoute()
+  async findPublicDetail(
+    @Req() req: Request,
+    @Param('bookingId', ParseIntPipe) bookingId: number,
+    @Res() res: Response,
+    @Query('token') token?: string,
+  ) {
+    const result = await this.bookingService.findDetail(req, bookingId, token);
+    return res.render('pages/view-booking-detail', {
+      payload: { booking: result.data },
+    });
   }
 }
