@@ -180,15 +180,15 @@ model Booking {
 }
 
 model Payment {
-  id        Int           @id @default(autoincrement())
-  bookingId Int           @unique
-  booking   Booking       @relation(fields: [bookingId], references: [id])
+  id        Int            @id @default(autoincrement())
+  bookingId Int            @unique
+  booking   Booking        @relation(fields: [bookingId], references: [id])
   amount    Float
-  method    PaymentMethod
+  method    PaymentMethod?
   status    PaymentStatus
-  paidAt    DateTime
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  paidAt    DateTime?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 
   @@map("payments")
 }

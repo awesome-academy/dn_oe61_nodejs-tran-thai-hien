@@ -367,6 +367,10 @@
       "findStatisticRevenues":{
         "success":"Find statistics revenue successfully.",
         "failed":"Failed to find statistics revenue"
+      },
+      "statisticSummary":{
+        "success":"Get statistics summary successfully",
+        "failed":"Failed to get statistics summary"
       }
     }
   },

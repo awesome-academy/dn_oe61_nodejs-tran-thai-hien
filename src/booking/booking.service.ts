@@ -217,7 +217,7 @@ export class BookingService {
       amount: bookingDetail.totalPrice,
       bookingId: bookingDetail.id,
       userId: bookingDetail.userId,
-      description: `PAY BOOKING-${bookingDetail.id} ${bookingDetail.space.name}`,
+      description: `PAY FOR BOOKING-${bookingDetail.id}`,
       expiredAt: expiredAt,
     };
     let paymentData: PayOSCreatePaymentResponseDto;

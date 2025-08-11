@@ -5,30 +5,30 @@ block content
 
   // Stats cards
   .row.mb-4
-    .col-md-6.col-lg-3
+    .col-md-6.col-lg-2
       .stat-card.bg-primary
         .d-flex.justify-content-between
           div
             i.fas.fa-building
-            .stat-value 124
+            .stat-value#sm-totalVenues 0
             .stat-title Venues
           i.fas.fa-ellipsis-h.opacity-5
 
-    .col-md-6.col-lg-3
+    .col-md-6.col-lg-2
       .stat-card.bg-success
         .d-flex.justify-content-between
           div
             i.fas.fa-th-large
-            .stat-value 342
+            .stat-value#sm-totalSpaces 0
             .stat-title Spaces
           i.fas.fa-ellipsis-h.opacity-5
 
-    .col-md-6.col-lg-3
+    .col-md-6.col-lg-2
       .stat-card.bg-warning
         .d-flex.justify-content-between
           div
             i.fas.fa-calendar-check
-            .stat-value 876
+            .stat-value#sm-totalBookings 0
             .stat-title Bookings
           i.fas.fa-ellipsis-h.opacity-5
 
@@ -37,27 +37,106 @@ block content
         .d-flex.justify-content-between
           div
             i.fas.fa-dollar-sign
-            .stat-value $24,567
+            .stat-value#sm-totalRevenue ₫0
             .stat-title Revenue
           i.fas.fa-ellipsis-h.opacity-5
 
-  // Chart & activities
-  .row
-    .col-lg-8.mb-4
-      .card.card-custom
-        .card-header Booking Statistics
-        .card-body
-          .chart-container
-            canvas#bookingChart
+    .col-md-6.col-lg-3
+      .stat-card.bg-secondary
+        .d-flex.justify-content-between
+          div
+            i.fas.fa-users
+            .stat-value#sm-totalUsers 0
+            .stat-title Users
+          i.fas.fa-ellipsis-h.opacity-5
 
-    .col-lg-4.mb-4
-      .card.card-custom
-        .card-header Recent Activities
-        .card-body
-          ul.list-group.list-group-flush
-            li.list-group-item.d-flex.justify-content-between.align-items-center
-              | New booking received
-              span.badge.bg-primary.rounded-pill Just now
-            li.list-group-item.d-flex.justify-content-between.align-items-center
-              | Payment completed
-              span.badge.bg-success.rounded-pill 5 min ago
+  // Chart & activities
+  .container-fluid.py-4
+    // Filter
+    .row.mb-4
+      .col-md-3
+        label(for="startDate") Start Date
+        input#startDate.form-control(type="date")
+      .col-md-3
+        label(for="endDate") End Date
+        input#endDate.form-control(type="date")
+      .col-md-4
+        label(for="venueSelect") Venue
+        select#venueSelect.form-select
+          option(value="") All Venues
+      .col-md-2.d-flex.align-items-end
+        button#btnApply.btn.btn-primary.w-100 Apply
+
+    // Summary Cards
+    .row.mb-4
+      .col-md-4
+        .card.shadow-sm.text-center
+          .card-body
+            h5.card-title Total Bookings
+            h2#totalBookings 0
+      .col-md-4
+        .card.shadow-sm.text-center
+          .card-body
+            h5.card-title Total Revenue
+            h2#totalRevenue 0
+      .col-md-4
+        .card.shadow-sm.text-center
+          .card-body
+            h5.card-title Total Users
+            h2#totalUsers 0
+
+    // Charts
+    .row
+      .col-md-6.mb-4
+        h5 Bookings by Status
+        canvas#bookingsByStatus
+      .col-md-6.mb-4
+        h5 Bookings by Type
+        canvas#bookingsByType
+    .row
+      .col-md-6.mb-4
+        h5 Bookings by Month
+        canvas#bookingsByMonth
+      .col-md-6.mb-4
+        h5 Revenue by Month
+        canvas#revenueByMonth
+    .row
+      .col-md-6.mb-4
+        h5 Users by Status
+        canvas#usersByStatus
+      .col-md-6.mb-4
+        h5 Users by Month
+        canvas#usersByMonth
+
+    // Top Tables
+    .row
+      .col-md-6
+        .d-flex.justify-content-between.align-items-center.mb-2
+          h5.mb-0 Top Users (by bookings)
+          select#topUsersLimit.form-select.form-select-sm(style="width:auto")
+            option(value="5") 5
+            option(value="10") 10
+            option(value="20") 20
+        table.table.table-striped
+          thead
+            tr
+              th Name
+              th Total Bookings
+          tbody#topUsers
+      .col-md-6
+          .d-flex.justify-content-between.align-items-center.mb-2
+            h5.mb-0 Top Venues (by bookings)
+            select#topVenuesLimit.form-select.form-select-sm(style="width:auto")
+              option(value="5") 5
+              option(value="10") 10
+              option(value="20") 20
+          table.table.table-striped
+            thead
+              tr
+                th Name
+                th Total Bookings
+            tbody#topVenues
+  script(src="/vendor/chartjs/chart.min.js")
+  script(src="/vendor/jquery/jquery.min.js")
+  script(src="/vendor/select2/select2.min.js")
+  script(src="/js/statistics.js")

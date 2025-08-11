@@ -358,6 +358,10 @@
        "findTopVenues":{
         "success":"Lấy thông tin các toà nhà có nhiều đặt chỗ nhất thành công.",
         "failed":"Lấy thông tin các toà nhà có nhiều đặt chỗ nhất thất bại."
+      },
+      "statisticSummary":{
+        "success":"Lấy thông tin thống kê tổng quan thành công",
+        "failed":"Lấy thông tin thống kê tổng quan thất bại"
       }
     }
   },

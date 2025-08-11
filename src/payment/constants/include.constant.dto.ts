@@ -10,6 +10,13 @@ export const INCLUDE_BOOKING_HISTORY = {
           name: true,
         },
       },
+      space: {
+        select: {
+          id: true,
+          name: true,
+          type: true,
+        },
+      },
     },
   },
 };

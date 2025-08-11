@@ -29,6 +29,16 @@ class UserInfo {
   name: string;
 }
 
+export class SpaceInfo {
+  @ApiProperty({ example: 10, description: 'Space ID' })
+  id: number;
+
+  @ApiProperty({ example: 'Co-Space 29ieh', description: 'Space name' })
+  name: string;
+  @ApiProperty({ example: 'PRIVATE_OFFICE', description: 'Space type' })
+  type: string;
+}
+
 export class PaymentHistoryResponseDto {
   @ApiProperty({ example: 789, description: 'Payment ID' })
   id: number;
@@ -61,7 +71,11 @@ export class PaymentHistoryResponseDto {
     description: 'User who made the payment',
   })
   user: UserInfo;
-
+  @ApiProperty({
+    type: () => SpaceInfo,
+    description: 'Associated booking info',
+  })
+  space: SpaceInfo;
   @ApiProperty({
     example: '2025-08-01T09:00:00Z',
     description: 'Record creation time',
