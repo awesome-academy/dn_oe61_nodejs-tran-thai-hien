@@ -203,10 +203,12 @@ export class StatisticService {
       });
       const userWithBookings = await this.prismaService.booking.groupBy({
         by: ['userId'],
+        where: userFilter,
       });
       const usersStatus = await this.prismaService.user.groupBy({
         by: ['status'],
         _count: { _all: true },
+        where: userFilter,
       });
       const byStatus = usersStatus.map((u) => ({
         status: u.status,

@@ -18,10 +18,20 @@ import { AddManageSpaceRequestDto } from './dto/requests/add-manage-space-reques
 import { SpaceFilterRequestDto } from './dto/requests/space-filter-request.dto';
 import { SpaceUpdateRequestDto } from './dto/requests/space-update-request.dto';
 import { SpaceOwnerOrManagerGuard } from 'src/common/guards/space-owner-or-manager-guard.guard';
-
+import { ApiResponseCreateSpace } from 'src/swagger/examples/spaces/create-space.example';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiResponseAddManagerExample } from 'src/swagger/examples/spaces/add-manager.example';
+import { ApiResponseGetPublicSpace } from 'src/swagger/examples/spaces/get-space.example';
+import { ApiResponseGetMySpace } from 'src/swagger/examples/spaces/get-my-space.example';
+import { ApiResponseGetPublicDetail } from 'src/swagger/examples/spaces/get-public-detail.example';
+import { ApiResponseUpdateSpace } from 'src/swagger/examples/spaces/update-space.example';
+import { ApiResponseDeleteSpace } from 'src/swagger/examples/spaces/delete-space.example';
+@ApiTags('spaces')
 @Controller('spaces')
 export class SpaceController {
   constructor(private readonly spaceService: SpaceService) {}
+  @ApiBearerAuth('access-token')
+  @ApiResponseCreateSpace()
   @Post()
   async create(
     @CurrentUser() user: AccessTokenPayload,
@@ -29,6 +39,8 @@ export class SpaceController {
   ) {
     return await this.spaceService.create(user, dto);
   }
+  @ApiBearerAuth('access-token')
+  @ApiResponseAddManagerExample()
   @Patch(':id/managers')
   async addManagers(
     @CurrentUser() user: AccessTokenPayload,
@@ -37,10 +49,14 @@ export class SpaceController {
   ) {
     return await this.spaceService.addManagers(user, spaceId, dto);
   }
+  @ApiBearerAuth('access-token')
+  @ApiResponseGetPublicSpace()
   @Get()
   async findPublicSpaces(@Query() filter: SpaceFilterRequestDto) {
     return await this.spaceService.findPublicSpaces(filter);
   }
+  @ApiBearerAuth('access-token')
+  @ApiResponseGetMySpace()
   @Get('/me')
   async findSpacesByManager(
     @CurrentUser() user: AccessTokenPayload,
@@ -48,10 +64,14 @@ export class SpaceController {
   ) {
     return await this.spaceService.findSpacesByManagers(user, filter);
   }
+  @ApiBearerAuth('access-token')
+  @ApiResponseGetPublicDetail()
   @Get(':id')
   async findDetailPublicSpace(@Param('id', ParseIntPipe) spaceId: number) {
     return await this.spaceService.findDetailPublicSpace(spaceId);
   }
+  @ApiBearerAuth('access-token')
+  @ApiResponseUpdateSpace()
   @UseGuards(SpaceOwnerOrManagerGuard)
   @Patch(':id')
   async update(
@@ -60,6 +80,8 @@ export class SpaceController {
   ) {
     return await this.spaceService.update(spaceId, dto);
   }
+  @ApiBearerAuth('access-token')
+  @ApiResponseDeleteSpace()
   @UseGuards(SpaceOwnerOrManagerGuard)
   @Delete(':id')
   async delete(@Param('id', ParseIntPipe) spaceId: number) {

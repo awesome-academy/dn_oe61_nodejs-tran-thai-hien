@@ -1,8 +1,16 @@
 import { Type } from 'class-transformer';
 import { IsInt, IsOptional, Min } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class ChatQueryDto {
+  @ApiPropertyOptional({
+    description: 'Page number for pagination',
+    example: 1,
+    minimum: 0,
+    type: Number,
+    default: 1,
+  })
   @IsOptional()
   @Type(() => Number)
   @IsInt({
@@ -16,6 +24,14 @@ export class ChatQueryDto {
     }),
   })
   page: number = 1;
+
+  @ApiPropertyOptional({
+    description: 'Number of items per page',
+    example: 20,
+    minimum: 0,
+    type: Number,
+    default: 20,
+  })
   @IsOptional()
   @Type(() => Number)
   @IsInt({

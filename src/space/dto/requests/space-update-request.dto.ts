@@ -1,3 +1,4 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { SpaceType } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
 import {
@@ -14,6 +15,10 @@ import { i18nValidationMessage } from 'nestjs-i18n';
 import { PriceDto } from './price-dto';
 
 export class SpaceUpdateRequestDto {
+  @ApiPropertyOptional({
+    description: 'Name of the space',
+    example: 'Meeting Room A',
+  })
   @IsOptional()
   @IsString({
     message: i18nValidationMessage('common.validation.isString', {
@@ -21,6 +26,12 @@ export class SpaceUpdateRequestDto {
     }),
   })
   name: string;
+
+  @ApiPropertyOptional({
+    description: 'Type of the space',
+    example: 'PRIVATE_OFFICE',
+    enum: SpaceType,
+  })
   @IsOptional()
   @Transform(({ value }) => {
     if (value == null) return undefined;
@@ -32,6 +43,11 @@ export class SpaceUpdateRequestDto {
     }),
   })
   type?: SpaceType;
+
+  @ApiPropertyOptional({
+    description: 'Capacity of the space',
+    example: 20,
+  })
   @IsOptional()
   @IsInt({
     message: i18nValidationMessage('common.validation.isInt', {
@@ -39,6 +55,12 @@ export class SpaceUpdateRequestDto {
     }),
   })
   capacity: number;
+
+  @ApiPropertyOptional({
+    description: 'Description of the space',
+    example: 'Spacious room with projector',
+    nullable: true,
+  })
   @IsOptional()
   @IsString({
     message: i18nValidationMessage('common.validation.isString', {
@@ -46,6 +68,11 @@ export class SpaceUpdateRequestDto {
     }),
   })
   description?: string | null;
+
+  @ApiPropertyOptional({
+    description: 'List of prices for the space',
+    type: [PriceDto],
+  })
   @IsOptional()
   @IsArray()
   @ValidateNested({
@@ -53,6 +80,11 @@ export class SpaceUpdateRequestDto {
   })
   @Type(() => PriceDto)
   prices?: PriceDto[];
+
+  @ApiPropertyOptional({
+    description: 'Opening hour in format HH:mm',
+    example: '08:00',
+  })
   @IsOptional()
   @Matches(/^([01]\d|2[0-3]):([0-5]\d)$/, {
     message: i18nValidationMessage('common.validation.formatHourInvalid', {
@@ -60,6 +92,11 @@ export class SpaceUpdateRequestDto {
     }),
   })
   openHour: string;
+
+  @ApiPropertyOptional({
+    description: 'Closing hour in format HH:mm',
+    example: '19:00',
+  })
   @IsOptional()
   @Matches(/^([01]\d|2[0-3]):([0-5]\d)$/, {
     message: i18nValidationMessage('common.validation.formatHourInvalid', {
@@ -67,6 +104,12 @@ export class SpaceUpdateRequestDto {
     }),
   })
   closeHour: string;
+
+  @ApiPropertyOptional({
+    description: 'List of amenity IDs',
+    type: [Number],
+    example: [1],
+  })
   @IsOptional()
   @IsArray()
   @IsInt({
@@ -78,6 +121,12 @@ export class SpaceUpdateRequestDto {
     message: i18nValidationMessage('common.validation.ids.min'),
   })
   amenities?: number[];
+
+  @ApiPropertyOptional({
+    description: 'List of manager user IDs',
+    type: [Number],
+    example: [101],
+  })
   @IsOptional()
   @IsArray()
   @IsInt({
