@@ -11,6 +11,8 @@ export class UserSummaryDto {
   userName: string;
   @ApiProperty({ example: 'ACTIVE', description: 'Account status' })
   status: string;
+  @ApiProperty({ example: 'USER', description: 'Account role' })
+  role: string;
   @ApiProperty({ example: true, description: 'Indicates if email is verified' })
   isVerified: boolean;
 }

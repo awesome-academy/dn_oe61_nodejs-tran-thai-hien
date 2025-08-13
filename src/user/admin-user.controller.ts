@@ -22,6 +22,8 @@ import { ApiResponseStatusUpdate } from 'src/swagger/examples/users/status-updat
 import { ApiResponseChangeVerifyExample } from 'src/swagger/examples/users/change-verify.example';
 import { ApiResponseChangeRoleExample } from 'src/swagger/examples/users/change-role.example';
 import { ApiBearerAuth } from '@nestjs/swagger';
+import { UpdateStatusUserBulkRequest } from './dto/requests/update-status-user-bulk.dto';
+import { ApiResponseUpdateStatusUserBulk } from 'src/swagger/examples/users/update-status-user-bulk.example';
 
 @Controller('admin/users')
 export class AdminUserController {
@@ -67,5 +69,11 @@ export class AdminUserController {
   @Get('/')
   async findUsers(@Query() query: QueryParamDto) {
     return this.userService.findUsers(query);
+  }
+  @ApiResponseUpdateStatusUserBulk()
+  @HasRole(Role.MODERATOR, Role.ADMIN)
+  @Patch('/')
+  async updateStatusUserBulk(@Body() dto: UpdateStatusUserBulkRequest) {
+    return this.userService.updateStatusUserBulk(dto);
   }
 }

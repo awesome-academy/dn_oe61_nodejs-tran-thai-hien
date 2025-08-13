@@ -1,0 +1,39 @@
+.search-box {
+  max-width: 300px;
+  flex: 1;
+  min-width: 180px;
+}
+.card {
+  border-radius: 12px;
+}
+.badge {
+  font-size: 0.8rem;
+}
+.table td,
+.table th {
+  vertical-align: middle;
+}
+
+.search-box input {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+select.form-select {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.table {
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.table thead th {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+}
+
+@media (max-width: 576px) {
+  .search-box {
+    max-width: 100%;
+  }
+}

@@ -1,0 +1,102 @@
+extends ../layouts/layout.pug
+
+block content
+  .container-fluid.py-4
+    //- Search & Filter
+    .d-flex.flex-wrap.align-items-center.justify-content-between.mb-3.gap-2
+      .input-group.input-group-sm.search-box(style="max-width: 360px;")
+        span.input-group-text.bg-white.border-end-0
+          i.fas.fa-search.text-muted
+        input#inputSearch.form-control.border-start-0(type="text", placeholder="Search users by name...")
+      select#pageSizeSelect.form-select.form-select-sm(style="width: 140px;")
+        option 10 per page
+        option 20 per page
+        option 30 per page
+        option 50 per page
+    //- User Table
+    .card.shadow-sm
+      .card-body.p-0
+        table.table.align-middle.mb-0
+          thead.table-light
+            tr
+              th
+                input#select-all(type="checkbox")
+              th(scope="col") ID
+              th(scope="col") User
+              th(scope="col") Email
+              th(scope="col") Role
+              th(scope="col") Status
+              th(scope="col") Verified
+              th(scope="col") Actions
+          tbody
+            each user in payload.users || []
+              tr
+                td
+                  input.user-checkbox(type="checkbox", value=user.sub)
+                td #{user.sub}
+                td.d-flex.align-items-center
+                  img(src="/images/default-avatar.png", alt="avatar", class="rounded-circle me-2", width="40", height="40")
+                  div
+                    strong #{user.userName}
+                    div.text-muted.small #{user.userName}
+                td #{user.userName}
+                td
+                  if payload.currentUser.role === 'ADMIN'
+                    select.form-select.form-select-sm(role="role-select", disabled)
+                      option(value="USER" selected=user.role==='USER') User
+                      option(value="MODERATOR" selected=user.role==='MODERATOR') Moderator
+                      option(value="ADMIN" selected=user.role==='ADMIN') Admin
+                  else
+                    span.badge(class={
+                      'bg-info text-dark': user.role==='ADMIN',
+                      'bg-warning text-dark': user.role==='MODERATOR',
+                      'bg-success': user.role==='USER'
+                    }) #{user.role}
+                td
+                  select.form-select.form-select-sm(role="status-select", disabled)
+                    option(value="ACTIVE" selected=user.status==='ACTIVE') Active
+                    option(value="INACTIVE" selected=user.status==='INACTIVE') Inactive
+                td
+                  if payload.currentUser.role === 'ADMIN' ||   payload.currentUser.role === 'MODERATOR'
+                    select.form-select.form-select-sm(role="verify-select", disabled)
+                      option(value="true" selected=user.isVerified) Verified
+                      option(value="false" selected=!user.isVerified) Not Verified
+                  else
+                    if user.isVerified
+                      span.badge.bg-primary Verified
+                    else
+                      span.badge.bg-secondary Not Verified
+                td
+                  button.btn.btn-outline-primary.btn-sm.me-1 Edit
+                  button.btn.btn-outline-danger.btn-sm Delete
+    //- Action buttons
+    .mt-3
+      button#previewUpdatesBtn.btn.btn-warning(type="button" style="display:none") Preview Updates
+      button#clearChangesBtn.btn.btn-secondary(type="button" style="margin-left: 10px; display:none") Clear All Changes
+    //- Modal preview
+    div#updatePreviewModal.modal.fade(tabindex="-1")
+      div.modal-dialog.modal-lg
+        div.modal-content
+          div.modal-header
+            h5.modal-title Update Preview
+            button.btn-close(type="button", data-bs-dismiss="modal", aria-label="Close")
+          div.modal-body
+            table.table.table-bordered.mb-0
+              thead
+                tr
+                  th Select
+                  th User ID
+                  th Name
+                  th Changes
+              tbody#previewTableBody
+          div.modal-footer
+            button.btn.btn-secondary(type="button", data-bs-dismiss="modal") Cancel
+            button#confirmUpdateBtn.btn.btn-primary(type="button") Confirm Updates
+
+    //- Pagination
+    .mt-3
+      nav#paginationContainer
+
+  #currentUserConfig(data-current-user=payload.currentUser style="display:none;")
+  script(src="/js/manage-users.js")
+  script(src="/vendor/toastify/toastify.js")
