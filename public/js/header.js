@@ -119,7 +119,6 @@ async function updateBadgeCount() {
     }
     if (!res.ok)
       throw new Error(`Lỗi khi lấy số thông báo chưa đọc: ${res.status}`);
-
     const data = await res.json();
     if (data.success) {
       const unread = data.payload;

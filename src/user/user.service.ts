@@ -664,6 +664,10 @@ export class UserService {
       await this.mailService.sendUserMail(mailPayLoad);
       return SEND_MAIL_STATUS.SENT;
     } catch (error) {
+      this.loggerService.error(
+        'Send user mail:: ',
+        `${(error as Error).stack}`,
+      );
       let message: string;
       let caused: string | undefined;
       if (error instanceof MailException) {

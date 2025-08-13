@@ -4,11 +4,12 @@ import { UserController } from './user.controller';
 import { AuthModule } from 'src/auth/auth.module';
 import { MailModule } from 'src/mail/mail.module';
 import { UserViewController } from './user-view.controller';
+import { AdminUserController } from './admin-user.controller';
 
 @Module({
   imports: [AuthModule, MailModule],
   providers: [UserService],
   exports: [UserService],
-  controllers: [UserController, UserViewController],
+  controllers: [UserController, UserViewController, AdminUserController],
 })
 export class UserModule {}
