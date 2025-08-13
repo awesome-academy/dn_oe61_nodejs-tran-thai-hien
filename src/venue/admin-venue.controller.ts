@@ -19,6 +19,8 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ApiResponseGetVenue } from 'src/swagger/examples/venues/get-venue.example';
 import { ApiResponseUpdateStatusVenue } from 'src/swagger/examples/venues/update-status-venue.example';
 import { ApiResponseGetDetailVenues } from 'src/swagger/examples/venues/get-detail-venue.example';
+import { StatusVenueUpdateBulkRequest } from './dto/requests/status-venue-update-bulk.request';
+import { ApiResponseUpdateStatusVenueBulk } from 'src/swagger/examples/venues/update-status-venue-bulk.example';
 @ApiTags('admin-venues')
 @Controller('admin/venues')
 export class AdminVenueController {
@@ -84,5 +86,13 @@ export class AdminVenueController {
   @Get(':id')
   async findDetailVenue(@Param('id', ParseIntPipe) venueId: number) {
     return await this.venueService.findDetailVenue(venueId);
+  }
+  @ApiResponseUpdateStatusVenueBulk()
+  @Patch('/status')
+  async changeStatusVenuesBulk(
+    @CurrentUser() user: AccessTokenPayload,
+    @Body() dto: StatusVenueUpdateBulkRequest,
+  ) {
+    return await this.venueService.changeStatusVenueBulk(user, dto);
   }
 }

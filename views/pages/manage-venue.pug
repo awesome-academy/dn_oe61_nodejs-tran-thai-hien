@@ -1,0 +1,129 @@
+extends ../layouts/layout.pug
+block content
+  .container-fluid.py-4
+
+    .d-flex.flex-wrap.align-items-center.justify-content-between.mb-3.gap-2
+      .input-group.input-group-sm.search-box(style="max-width: 360px;")
+        span.input-group-text.bg-white.border-end-0
+          i.fas.fa-search.text-muted
+        input#inputSearch.form-control.border-start-0(type="text", placeholder="Search venues by name...")
+      select#pageSizeSelect.form-select.form-select-sm(style="width: 140px;")
+        option 10 per page
+        option 20 per page
+        option 30 per page
+        option 50 per page  
+    //- Venues Table
+    .card.shadow-sm
+      .card-body.p-0
+        table.table.align-middle.mb-0
+          thead.table-light
+            tr
+              th
+                input#select-all(type="checkbox")
+              th(scope="col") ID
+              th(scope="col") Name
+              th(scope="col") Owner
+              th(scope="col") Street
+              th(scope="col") City
+              th(scope="col") Status
+              th(scope="col") Actions
+          tbody
+            each venue in payload.users || []
+              tr
+                td
+                  input.venue-checkbox(type="checkbox", value=venue.id)
+                td #{venue.id}
+                td #{venue.name}
+                td #{venue.ownerName}
+                td #{venue.street}
+                td #{venue.city}
+                td
+              
+                  span.badge(
+                    class={
+                      'bg-warning text-dark': venue.status === 'PENDING',
+                      'bg-success': venue.status === 'APPROVED',
+                      'bg-danger': venue.status === 'REJECTED'
+                    }
+                  ) #{venue.status}
+                td
+           
+                  button.btn.btn-outline-info.btn-sm.me-1.view-venue-btn(type="button", data-venue-id=venue.id) View
+                  if payload.currentUser.role === 'ADMIN' || payload.currentUser.role === 'MODERATOR'
+                  
+                    button.btn.btn-outline-danger.btn-sm.me-1.block-venue-btn(type="button", data-venue-id=venue.id) Block
+                 
+                    button.btn.btn-outline-success.btn-sm.approve-venue-btn(type="button", data-venue-id=venue.id) Approve
+    .mt-3
+      button#previewUpdatesBtn.btn.btn-warning(type="button", style="display:none") Preview Updates
+      button#clearChangesBtn.btn.btn-secondary(type="button", style="margin-left: 10px; display:none") Clear All Changes
+    div#confirmActionModal.modal.fade(tabindex='-1')
+      div.modal-dialog
+        div.modal-content
+          div.modal-header
+            h5#confirmActionTitle.modal-title Confirm Action
+            button.btn-close(type='button', data-bs-dismiss='modal', aria-label='Close')
+          div.modal-body
+            p#confirmActionMessage Are you sure?
+            div#blockReasonContainer(style="display:none; margin-top: 1rem;")
+              label(for="blockReason") Reason for blocking:
+              textarea#blockReason.form-control(rows="3", placeholder="Enter reason here...")
+          div.modal-footer
+            button.btn.btn-secondary(type='button', data-bs-dismiss='modal') Cancel
+            button#confirmActionBtn.btn(type='button') Confirm
+    div#updatePreviewModal.modal.fade(tabindex="-1")
+      div.modal-dialog.modal-lg
+        div.modal-content
+          div.modal-header
+            h5.modal-title Update Preview
+            button.btn-close(type="button", data-bs-dismiss="modal", aria-label="Close")
+          div.modal-body
+            table.table.table-bordered.mb-0
+              thead
+                tr
+                  th Select
+                  th Venue ID
+                  th Name
+                  th Changes
+              tbody#previewTableBody
+          div.modal-footer
+            button.btn.btn-secondary(type="button", data-bs-dismiss="modal") Cancel
+            button#confirmUpdateBtn.btn.btn-primary(type="button") Confirm Updates
+    div#venueDetailModal.modal.fade(tabindex="-1")
+      div.modal-dialog.modal-lg
+        div.modal-content
+          div.modal-header
+            h5.modal-title Venue Details
+            button.btn-close(type="button", data-bs-dismiss="modal", aria-label="Close")
+          div.modal-body
+            p
+              strong ID:
+              span#venueDetailId
+            p
+              strong Name:
+              span#venueDetailName
+            p
+              strong Owner:
+              span#venueDetailOwner
+            p
+              strong Street:
+              span#venueDetailStreet
+            p
+              strong City:
+              span#venueDetailCity
+            p
+              strong Status:
+              span#venueDetailStatus
+            p
+              strong Spaces:
+            ul#venueSpacesList
+          div.modal-footer
+            button.btn.btn-secondary(type="button", data-bs-dismiss="modal") Close
+
+    //- Pagination
+    .mt-3
+      nav#paginationContainer
+
+  #currentUserConfig(data-current-user=payload.currentUser style="display:none;")
+  script(src="/js/manage-venues.js")
+  script(src="/vendor/toastify/toastify.js")

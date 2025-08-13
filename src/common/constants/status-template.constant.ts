@@ -1,0 +1,7 @@
+export const BOOKING_STATUSES = [
+  'CANCELED',
+  'PENDING',
+  'CONFIRMED',
+  'REJECTED',
+  'COMPLETED',
+];

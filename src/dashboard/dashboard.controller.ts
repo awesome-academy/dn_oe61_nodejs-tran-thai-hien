@@ -62,4 +62,17 @@ export class DashboardController {
       currentUser: user,
     };
   }
+  @ApiExcludeEndpoint()
+  @Get('venues/:id')
+  @Render('pages/detail-venue')
+  detailVenue(@CurrentUser() user: AccessTokenPayload) {
+    const socketUrl = this.configService.get<string>(
+      'socket.url',
+      SOCKET_URL_DEFAULT,
+    );
+    return {
+      socketUrl: socketUrl,
+      currentUser: user,
+    };
+  }
 }

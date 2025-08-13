@@ -196,6 +196,7 @@
   "venue":{
     "nameExists":"Name venue already exists.",
     "missingAmenities":"Some amenities do not exist.",
+    "missingVenues":"Some venues do not exist",
     "notFound":"Venue not found.",
     "action":{
       "create":{
