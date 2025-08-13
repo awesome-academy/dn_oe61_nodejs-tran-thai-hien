@@ -53,7 +53,6 @@ document.addEventListener('DOMContentLoaded', () => {
           (u) => u.id != currentUserId,
         );
         renderUsers(filteredUsers);
-
         if (!activeUserId && filteredUsers.length > 0) {
           selectUser(filteredUsers[0]);
         } else if (filteredUsers.length === 0) {

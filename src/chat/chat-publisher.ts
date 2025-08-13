@@ -7,7 +7,6 @@ import { ChatEvent } from './enums/chat-event.enum';
 export class ChatPublisher {
   constructor(private readonly eventEmitter: EventEmitter2) {}
   publishCreateMessage(payload: MessagePayloadDto): void {
-    console.log('Create publish');
     this.eventEmitter.emit(ChatEvent.CREATE_MESSAGE, payload);
   }
 }

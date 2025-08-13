@@ -1,18 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { ChatMessage, Prisma } from '@prisma/client';
+import { I18nService } from 'nestjs-i18n';
+import { AccessTokenPayload } from 'src/auth/interfaces/access-token-payload';
+import { getPaginationData } from 'src/common/helpers/paginate.helper';
+import { getUserOrFail } from 'src/common/helpers/user.helper';
+import { PaginationResult } from 'src/common/interfaces/paginate-type';
+import { OwnerLite } from 'src/common/interfaces/type';
 import { CustomLogger } from 'src/common/logger/custom-logger.service';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { MessageCreationRequestDto } from './dto/requests/message-creation-request.dto';
-import { I18nService } from 'nestjs-i18n';
-import { ChatMessage, Prisma } from '@prisma/client';
 import { INCLUDE_CHAT_SUMMARY } from './constants/includes.constant';
-import { OwnerLite } from 'src/common/interfaces/type';
-import { ChatSummaryResponseDto } from './dto/responses/chat-summary-response.dto';
-import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { AccessTokenPayload } from 'src/auth/interfaces/access-token-payload';
-import { getUserOrFail } from 'src/common/helpers/user.helper';
 import { ChatQueryDto } from './dto/requests/chat-query.dto';
-import { getPaginationData } from 'src/common/helpers/paginate.helper';
-import { PaginationResult } from 'src/common/interfaces/paginate-type';
+import { MessageCreationRequestDto } from './dto/requests/message-creation-request.dto';
+import { ChatSummaryResponseDto } from './dto/responses/chat-summary-response.dto';
 
 @Injectable()
 export class ChatService {

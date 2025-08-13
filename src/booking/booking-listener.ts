@@ -15,7 +15,9 @@ import { BookingStatusPayloadDto } from 'src/mail/dto/booking-confirmed-payload.
 import { BookingPaymentExpiredPayloadDto } from 'src/mail/dto/booking-payment-expired-payload.dto';
 import { BookingPaymentSuccessPayloadDto } from 'src/mail/dto/booking-payment-success.dto';
 import { MailService } from 'src/mail/mail.service';
+import { StatusPaymentNotiPayload } from 'src/notification/dto/payloads/status-payment-noti-payload';
 import { JobNotificationKey } from 'src/notification/enums/job-notification-key';
+import { NotificationPublisher } from 'src/notification/notification-publisher';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { BookingEvent } from './constants/booking-event.enum';
 import { INCLUDE_PAYLOAD_EMAIL_BOOKING } from './constants/include.constant';
@@ -31,6 +33,7 @@ export class BookingListener {
     private readonly i18nService: I18nService,
     private readonly mailService: MailService,
     private readonly configService: ConfigService,
+    private readonly notificationPublisher: NotificationPublisher,
     @InjectQueue('booking') private readonly queue: Queue,
   ) {}
   @OnEvent(BookingEvent.BOOKING_CONFIRMED)
@@ -108,6 +111,18 @@ export class BookingListener {
       booking: bookingUpdated,
       payment: paymentCreated,
     };
+    const notifiPaymentSuccessPayload: StatusPaymentNotiPayload = {
+      bookingId: bookingUpdated.id,
+      paymentId: paymentCreated.id,
+      amount: paymentCreated.amount,
+      method: paymentCreated.method,
+      payerName: bookingUpdated.user.name,
+      paidAt: paymentCreated.createdAt,
+      type: PaymentStatus.PAID,
+    };
+    this.notificationPublisher.publishStatusPayment(
+      notifiPaymentSuccessPayload,
+    );
     await this.mailService.sendBookingPaymentSuccess(
       bookingPaymentSucessPayload,
     );
@@ -154,6 +169,17 @@ export class BookingListener {
       this.loggerService.debug(
         `Booking updated:: ${JSON.stringify(bookingUpdated)}`,
       );
+      const reason = this.i18nService.translate(
+        'common.notification.message.expiredPayment',
+      );
+      const notifyPaymentFailed: StatusPaymentNotiPayload = {
+        bookingId: bookingUpdated.id,
+        payerName: bookingUpdated.user.name,
+        reason,
+        paidAt: bookingUpdated.updatedAt,
+        type: PaymentStatus.FAILED,
+      };
+      this.notificationPublisher.publishStatusPayment(notifyPaymentFailed);
       emailPayload = {
         to: bookingUpdated.user.email,
         userName: bookingUpdated.user.name,

@@ -73,6 +73,7 @@ import { UserProfileResponse } from './dto/responses/user-profile.response';
 import { UserSummaryDto } from './dto/responses/user-summary.dto';
 import { VerifyUserResponseDto } from './dto/responses/verify-email.dto';
 import { UserSummaryType } from './interfaces/user-summary.type';
+import { AdminModeratorSummaryResponseDto } from './dto/responses/admin-moderator-summary-response.dto';
 @Injectable()
 export class UserService {
   constructor(
@@ -764,7 +765,31 @@ export class UserService {
       this.buildUserSummaryResponse(userById),
     );
   }
-
+  async findAllAdminsAndModerators(): Promise<
+    AdminModeratorSummaryResponseDto[]
+  > {
+    try {
+      const results = await this.prismaService.user.findMany({
+        where: {
+          role: {
+            name: { in: [Role.ADMIN, Role.MODERATOR] },
+          },
+          status: UserStatus.ACTIVE,
+        },
+      });
+      return results.map((user) => this.buildAdminModeratorResponse(user));
+    } catch (error) {
+      logAndThrowPrismaClientError(
+        error as Error,
+        UserService.name,
+        'user',
+        'findAllAdminsAndModerators',
+        'failed',
+        this.loggerService,
+        this.i18nService,
+      );
+    }
+  }
   private buildUserSummaryResponse(user: User): UserSummaryDto {
     return {
       id: user.id,
@@ -812,12 +837,21 @@ export class UserService {
     userData: User & { profile: Profile | null },
   ): UserProfileResponse {
     return {
+      id: userData.id,
       name: userData.name,
       email: userData.email,
       avatar: userData.profile?.avatar ?? '',
       address: userData.profile?.address ?? '',
       phone: userData.profile?.phone ?? '',
       bio: userData.profile?.bio ?? '',
+    };
+  }
+  private buildAdminModeratorResponse(
+    data: User,
+  ): AdminModeratorSummaryResponseDto {
+    return {
+      id: data.id,
+      name: data.name,
     };
   }
 }

@@ -2,11 +2,15 @@ nav.navbar.navbar-expand-lg.navbar-custom
   .container-fluid
     button#sidebarToggle.btn.btn-primary.d-md-none(type="button")
       i.fas.fa-bars
+    #socketStatus.ms-2.me-auto.text-nowrap(style="display: none; font-size: 0.9rem;")
     .navbar-nav.ms-auto.d-flex.align-items-center
       // Notification Bell
-      a#notificationBell.nav-link.position-relative.me-3(href="#")
+      a#notificationBell.nav-link.position-relative.me-3(href="#", data-bs-toggle="dropdown", role="button")
         i.fas.fa-bell
-        span.position-absolute.top-10.start-120.translate-middle.badge.rounded-pill.bg-danger 3
+        span#notificationBadge.position-absolute.top-10.start-120.translate-middle.badge.rounded-pill.bg-danger 0
+        ul#notificationDropdown.dropdown-menu.dropdown-menu-end.mt-2
+          li.empty-state.text-center.py-2 No notifications
+
       // User Dropdown
       .nav-item.dropdown
         a.nav-link.dropdown-toggle(href="#", role="button", data-bs-toggle="dropdown")
@@ -17,3 +21,8 @@ nav.navbar.navbar-expand-lg.navbar-custom
           li: a.dropdown-item(href="#") Settings
           li: hr.dropdown-divider
           li: a.dropdown-item(href="#") Logout
+
+
+  // Hidden socket URL config
+  #socketConfig(data-socket-url=payload.socketUrl style="display:none")
+

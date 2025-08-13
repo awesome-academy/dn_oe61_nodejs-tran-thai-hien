@@ -1,13 +1,14 @@
-import { Module } from '@nestjs/common';
-import { ChatPublisher } from './chat-publisher';
-import { ChatListener } from './chat-listener';
-import { ChatGateway } from './chat-gateway';
 import { BullModule } from '@nestjs/bullmq';
-import { QUEUE_CHAT } from 'src/common/constants/queue.constant';
-import { ChatService } from './chat.service';
-import { ChatController } from './chat.controller';
+import { forwardRef, Module } from '@nestjs/common';
 import { AuthModule } from 'src/auth/auth.module';
+import { QUEUE_CHAT } from 'src/common/constants/queue.constant';
+import { NotificationModule } from 'src/notification/notification.module';
+import { ChatGateway } from './chat-gateway';
+import { ChatListener } from './chat-listener';
 import { ChatProcessor } from './chat-processor';
+import { ChatPublisher } from './chat-publisher';
+import { ChatController } from './chat.controller';
+import { ChatService } from './chat.service';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { ChatProcessor } from './chat-processor';
     BullModule.registerQueue({
       name: QUEUE_CHAT,
     }),
+    forwardRef(() => NotificationModule),
   ],
   providers: [
     ChatGateway,
