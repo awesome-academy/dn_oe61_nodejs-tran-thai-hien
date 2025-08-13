@@ -10,6 +10,7 @@ import {
 import { i18nValidationMessage } from 'nestjs-i18n';
 import { SortDirection } from 'src/common/enums/query.enum';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { BookingStatus } from '@prisma/client';
 
 export class BookingFilterRequestDto {
   @ApiPropertyOptional({
@@ -53,7 +54,28 @@ export class BookingFilterRequestDto {
     }),
   })
   endDate?: Date;
-
+  @ApiPropertyOptional({
+    description: 'Filter bookings by statuses',
+    enum: BookingStatus,
+    isArray: true,
+    example: ['PENDING', 'CONFIRMED'],
+    type: String,
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null) return undefined;
+    if (Array.isArray(value)) {
+      return value.map((v) => String(v).toUpperCase().replace(/\s+/g, '_'));
+    }
+    return String(value).toUpperCase().replace(/\s+/g, '_');
+  })
+  @IsEnum(BookingStatus, {
+    each: true,
+    message: i18nValidationMessage('common.validation.isEnum', {
+      field: 'status',
+    }),
+  })
+  statuses?: BookingStatus[];
   @ApiPropertyOptional({
     description: 'Page number for pagination (min 1)',
     example: 1,

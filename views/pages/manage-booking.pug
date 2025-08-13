@@ -1,0 +1,85 @@
+extends ../layouts/layout.pug
+
+block content
+  .container-fluid.py-4
+    .d-flex.align-items-center.justify-content-between.mb-3.gap-3
+      //- Date filters group
+      .date-filter-group.flex
+        .form-group
+          label(for="startDate") Start Date
+          input#startDate.form-control.form-control-sm(type="date")
+        .form-group
+          label(for="endDate") End Date
+          input#endDate.form-control.form-control-sm(type="date")
+      select#sortBySelect
+        option(value='') Sắp xếp theo
+        option(value='startTime_asc') Thời gian bắt đầu ↑
+        option(value='startTime_desc') Thời gian bắt đầu ↓
+        option(value='totalPrice_asc') Giá ↑
+        option(value='totalPrice_desc') Giá ↓
+    
+    .input-group.input-group-sm.search-box(style="max-width: 460px;")
+      span.input-group-text.bg-white.border-end-0
+        i.fas.fa-search.text-muted
+      input#inputSearch.form-control(type="search" placeholder="Search name space...")
+      //- Page size selector
+    .d-flex.justify-content-between.mb-3.align-items-center.mt-3
+        #statusFilterContainer.d-flex.flex-wrap.align-items-center.gap-2.mb-3
+        .div
+          label.form-label.mb-0.me-2(for="pageSizeSelect") Items per page:
+          select#pageSizeSelect.form-select.form-select-sm(style="width: 100px;")
+            option(value="10") 10
+            option(value="20") 20
+            option(value="30") 30
+            option(value="50") 50
+    //- Bookings Table
+    .card.shadow-sm
+      .card-body.p-0
+        table.table.table-striped.table-hover.align-middle.mb-0
+          thead.table-light
+            tr
+              th
+                input#select-all(type="checkbox")
+              th(scope="col") ID
+              th(scope="col") Space Name
+              th(scope="col") Type
+              th(scope="col") Address
+              th(scope="col") Start - End Time
+              th(scope="col") Total Price
+              th(scope="col") Owner
+              th(scope="col") Status
+              th(scope="col") Actions
+          tbody
+            each booking in payload.data || []
+              tr
+                td
+                  input.booking-checkbox(type="checkbox", value=booking.id)
+                td #{booking.id}
+                td
+                  strong #{booking.space.name}
+                  br
+                  small #{booking.space.venueName} - #{booking.space.type}
+                td #{booking.space.type}
+                td #{booking.space.address}
+                td #{new Date(booking.startTime).toLocaleString()} - #{new Date(booking.endTime).toLocaleString()}
+                td #{booking.totalPrice.toLocaleString()} VND
+                td #{booking.user.name}
+                td
+                  - var statusClass = '';
+                  if booking.status === 'PENDING'
+                    - statusClass = 'bg-warning text-dark';
+                  else if booking.status === 'CONFIRMED'
+                    - statusClass = 'bg-success';
+                  else if booking.status === 'CANCELLED' || booking.status === 'REJECTED'
+                    - statusClass = 'bg-danger';
+                  span.badge(class=statusClass)= booking.status
+                td
+                  button.btn.btn-outline-info.btn-sm.me-1.view-booking-btn(type="button", data-booking-id=booking.id) View
+    //- Pagination
+    .mt-3
+      nav#paginationContainer
+  #currentUserConfig(data-current-user=payload.currentUser, style="display:none;")
+  #bookingStatutesConfig(data-statuses=payload.statuses,style="display:none;")
+  //- Scripts
+  script(src="/js/manage-bookings.js")
+  script(src="/vendor/toastify/toastify.js")

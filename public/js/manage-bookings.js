@@ -7,7 +7,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const endDateInput = document.getElementById('endDate'); // input type="date"
   const sortBySelect = document.getElementById('sortBySelect');
   const statusContainer = document.getElementById('statusFilterContainer');
-
+  const statusesEl = document.getElementById('bookingStatutesConfig');
+  const statuses = statusesEl ? JSON.parse(statusesEl.dataset.statuses) : null;
+  console.log('Statustes:: ', statuses);
   let currentPage = 1;
   let pageSize = parseInt(pageSizeSelect?.value, 10) || 10;
   let bookings = [];
@@ -51,13 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
         throw new Error(json.message || 'Failed to fetch status counts');
       const counts = json.payload.counts;
 
-      const allStatuses = [
-        'CANCELED',
-        'PENDING',
-        'CONFIRMED',
-        'REJECTED',
-        'COMPLETED',
-      ];
+      const allStatuses = statuses;
       statusContainer.innerHTML = '';
 
       for (const status of allStatuses) {
@@ -162,8 +158,8 @@ document.addEventListener('DOMContentLoaded', () => {
               state.startDate,
               state.endDate,
               selectedStatuses,
-              sortBy,
-              direction,
+              state.sortBy,
+              state.direction,
             );
           },
         );
@@ -293,8 +289,8 @@ document.addEventListener('DOMContentLoaded', () => {
       state.startDate,
       state.endDate,
       selectedStatuses,
-      sortBy,
-      direction,
+      state.sortBy,
+      state.direction,
     );
   });
   if (sortBySelect) {
@@ -304,11 +300,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const allowedFields = ['startTime', 'totalPrice'];
       const allowedDirs = ['asc', 'desc'];
       if (allowedFields.includes(field) && allowedDirs.includes(dir)) {
-        sortBy = field;
-        direction = dir;
+        state.sortBy = field;
+        state.direction = dir;
       } else {
-        sortBy = '';
-        direction = '';
+        state.sortBy = '';
+        state.direction = '';
       }
       fetchBookings(
         currentPage,
@@ -317,8 +313,8 @@ document.addEventListener('DOMContentLoaded', () => {
         state.startDate,
         state.endDate,
         selectedStatuses,
-        sortBy,
-        direction,
+        state.sortBy,
+        state.direction,
       );
     });
   }
@@ -354,8 +350,8 @@ document.addEventListener('DOMContentLoaded', () => {
       state.startDate,
       state.endDate,
       selectedStatuses,
-      sortBy,
-      direction,
+      state.sortBy,
+      state.direction,
     );
     fetchAndRenderStatusCounts(state.keySearch, state.startDate, state.endDate);
   }

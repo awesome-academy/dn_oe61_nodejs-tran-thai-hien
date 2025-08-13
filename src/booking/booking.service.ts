@@ -71,6 +71,8 @@ import { BookingInfoType } from './interfaces/booking-summary.type';
 import { BookingCancelPayloadDto } from './dto/requests/booking-cancel-payload';
 import { NotificationPublisher } from 'src/notification/notification-publisher';
 import { BookingStatusNotiPayload } from 'src/notification/dto/payloads/create-booking-noti-payload';
+import { buildDataRange } from 'src/common/helpers/prisma.helper';
+import { BookingStatusCountDto } from './dto/responses/bookig-status-count.response';
 
 @Injectable()
 export class BookingService {
@@ -433,7 +435,7 @@ export class BookingService {
   async findBookings(
     filter: BookingFilterRequestDto,
   ): Promise<PaginationResult<BookingInfoResponse>> {
-    const { page, pageSize, sortBy, direction } = filter;
+    const { page, pageSize, sortBy, direction, statuses } = filter;
     const fieldsValidEnum = Prisma.BookingScalarFieldEnum;
     const sortFieldsValid = Object.values(fieldsValidEnum) as readonly string[];
     const fieldDefault = fieldsValidEnum.startTime;
@@ -447,7 +449,13 @@ export class BookingService {
       page,
       pageSize,
     };
-    const queryOptions = this.buildBookingsQuery(filter, sort, null);
+    const statusesArray: BookingStatus[] = Array.isArray(statuses)
+      ? statuses.filter((s): s is BookingStatus => s !== undefined)
+      : statuses !== undefined
+        ? [statuses]
+        : [];
+    const conditionsExtra = statuses ? { status: { in: statusesArray } } : {};
+    const queryOptions = this.buildBookingsQuery(filter, sort, conditionsExtra);
     return this.getPaginatedBookings(
       paginationParams,
       queryOptions,
@@ -603,6 +611,43 @@ export class BookingService {
     );
     return Array.from(ownerAndManagersSet);
   }
+  async getBookingStatusCount(
+    filter: BookingFilterRequestDto,
+  ): Promise<BaseResponse<BookingStatusCountDto>> {
+    const { startDate, endDate, spaceName } = filter;
+    const filterDate = buildDataRange(startDate, endDate);
+    const where = {
+      ...(filterDate ? { startTime: filterDate } : {}),
+      ...(spaceName ? { space: { name: { contains: spaceName } } } : {}),
+    };
+    try {
+      const results = await this.prismaService.booking.groupBy({
+        by: ['status'],
+        where,
+        _count: {
+          status: true,
+        },
+      });
+      const counts = {};
+      for (const item of results) {
+        counts[item.status] = Number(item._count.status);
+      }
+      const countsStatusResponse: BookingStatusCountDto = {
+        counts,
+      };
+      return buildBaseResponse(StatusKey.SUCCESS, countsStatusResponse);
+    } catch (error) {
+      logAndThrowPrismaClientError(
+        error as Error,
+        BookingService.name,
+        'booking',
+        'getBookingStatusCount',
+        StatusKey.FAILED,
+        this.loggerService,
+        this.i18nService,
+      );
+    }
+  }
   private calculateBookingPrice(
     startTime: Date,
     endTime: Date,
@@ -675,6 +720,7 @@ export class BookingService {
         ),
       };
     } catch (exception) {
+      this.loggerService.error('Error Detail:: ', (exception as Error).stack);
       logAndThrowPrismaClientError(
         exception as Error,
         BookingService.name,
