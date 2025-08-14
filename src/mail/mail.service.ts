@@ -26,6 +26,9 @@ import { BookingRejectedPayloadDto } from './dto/booking-rejected-payload.dto';
 import { BookingPaymentSuccessPayloadDto } from './dto/booking-payment-success.dto';
 import { BookingPaymentExpiredPayloadDto } from './dto/booking-payment-expired-payload.dto';
 import { BookingCanceledPayloadDto } from './dto/booking-canceled-payload.dto';
+import { AuthService } from 'src/auth/auth.service';
+import { ViewBookingTokenPayload } from 'src/auth/interfaces/view-booking-token.payload';
+import { CustomLogger } from 'src/common/logger/custom-logger.service';
 
 @Injectable()
 export class MailService {
@@ -33,6 +36,8 @@ export class MailService {
     private readonly mailerService: MailerService,
     private readonly configService: ConfigService,
     private readonly i18nService: I18nService,
+    private readonly authService: AuthService,
+    private readonly loggerService: CustomLogger,
   ) {}
   async sendUserMail(mailPayload: MailPayloadDto) {
     try {
@@ -77,6 +82,10 @@ export class MailService {
       const subject = `${BOOKING_REQUEST} for ${payload.booking.space.name}`;
       const startTime = formatDateTime(payload.booking.startTime);
       const endTime = formatDateTime(payload.booking.endTime);
+      const bookingLink = await this.generateLinkViewBooking(
+        payload.booking.id,
+        payload.booking.userId,
+      );
       await this.mailerService.sendMail({
         to: payload.to,
         subject: subject,
@@ -86,6 +95,7 @@ export class MailService {
           spaceName: payload.booking.space.name,
           startTime: startTime,
           endTime: endTime,
+          bookingLink,
         },
       });
     } catch (error) {
@@ -108,6 +118,10 @@ export class MailService {
       const expiredAt = payload?.expiredAt
         ? formatDateTime(new Date(payload.expiredAt * 1000))
         : null;
+      const bookingLink = await this.generateLinkViewBooking(
+        payload.booking.id,
+        payload.booking.userId,
+      );
       await this.mailerService.sendMail({
         to: payload.to,
         subject: subject,
@@ -118,6 +132,7 @@ export class MailService {
           startTime: startTime,
           endTime: endTime,
           checkoutUrl: payload.paymentLink,
+          bookingLink,
           expiredAt: expiredAt ?? 'Không xác định',
         },
       });
@@ -168,7 +183,10 @@ export class MailService {
       const startTime = formatDateTime(payload.booking.startTime);
       const endTime = formatDateTime(payload.booking.endTime);
       const expiredAt = formatDateTime(new Date(payload.expiredAt * 1000));
-
+      const bookingLink = await this.generateLinkViewBooking(
+        payload.booking.id,
+        payload.booking.userId,
+      );
       const remainingTime = getRemainingTime(payload.expiredAt);
       await this.mailerService.sendMail({
         to: payload.to,
@@ -182,6 +200,7 @@ export class MailService {
           expiredAt: expiredAt,
           remainingTime: remainingTime,
           checkoutUrl: payload.paymentLink,
+          bookingLink,
         },
       });
     } catch (error) {
@@ -202,6 +221,10 @@ export class MailService {
       const startTime = formatDateTime(payload.booking.startTime);
       const endTime = formatDateTime(payload.booking.endTime);
       const method = payload.payment.method.replace('_', ' ');
+      const bookingLink = await this.generateLinkViewBooking(
+        payload.booking.id,
+        payload.booking.userId,
+      );
       await this.mailerService.sendMail({
         to: payload.to,
         subject: subject,
@@ -213,7 +236,7 @@ export class MailService {
           endTime: endTime,
           amount: payload.payment.amount,
           method: method,
-          bookingLink: '',
+          bookingLink,
         },
       });
     } catch (error) {
@@ -326,5 +349,25 @@ export class MailService {
       });
     }
     return result;
+  }
+  private async generateLinkViewBooking(
+    bookingId: number,
+    userId: number,
+  ): Promise<string> {
+    const payload: ViewBookingTokenPayload = {
+      bookingId,
+      userId,
+    };
+    try {
+      const baseUrl = this.configService.get<string>('app.url');
+      const token = await this.authService.generateViewBookingToken(payload);
+      return `${baseUrl}/bookings/${bookingId}?token=${token}`;
+    } catch (error) {
+      this.loggerService.error(
+        `Failed to generate view booking link (Booking ID: ${bookingId})`,
+        (error as Error).stack,
+      );
+      return '';
+    }
   }
 }

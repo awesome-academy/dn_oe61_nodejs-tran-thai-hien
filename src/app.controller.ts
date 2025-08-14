@@ -1,14 +1,16 @@
-import { Controller, Get, Res } from '@nestjs/common';
+import { Controller, Get, Res, UseFilters } from '@nestjs/common';
+import { Response } from 'express';
 import { AppService } from './app.service';
 import { AccessTokenPayload } from './auth/interfaces/access-token-payload';
 import { CurrentUser } from './common/decorators/current-user.decorator';
-import { Response } from 'express';
 import { Role } from './common/enums/role.enum';
+import { RedirectUnauthorizedFilter } from './common/filters/redirect-unauthorized-exception.filter';
 
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
   @Get('/')
+  @UseFilters(RedirectUnauthorizedFilter)
   root(@CurrentUser() user: AccessTokenPayload, @Res() res: Response) {
     if (
       user &&

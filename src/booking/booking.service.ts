@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -75,6 +76,10 @@ import { buildDataRange } from 'src/common/helpers/prisma.helper';
 import { BookingStatusCountDto } from './dto/responses/bookig-status-count.response';
 import { ConfirmBookingSmsPayload } from 'src/sms/dto/requests/confirm-booking-sms-payload';
 import { SmsPublisher } from 'src/sms/sms-publisher';
+import { Request } from 'express';
+import { extractTokenFromHeader } from 'src/common/utils/jwt.util';
+import { AuthService } from 'src/auth/auth.service';
+import { ViewBookingTokenPayload } from 'src/auth/interfaces/view-booking-token.payload';
 
 @Injectable()
 export class BookingService {
@@ -88,6 +93,7 @@ export class BookingService {
     private readonly bookingPublisher: BookingPublisher,
     private readonly smsPublisher: SmsPublisher,
     private readonly notificationPublisher: NotificationPublisher,
+    private readonly authService: AuthService,
   ) {}
   async create(
     currentUser: AccessTokenPayload,
@@ -473,14 +479,42 @@ export class BookingService {
     );
   }
   async findDetail(
-    currentUser: AccessTokenPayload,
+    req: Request,
     bookingId: number,
+    tokenView?: string,
   ): Promise<BaseResponse<BookingSummaryResponseDto>> {
-    const userDetail = await getUserOrFail(
-      this.prismaService,
-      this.i18nService,
-      currentUser.sub,
-    );
+    let tokenFromHeader: string | undefined = '';
+    let tokenFromCookie: string | undefined = '';
+    try {
+      tokenFromHeader = extractTokenFromHeader(req);
+    } catch (err) {
+      this.loggerService.log(
+        'Extract token from header failed',
+        (err as Error).stack,
+      );
+      tokenFromHeader = '';
+    }
+    try {
+      tokenFromCookie = req.cookies['accessToken'] as string;
+    } catch (error) {
+      this.loggerService.log(
+        'Extract token from cokkie failed',
+        (error as Error).stack,
+      );
+      tokenFromCookie = '';
+    }
+    const token = tokenFromHeader || tokenFromCookie || tokenView;
+    if (!token)
+      throw new UnauthorizedException(
+        this.i18nService.translate('common.auth.unauthorized'),
+      );
+    let currentUser: AccessTokenPayload | undefined;
+    let bookingToken: ViewBookingTokenPayload | undefined;
+    if (tokenFromCookie || tokenFromHeader) {
+      currentUser = await this.authService.verifyToken(token);
+    } else {
+      bookingToken = await this.authService.verifyViewBookingToken(token);
+    }
     const bookingDetail = await this.prismaService.booking.findUnique({
       where: {
         id: bookingId,
@@ -500,11 +534,21 @@ export class BookingService {
       throw new NotFoundException(
         this.i18nService.translate('common.booking.notFound'),
       );
-    const isAdminAction = this.validRoleAction(currentUser.role as Role);
-    const isOwner = bookingDetail?.userId === userDetail.id;
-    const isManager = bookingDetail?.space.spaceManagers.some(
-      (manager) => manager.managerId === userDetail.id,
-    );
+    let isOwner = false;
+    let isAdminAction = false;
+    let isManager = false;
+    if (currentUser) {
+      isOwner = bookingDetail?.userId === currentUser.sub;
+    }
+    if (bookingToken) {
+      isOwner = bookingDetail?.userId === bookingToken.userId;
+    }
+    if (currentUser) {
+      isAdminAction = this.validRoleAction(currentUser.role as Role);
+      isManager = bookingDetail?.space.spaceManagers.some(
+        (manager) => manager.managerId === currentUser.sub,
+      );
+    }
     if (!(isAdminAction || isOwner || isManager))
       throw new ForbiddenException(
         this.i18nService.translate('common.auth.forbidden'),

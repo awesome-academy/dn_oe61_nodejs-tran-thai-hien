@@ -1,6 +1,9 @@
 extends ../layouts/layout.pug
 
 block content
+  #loading-overlay
+      .spinner-border.text-primary(role="status")
+          span.visually-hidden Loading...
   .container-fluid.py-4
     //- Search & Filter
     .d-flex.flex-wrap.align-items-center.justify-content-between.mb-3.gap-2

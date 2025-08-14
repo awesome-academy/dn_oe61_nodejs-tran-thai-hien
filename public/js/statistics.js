@@ -153,6 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   async function loadStatistics() {
     try {
+      LoadingOverlay.show();
       const start = startDateInput.value;
       const end = endDateInput.value;
       const venueId = venueSelectEl.value;
@@ -244,6 +245,8 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.error('Load statistics error:', err);
       alert(err.message || 'Failed to load statistics');
+    } finally {
+      LoadingOverlay.hide();
     }
   }
 

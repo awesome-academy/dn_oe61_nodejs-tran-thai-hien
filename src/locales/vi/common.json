@@ -61,6 +61,7 @@
     "alreadyVerified": "Tài khoản đã được xác minh",
     "notVerified": "Tài khoản chưa được xác minh",
     "roleNotFound":"Không tìm thấy vai trò",
+    "tokenAlready":"Token đã được sử dụng hoặc không hợp lệ",
     "missingUsers":"Một vài người dùng không tồn tại",
     "status": {
       "pending": "Đang chờ xác thực",
@@ -394,7 +395,7 @@
       "newMessage":"Bạn có một tin nhắn mới từ {name} lúc {time}.",
       "paymentSuccess":"Booking (ID: {bookingId}) đã được thanh toán thành công bởi {payerName} với số tiền {amount} qua {method} vào lúc {time}.",
       "paymentFailed": "Booking (ID: {bookingId}) thuộc về người dùng {payerName} thanh toán không thành công. Lý do: {reason} vào lúc {time}.",
-      "expiredPayment": "Thanh toán cho booking (ID: {bookingId}) đã hết hạn vào lúc {time}."
+      "expiredPayment": "Thanh toán cho booking (ID: {bookingId}) đã hết hạn"
     }
   },
    "sms":{

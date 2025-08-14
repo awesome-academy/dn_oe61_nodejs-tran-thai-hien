@@ -94,6 +94,7 @@
   "user": {
     "notFound": "User not found",
     "alreadyVerified": "Account already verified",
+    "tokenAlready":"Token already exists",
     "notVerified": "Account not verified",
     "roleNotFound":"Role not found",
     "missingUsers":"Some user do not exist.",
@@ -403,7 +404,7 @@
       "newMessage":"You have a new message from {name} at {time}.",
       "paymentSuccess": "Booking (ID: {bookingId}) was successfully paid by {payerName} with the amount of {amount} via {method} at {time}.",
       "paymentFailed": "Booking (ID: {bookingId}) made by user {payerName} failed to process the payment. Reason: {reason} at {time}.",
-      "expiredPayment": "The payment for booking (ID: {bookingId}) expired at {time}."
+      "expiredPayment": "The payment for booking (ID: {bookingId}) expired"
     }
   }
   ,

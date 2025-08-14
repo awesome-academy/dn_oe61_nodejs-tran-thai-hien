@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   async function fetchAndRenderStatusCounts(keySearch, startDate, endDate) {
     try {
+      LoadingOverlay.show();
       const params = new URLSearchParams();
       if (keySearch) params.append('spaceName', keySearch);
       if (startDate) params.append('startDate', startDate);
@@ -94,6 +95,8 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.error('Error fetching status counts:', err);
       statusContainer.textContent = 'Failed to load status data';
+    } finally {
+      LoadingOverlay.hide();
     }
   }
 
@@ -108,6 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
     direction,
   ) {
     try {
+      LoadingOverlay.show();
       const statusFilter = Array.from(statuses);
       console.log('Status filteR:: ', statusFilter);
       const params = new URLSearchParams();
@@ -168,6 +172,8 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Fetch bookings error', err);
       tableBody.innerHTML =
         '<tr><td colspan="8" class="text-center text-danger">Unable to load booking list</td></tr>';
+    } finally {
+      LoadingOverlay.hide();
     }
   }
   function statusBadgeClass(status) {

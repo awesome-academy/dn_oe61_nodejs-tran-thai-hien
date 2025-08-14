@@ -185,6 +185,11 @@ export class BookingListener {
       );
       const reason = this.i18nService.translate(
         'common.notification.message.expiredPayment',
+        {
+          args: {
+            bookingId: bookingUpdated.id,
+          },
+        },
       );
       const notifyPaymentFailed: StatusPaymentNotiPayload = {
         bookingId: bookingUpdated.id,

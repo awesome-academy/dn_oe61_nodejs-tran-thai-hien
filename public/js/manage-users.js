@@ -52,6 +52,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   async function fetchUsers(currentPage, pageSize, search) {
     try {
+      LoadingOverlay.show();
       const res = await fetch(
         `/admin/users?page=${currentPage}&pageSize=${pageSize}&search=${search}`,
         {
@@ -87,6 +88,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.error('Fetch users error', err);
       tableBody.innerHTML =
         '<tr><td colspan="8" class="text-center text-danger">Không thể tải danh sách người dùng</td></tr>';
+    } finally {
+      LoadingOverlay.hide();
     }
   }
   fetchUsers(currentPage, pageSize, keySearch);

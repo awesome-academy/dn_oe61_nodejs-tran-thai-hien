@@ -1,0 +1,97 @@
+doctype html
+html(lang="en")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport" content="width=device-width, initial-scale=1.0")
+    title Booking Detail
+    link(rel="stylesheet", href="/vendor/bootstrap/bootstrap.min.css")
+    link(rel="stylesheet", href="/vendor/fontawesome/css/all.min.css")
+    style.
+      body {
+        background-color: #f4f6f9;
+        font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: #333;
+      }
+      .card {
+        max-width: 720px;
+        margin: 50px auto;
+        border-radius: 14px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+        overflow: hidden;
+        background-color: #fff;
+        transition: all 0.25s ease-in-out;
+      }
+      .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 24px rgba(0,0,0,0.15);
+      }
+      .card-header {
+        font-size: 1.6rem;
+        font-weight: 600;
+        background: linear-gradient(135deg, #1976d2, #1565c0);
+        color: #fff;
+        padding: 1rem 1.5rem;
+      }
+      .badge-status {
+        font-size: 0.85rem;
+        padding: 0.4em 0.75em;
+        border-radius: 6px;
+        text-transform: capitalize;
+        color: #fff !important;
+      }
+      .badge-warning-custom {
+        background-color: #ffc107;
+        color: #000 !important;
+      }
+      .list-group-item {
+        background-color: #f8f9fa;
+        border: none;
+        border-bottom: 1px solid #e0e0e0;
+      }
+      .list-group-item:last-child {
+        border-bottom: none;
+      }
+      strong {
+        color: #444;
+      }
+  body
+    .card
+      .card-header Booking Detail
+      .card-body
+        .row.mb-3
+          .col-md-6
+            strong.me-2 Space Name:
+            | #{payload.booking.space.name}
+          .col-md-6
+            strong.me-2 Booking Status:
+            span.badge-status(
+              class={
+                'badge-warning-custom': payload.booking.status === 'PENDING',
+                'bg-success': payload.booking.status === 'CONFIRMED',
+                'bg-danger': payload.booking.status === 'CANCELLED',
+                'bg-primary': payload.booking.status === 'COMPLETED'
+              }
+            ) #{payload.booking.status}
+        .row.mb-3
+          .col-md-6
+            strong.me-2 User Name:
+            | #{payload.booking.user.name}
+          .col-md-6
+            strong.me-2 Total Price:
+            | #{payload.booking.totalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
+        .row.mb-3
+          .col-md-6
+            strong.me-2 Start Time:
+            | #{new Date(payload.booking.startTime).toLocaleString()}
+          .col-md-6
+            strong.me-2 End Time:
+            | #{new Date(payload.booking.endTime).toLocaleString()}
+        .row.mb-3
+          .col-12
+            strong.me-2 Managers:
+            ul.list-group.list-group-flush
+              each manager in payload.booking.space.spaceManagers
+                li.list-group-item
+                  | Manager ID: #{manager.managerId} (#{new Date(manager.startDate).toLocaleDateString()} - #{manager.endDate ? new Date(manager.endDate).toLocaleDateString() : 'Present'})
+      .card-footer.text-center
+        a.btn.btn-secondary(href="/") Back to Home
