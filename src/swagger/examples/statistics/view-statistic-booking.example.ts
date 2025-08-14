@@ -5,7 +5,7 @@ import {
   ApiErrorConflict,
   ApiErrorInternal,
 } from 'src/swagger/decorators/swagger-error.decorator';
-import { SwaggerGetPaginatedResponse } from 'src/swagger/decorators/swagger-response.decorator';
+import { SwaggerGetResponse } from 'src/swagger/decorators/swagger-response.decorator';
 
 export function ApiResponseViewStatisticBooking() {
   const path = '/statistics/bookings';
@@ -14,7 +14,7 @@ export function ApiResponseViewStatisticBooking() {
       summary: 'Get statistics booking',
       description: 'Get statistics booking',
     }),
-    SwaggerGetPaginatedResponse(
+    SwaggerGetResponse(
       StatisticBookingResponseDto,
       'Get statistics bookings successfully',
       'Get statistics bookings successfully',

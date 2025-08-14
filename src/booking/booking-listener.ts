@@ -2,7 +2,7 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { OnEvent } from '@nestjs/event-emitter';
-import { BookingStatus, PaymentStatus, Prisma } from '@prisma/client';
+import { BookingStatus, PaymentStatus } from '@prisma/client';
 import { Queue } from 'bullmq';
 import { I18nService } from 'nestjs-i18n';
 import { REMINDER_BEFORE_EXPIRED_DEFAULT } from 'src/common/constants/time.constant';
@@ -88,7 +88,7 @@ export class BookingListener {
       throw new BadRequestException(
         this.i18nService.translate('common.booking.notFound'),
       );
-    const { bookingUpdated, paymentCreated } =
+    const { bookingUpdated, paymentUpdated } =
       await this.prismaService.$transaction(async (tx) => {
         await this.clearScheduleBooking(payload.bookingId);
         const bookingUpdated = await tx.booking.update({
@@ -96,28 +96,29 @@ export class BookingListener {
           data: { status: BookingStatus.COMPLETED },
           include: INCLUDE_PAYLOAD_EMAIL_BOOKING,
         });
-        const paymentData: Prisma.PaymentCreateInput = {
-          amount: payload.amount,
-          booking: { connect: { id: bookingUpdated.id } },
-          method: payload.method,
-          status: PaymentStatus.PAID,
-          paidAt: new Date(),
-        };
-        const paymentCreated = await tx.payment.create({ data: paymentData });
-        return { bookingUpdated, paymentCreated };
+        const paymentUpdated = await tx.payment.update({
+          where: {
+            bookingId: bookingDetail.id,
+          },
+          data: {
+            status: PaymentStatus.PAID,
+            paidAt: new Date(),
+          },
+        });
+        return { bookingUpdated, paymentUpdated };
       });
     const bookingPaymentSucessPayload: BookingPaymentSuccessPayloadDto = {
       to: bookingUpdated.user.email,
       booking: bookingUpdated,
-      payment: paymentCreated,
+      payment: paymentUpdated,
     };
     const notifiPaymentSuccessPayload: StatusPaymentNotiPayload = {
       bookingId: bookingUpdated.id,
-      paymentId: paymentCreated.id,
-      amount: paymentCreated.amount,
-      method: paymentCreated.method,
+      paymentId: paymentUpdated.id,
+      amount: paymentUpdated.amount,
+      method: paymentUpdated.method,
       payerName: bookingUpdated.user.name,
-      paidAt: paymentCreated.createdAt,
+      paidAt: paymentUpdated.paidAt ?? new Date(),
       type: PaymentStatus.PAID,
     };
     this.notificationPublisher.publishStatusPayment(
@@ -127,7 +128,7 @@ export class BookingListener {
       bookingPaymentSucessPayload,
     );
     this.loggerService.debug(
-      `Send email payment success:: ${JSON.stringify(paymentCreated)}`,
+      `Send email payment success:: ${JSON.stringify(paymentUpdated)}`,
     );
   }
   @OnEvent(BookingEvent.BOOKING_REMINDER)
@@ -157,15 +158,28 @@ export class BookingListener {
     await this.clearScheduleBooking(payload.bookingId);
     let emailPayload: BookingPaymentExpiredPayloadDto;
     try {
-      const bookingUpdated = await this.prismaService.booking.update({
-        where: {
-          id: payload.bookingId,
+      const { bookingUpdated } = await this.prismaService.$transaction(
+        async (tx) => {
+          const bookingUpdated = await tx.booking.update({
+            where: {
+              id: payload.bookingId,
+            },
+            data: {
+              status: BookingStatus.CANCELED,
+            },
+            include: INCLUDE_PAYLOAD_EMAIL_BOOKING,
+          });
+          await tx.payment.update({
+            where: {
+              bookingId: payload.bookingId,
+            },
+            data: {
+              status: PaymentStatus.FAILED,
+            },
+          });
+          return { bookingUpdated };
         },
-        data: {
-          status: BookingStatus.CANCELED,
-        },
-        include: INCLUDE_PAYLOAD_EMAIL_BOOKING,
-      });
+      );
       this.loggerService.debug(
         `Booking updated:: ${JSON.stringify(bookingUpdated)}`,
       );

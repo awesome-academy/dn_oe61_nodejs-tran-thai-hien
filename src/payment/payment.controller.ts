@@ -48,4 +48,11 @@ export class PaymentController {
   async findPaymentsHistory(@Query() query: PaymentFilterRequestDto) {
     return this.paymentService.history(query);
   }
+  @ApiBearerAuth('access-token')
+  @ApiResponseGetHistoryExample()
+  @HasRole(Role.ADMIN, Role.MODERATOR)
+  @Get('/status')
+  async getStatusPaymentCount(@Query() query: PaymentFilterRequestDto) {
+    return this.paymentService.getPaymentStatusCount(query);
+  }
 }

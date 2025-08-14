@@ -14,6 +14,17 @@ import { SortDirection } from 'src/common/enums/query.enum';
 
 export class PaymentFilterRequestDto {
   @ApiPropertyOptional({
+    description: 'Filter by space name',
+    example: 'Conference Room A',
+  })
+  @IsOptional()
+  @IsString({
+    message: i18nValidationMessage('common.validation.isString', {
+      field: 'spaceName',
+    }),
+  })
+  spaceName?: string;
+  @ApiPropertyOptional({
     description: 'Filter payments from this start date',
     type: String,
     format: 'date-time',
@@ -27,7 +38,6 @@ export class PaymentFilterRequestDto {
     }),
   })
   startDate?: Date;
-
   @ApiPropertyOptional({
     description: 'Filter payments up to this end date',
     type: String,
@@ -44,37 +54,49 @@ export class PaymentFilterRequestDto {
   endDate?: Date;
 
   @ApiPropertyOptional({
-    description: 'Payment method filter',
+    description: 'Filter payment by method',
     enum: PaymentMethod,
-    example: 'Bank Transfer',
+    isArray: true,
+    example: ['BANK TRANSFER', 'CREDIT CARD'],
+    type: String,
   })
   @IsOptional()
-  @Transform(({ value }) =>
-    value ? String(value).replace(' ', '_').toUpperCase() : null,
-  )
+  @Transform(({ value }) => {
+    if (value == null) return undefined;
+    if (Array.isArray(value)) {
+      return value.map((v) => String(v).toUpperCase().replace(/\s+/g, '_'));
+    }
+    return String(value).toUpperCase().replace(/\s+/g, '_');
+  })
   @IsEnum(PaymentMethod, {
-    message: i18nValidationMessage('common.validation.isEnum', {
-      field: 'method',
-    }),
-  })
-  method?: PaymentMethod;
-
-  @ApiPropertyOptional({
-    description: 'Payment status filter',
-    enum: PaymentStatus,
-    example: 'paid',
-  })
-  @IsOptional()
-  @Transform(({ value }) =>
-    value ? String(value).replace(' ', '_').toUpperCase() : null,
-  )
-  @IsEnum(PaymentStatus, {
+    each: true,
     message: i18nValidationMessage('common.validation.isEnum', {
       field: 'status',
     }),
   })
-  status?: PaymentStatus;
-
+  methods?: PaymentMethod[];
+  @ApiPropertyOptional({
+    description: 'Filter payments by statuses',
+    enum: PaymentStatus,
+    isArray: true,
+    example: ['PENDING', 'PAID'],
+    type: String,
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null) return undefined;
+    if (Array.isArray(value)) {
+      return value.map((v) => String(v).toUpperCase().replace(/\s+/g, '_'));
+    }
+    return String(value).toUpperCase().replace(/\s+/g, '_');
+  })
+  @IsEnum(PaymentStatus, {
+    each: true,
+    message: i18nValidationMessage('common.validation.isEnum', {
+      field: 'status',
+    }),
+  })
+  statuses?: PaymentStatus[];
   @ApiPropertyOptional({
     description: 'Page number for pagination',
     example: 1,

@@ -21,7 +21,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const result = await response.json();
         if (response.ok && result.success) {
           localStorage.setItem('currentUserId', result.data.id);
-          window.location.href = '/dashboard';
+          if (result.data.role == 'ADMIN' || result.data.role == 'MODERATOR') {
+            window.location.href = '/dashboard';
+          } else {
+            window.location.href = '/dashboard/chat';
+          }
         } else {
           let errorMsg = result.message || 'Đăng nhập thất bại!';
           if (result.details && Array.isArray(result.details)) {

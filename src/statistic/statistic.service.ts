@@ -1,22 +1,28 @@
 import { Injectable } from '@nestjs/common';
+import {
+  BookingStatus,
+  PaymentStatus,
+  UserStatus,
+  VenueStatus,
+} from '@prisma/client';
 import { I18nService } from 'nestjs-i18n';
 import { StatusKey } from 'src/common/enums/status-key.enum';
 import { logAndThrowPrismaClientError } from 'src/common/helpers/catch-error.helper';
 import { buildDataRange } from 'src/common/helpers/prisma.helper';
+import { BaseResponse } from 'src/common/interfaces/base-response';
 import { CustomLogger } from 'src/common/logger/custom-logger.service';
+import { buildBaseResponse } from 'src/common/utils/data.util';
 import { formatDateToSql } from 'src/common/utils/date.util';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { StatisticBookingFilterDto } from './dto/requests/statistic-booking-filter.dto';
-import { StatisticBookingResponseDto } from './dto/responses/statistic-booking-response.dto';
 import { StatisticRevenueFilterDto } from './dto/requests/statistic-revenue-filter.dto';
-import { BookingStatus, PaymentStatus } from '@prisma/client';
-import { BaseResponse } from 'src/common/interfaces/base-response';
-import { StatisticRevenueResponseDto } from './dto/responses/statistic-revenue-response.dto';
-import { buildBaseResponse } from 'src/common/utils/data.util';
 import { StatisticUserFilterDto } from './dto/requests/statistic-user-filter.dto';
-import { StatisticUserResponseDto } from './dto/responses/statistic-user-response.dto';
 import { TopBookingUserFilterDto } from './dto/requests/top-booking-user-filter.dto';
 import { TopVenueFilterDto } from './dto/requests/top-venue-filter.dto';
+import { StatisticBookingResponseDto } from './dto/responses/statistic-booking-response.dto';
+import { StatisticRevenueResponseDto } from './dto/responses/statistic-revenue-response.dto';
+import { StatisticSummaryResponseDto } from './dto/responses/statistic-summary-response.dto';
+import { StatisticUserResponseDto } from './dto/responses/statistic-user-response.dto';
 import { TopBookingUserResponseDto } from './dto/responses/top-booking-user-response.dto';
 import { TopVenueResponseDto } from './dto/responses/top-venue.dto';
 
@@ -306,6 +312,59 @@ export class StatisticService {
         StatisticService.name,
         'statistic',
         'findTopBookingUsers',
+        StatusKey.FAILED,
+        this.loggerServive,
+        this.i18nService,
+      );
+    }
+  }
+  async statisticSummary(): Promise<BaseResponse<StatisticSummaryResponseDto>> {
+    try {
+      const totalVenues = await this.prismaService.venue.count({
+        where: {
+          status: VenueStatus.APPROVED,
+          deletedAt: null,
+        },
+      });
+      const totalSpaces = await this.prismaService.space.count({
+        where: {
+          deletedAt: null,
+        },
+      });
+      const totalBookings = await this.prismaService.booking.count({
+        where: {
+          status: BookingStatus.COMPLETED,
+        },
+      });
+      const revenues = await this.prismaService.payment.aggregate({
+        where: {
+          status: PaymentStatus.PAID,
+        },
+        _sum: {
+          amount: true,
+        },
+      });
+      const totalRevenues = Number(revenues._sum.amount ?? 0);
+      const totalUsers = await this.prismaService.user.count({
+        where: {
+          status: UserStatus.ACTIVE,
+          isVerified: true,
+        },
+      });
+      const statisticResponse: StatisticSummaryResponseDto = {
+        totalVenues: Number(totalVenues),
+        totalBookings: Number(totalBookings),
+        totalRevenues,
+        totalSpaces: Number(totalSpaces),
+        totalUsers: Number(totalUsers),
+      };
+      return buildBaseResponse(StatusKey.SUCCESS, statisticResponse);
+    } catch (error) {
+      logAndThrowPrismaClientError(
+        error as Error,
+        StatisticService.name,
+        'statistics',
+        'statisticSummary',
         StatusKey.FAILED,
         this.loggerServive,
         this.i18nService,

@@ -1,6 +1,10 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Payment, PaymentMethod, Prisma } from '@prisma/client';
+import { Payment, PaymentMethod, PaymentStatus, Prisma } from '@prisma/client';
 import axios, { AxiosResponse } from 'axios';
 import { instanceToPlain } from 'class-transformer';
 import * as crypto from 'crypto';
@@ -8,10 +12,12 @@ import { I18nService } from 'nestjs-i18n';
 import { BookingPublisher } from 'src/booking/booking-publisher';
 import { PaymentPaidPayloadDto } from 'src/booking/dto/requests/payment-paid-payload';
 import { SortAndPaginationParamDto } from 'src/common/constants/sort-pagination.dto';
+import { StatusKey } from 'src/common/enums/status-key.enum';
 import { logAndThrowPrismaClientError } from 'src/common/helpers/catch-error.helper';
 import { queryWithPagination } from 'src/common/helpers/paginate.helper';
 import { ParseSingleSort } from 'src/common/helpers/parse-sort';
 import { buildDataRange } from 'src/common/helpers/prisma.helper';
+import { BaseResponse } from 'src/common/interfaces/base-response';
 import {
   FindOptions,
   PaginationParams,
@@ -19,13 +25,18 @@ import {
 } from 'src/common/interfaces/paginate-type';
 import { BookingLite, OwnerLite } from 'src/common/interfaces/type';
 import { CustomLogger } from 'src/common/logger/custom-logger.service';
+import { buildBaseResponse } from 'src/common/utils/data.util';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { INCLUDE_BOOKING_HISTORY } from './constants/include.constant.dto';
 import { PaymentHistoryType } from './constants/payment-history.type';
 import { PaymentCreationRequestDto } from './dto/requests/payment-creation-request.dto';
 import { PaymentFilterRequestDto } from './dto/requests/payment-filter-request.dto';
 import { PayOSPayloadDto } from './dto/requests/payos-payload.dto';
-import { PaymentHistoryResponseDto } from './dto/responses/payment-history-response.dto';
+import {
+  PaymentHistoryResponseDto,
+  SpaceInfo,
+} from './dto/responses/payment-history-response.dto';
+import { PaymentStatusCountDto } from './dto/responses/payment-status-count.response';
 import { PayOSCreatePaymentResponseDto } from './dto/responses/payos-creation-response.dto';
 import { PayOSWebhookDTO } from './dto/responses/payos-webhook.dto';
 import { PaymentCreationException } from './exceptions/payment-creation-exception';
@@ -39,6 +50,26 @@ export class PaymentService {
     private readonly i18nService: I18nService,
   ) {}
   async create(dto: PaymentCreationRequestDto) {
+    const bookingDetail = await this.prismaService.booking.findUnique({
+      where: {
+        id: dto.bookingId,
+      },
+    });
+    if (!bookingDetail)
+      throw new NotFoundException(
+        this.i18nService.translate('common.booking.notFound'),
+      );
+    const paymentData: Prisma.PaymentCreateInput = {
+      booking: {
+        connect: {
+          id: bookingDetail.id,
+        },
+      },
+      amount: dto.amount,
+      method: PaymentMethod.BANK_TRANSFER,
+      status: PaymentStatus.PENDING,
+      paidAt: null,
+    };
     try {
       const payload = {
         orderCode: dto.bookingId,
@@ -52,29 +83,35 @@ export class PaymentService {
       const endpoint = `${this.configService.get<string>('payOS.endpoint', '')}/payment-requests`;
       const clientId = this.configService.get<string>('payOS.clientId', '');
       const apiKey = this.configService.get<string>('payOS.apiKey', '');
-      const response: AxiosResponse<PayOSCreatePaymentResponseDto> =
-        await axios.post(
-          endpoint,
-          {
-            ...payload,
-            signature,
-          },
-          {
-            headers: {
-              'x-client-id': clientId,
-              'x-api-key': apiKey,
-              'Content-Type': 'application/json',
+      return await this.prismaService.$transaction(async (tx) => {
+        await tx.payment.create({ data: paymentData });
+        const response: AxiosResponse<PayOSCreatePaymentResponseDto> =
+          await axios.post(
+            endpoint,
+            {
+              ...payload,
+              signature,
             },
-          },
-        );
-      if (response.data.code !== '00') {
-        throw new PaymentCreationException(response.data.desc);
-      }
-      return response.data;
+            {
+              headers: {
+                'x-client-id': clientId,
+                'x-api-key': apiKey,
+                'Content-Type': 'application/json',
+              },
+            },
+          );
+        if (response.data.code !== '00') {
+          throw new PaymentCreationException(response.data.desc);
+        }
+        return response.data;
+      });
     } catch (error) {
-      console.error('Error Link:: ', (error as Error).stack);
-      const err = error as PaymentCreationException;
-      throw new PaymentCreationException(err.message);
+      this.loggerService.error('Error detail:: ', (error as Error).stack);
+      throw error instanceof PaymentCreationException
+        ? error
+        : new PaymentCreationException(
+            (error as PaymentCreationException).message,
+          );
     }
   }
   handleWebhook(payload: PayOSWebhookDTO) {
@@ -106,18 +143,75 @@ export class PaymentService {
   ): Promise<PaginationResult<PaymentHistoryResponseDto>> {
     const { sort, paginationParams } =
       this.getBuildSortAndPaginationParamPayments(query);
-    const { startDate, endDate, status, method } = query;
+    const { startDate, endDate, statuses, methods, spaceName } = query;
     const dateFilter = buildDataRange(startDate, endDate);
+    const statusesArray: PaymentStatus[] =
+      this.getStatusArrayByfilter(statuses);
+    const methodsArray: PaymentMethod[] = this.getMethodsArrayByFilter(methods);
     const queryOptions = {
       where: {
+        ...(spaceName
+          ? {
+              booking: {
+                space: {
+                  name: { contains: spaceName },
+                },
+              },
+            }
+          : {}),
         ...(dateFilter ? { createdAt: dateFilter } : {}),
-        ...(status ? { status: status } : {}),
-        ...(method ? { method: method } : {}),
+        ...(statuses ? { status: { in: statusesArray } } : {}),
+        ...(methods ? { method: { in: methodsArray } } : {}),
       },
       orderBy: sort,
       include: INCLUDE_BOOKING_HISTORY,
     };
     return this.getPaginatedPayments(paginationParams, queryOptions);
+  }
+  async getPaymentStatusCount(
+    filter: PaymentFilterRequestDto,
+  ): Promise<BaseResponse<PaymentStatusCountDto>> {
+    const { startDate, endDate, methods, spaceName } = filter;
+    const dateFilter = buildDataRange(startDate, endDate);
+    const methodsArray: PaymentMethod[] = this.getMethodsArrayByFilter(methods);
+    const whereOptions = {
+      ...(spaceName
+        ? {
+            booking: {
+              space: {
+                name: { contains: spaceName },
+              },
+            },
+          }
+        : {}),
+      ...(dateFilter ? { createdAt: dateFilter } : {}),
+      ...(methods ? { method: { in: methodsArray } } : {}),
+    };
+    try {
+      const results = await this.prismaService.payment.groupBy({
+        by: ['status'],
+        where: whereOptions,
+        _count: { status: true },
+      });
+      const counts = {};
+      for (const item of results) {
+        counts[item.status] = Number(item._count.status);
+      }
+      const countsStatusResponse: PaymentStatusCountDto = {
+        counts,
+      };
+      return buildBaseResponse(StatusKey.SUCCESS, countsStatusResponse);
+    } catch (error) {
+      logAndThrowPrismaClientError(
+        error as Error,
+        PaymentService.name,
+        'payment',
+        'getPaymentStatusCount',
+        StatusKey.FAILED,
+        this.loggerService,
+        this.i18nService,
+      );
+    }
   }
   private signPayload(payload: PayOSPayloadDto): string {
     const rawData =
@@ -234,7 +328,9 @@ export class PaymentService {
     }
   }
   private buildPaymentHistoryResponse(
-    data: Payment & { booking: BookingLite & { user: OwnerLite } },
+    data: Payment & {
+      booking: BookingLite & { user: OwnerLite; space: SpaceInfo };
+    },
   ): PaymentHistoryResponseDto {
     return {
       id: data.id,
@@ -251,7 +347,32 @@ export class PaymentService {
         id: data.booking.user.id,
         name: data.booking.user.name,
       },
+      space: {
+        id: data.booking.space.id,
+        name: data.booking.space.name,
+        type: data.booking.space.type,
+      },
       createdAt: data.createdAt,
     };
+  }
+  private getStatusArrayByfilter(
+    statuses: PaymentStatus[] | undefined,
+  ): PaymentStatus[] {
+    const statusesArray: PaymentStatus[] = Array.isArray(statuses)
+      ? statuses.filter((s): s is PaymentStatus => s !== undefined)
+      : statuses !== undefined
+        ? [statuses]
+        : [];
+    return statusesArray;
+  }
+  private getMethodsArrayByFilter(
+    methods: PaymentMethod[] | undefined,
+  ): PaymentMethod[] {
+    const methodsArray: PaymentMethod[] = Array.isArray(methods)
+      ? methods.filter((s): s is PaymentMethod => s !== undefined)
+      : methods !== undefined
+        ? [methods]
+        : [];
+    return methodsArray;
   }
 }

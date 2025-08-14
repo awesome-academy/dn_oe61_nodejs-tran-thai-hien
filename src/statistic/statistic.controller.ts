@@ -11,6 +11,7 @@ import { ApiResponseViewStatisticRevenue } from 'src/swagger/examples/statistics
 import { ApiResponseViewStatisticUser } from 'src/swagger/examples/statistics/view-statistic-user.example';
 import { ApiResponseViewTopVenue } from 'src/swagger/examples/statistics/view-top-venue.example';
 import { ApiResponseViewTopBooking } from 'src/swagger/examples/statistics/view-top-booking.example';
+import { ApiResponseViewStatisticSummary } from 'src/swagger/examples/statistics/view-statistic-summary.example';
 @ApiTags('statistics')
 @Controller('statistics')
 export class StatisticController {
@@ -44,5 +45,11 @@ export class StatisticController {
   @Get('/venues/top-booking')
   async findTopVenues(@Query() query: TopVenueFilterDto) {
     return this.statisticService.findTopVenue(query);
+  }
+  @ApiBearerAuth('access-token')
+  @ApiResponseViewStatisticSummary()
+  @Get('')
+  async statisticSummary() {
+    return this.statisticService.statisticSummary();
   }
 }

@@ -2,8 +2,10 @@ import {
   ArgumentsHost,
   Catch,
   ExceptionFilter,
+  ForbiddenException,
   HttpException,
   HttpStatus,
+  NotFoundException,
 } from '@nestjs/common';
 import { ValidationError } from 'class-validator';
 import { Request, Response } from 'express';
@@ -42,6 +44,40 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         `common.mail.send.${this.mapMailKey(exception.code)}`,
       );
       detail = exception?.detail;
+    }
+    if (exception instanceof NotFoundException) {
+      const ctx = host.switchToHttp();
+      const response = ctx.getResponse<Response>();
+      const request = ctx.getRequest<Request>();
+      if (
+        request.headers.accept &&
+        request.headers.accept.includes('text/html')
+      ) {
+        return response.status(404).render('pages/not-found');
+      }
+      return response.status(404).json({
+        code: 404,
+        message: exception.message,
+        path: request.url,
+        timestamp: new Date().toISOString(),
+      });
+    }
+    if (exception instanceof ForbiddenException) {
+      const ctx = host.switchToHttp();
+      const response = ctx.getResponse<Response>();
+      const request = ctx.getRequest<Request>();
+      if (
+        request.headers.accept &&
+        request.headers.accept.includes('text/html')
+      ) {
+        return response.status(404).render('pages/forbidden');
+      }
+      return response.status(404).json({
+        code: 404,
+        message: exception.message,
+        path: request.url,
+        timestamp: new Date().toISOString(),
+      });
     }
     if (exception instanceof HttpException) {
       code = HTTP_EXCEPTION_CODE;
