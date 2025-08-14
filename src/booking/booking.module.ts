@@ -9,6 +9,7 @@ import { BookingController } from './booking.controller';
 import { BookingProcessor } from './booking.processor';
 import { BookingService } from './booking.service';
 import { NotificationModule } from 'src/notification/notification.module';
+import { SmsModule } from 'src/sms/sms.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { NotificationModule } from 'src/notification/notification.module';
     }),
     MailModule,
     PaymentModule,
+    SmsModule,
     forwardRef(() => NotificationModule),
   ],
   providers: [

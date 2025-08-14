@@ -37,4 +37,9 @@ export default () => ({
   cookie: {
     accessTokenTTL: process.env.COOKIE_ACCESSTOKEN_TTL,
   },
+  vonage: {
+    apiKey: process.env.VONAGE_API_KEY,
+    secretKey: process.env.VONAGE_SECRET_KEY,
+    from: process.env.VONAGE_FROM,
+  },
 });

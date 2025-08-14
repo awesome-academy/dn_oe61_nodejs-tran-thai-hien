@@ -45,36 +45,6 @@ export class DashboardController {
   @ApiExcludeEndpoint()
   @UseFilters(RedirectUnauthorizedFilter)
   @HasRole(Role.ADMIN, Role.MODERATOR)
-  @Get('users')
-  @Render('pages/manage-user')
-  manageUsers(@CurrentUser() user: AccessTokenPayload) {
-    const socketUrl = this.configService.get<string>(
-      'socket.url',
-      SOCKET_URL_DEFAULT,
-    );
-    return {
-      socketUrl: socketUrl,
-      currentUser: user,
-    };
-  }
-  @ApiExcludeEndpoint()
-  @UseFilters(RedirectUnauthorizedFilter)
-  @HasRole(Role.ADMIN, Role.MODERATOR)
-  @Get('venues')
-  @Render('pages/manage-venue')
-  manageVenues(@CurrentUser() user: AccessTokenPayload) {
-    const socketUrl = this.configService.get<string>(
-      'socket.url',
-      SOCKET_URL_DEFAULT,
-    );
-    return {
-      socketUrl: socketUrl,
-      currentUser: user,
-    };
-  }
-  @ApiExcludeEndpoint()
-  @UseFilters(RedirectUnauthorizedFilter)
-  @HasRole(Role.ADMIN, Role.MODERATOR)
   @Get('venues/:id')
   @Render('pages/detail-venue')
   detailVenue(@CurrentUser() user: AccessTokenPayload) {
@@ -109,6 +79,37 @@ export class DashboardController {
   @Get('payments')
   @Render('pages/manage-payment')
   managePayments(@CurrentUser() user: AccessTokenPayload) {
+    const socketUrl = this.configService.get<string>(
+      'socket.url',
+      SOCKET_URL_DEFAULT,
+    );
+    return {
+      socketUrl: socketUrl,
+      currentUser: user,
+    };
+  }
+  @ApiExcludeEndpoint()
+  @UseFilters(RedirectUnauthorizedFilter)
+  @HasRole(Role.ADMIN, Role.MODERATOR)
+  @Get('users')
+  @UseFilters(RedirectUnauthorizedFilter)
+  @Render('pages/manage-user')
+  manageUsers(@CurrentUser() user: AccessTokenPayload) {
+    const socketUrl = this.configService.get<string>(
+      'socket.url',
+      SOCKET_URL_DEFAULT,
+    );
+    return {
+      socketUrl: socketUrl,
+      currentUser: user,
+    };
+  }
+  @ApiExcludeEndpoint()
+  @UseFilters(RedirectUnauthorizedFilter)
+  @HasRole(Role.ADMIN, Role.MODERATOR)
+  @Get('venues')
+  @Render('pages/manage-venue')
+  manageVenues(@CurrentUser() user: AccessTokenPayload) {
     const socketUrl = this.configService.get<string>(
       'socket.url',
       SOCKET_URL_DEFAULT,

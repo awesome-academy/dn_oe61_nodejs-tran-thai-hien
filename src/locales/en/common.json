@@ -406,4 +406,10 @@
       "expiredPayment": "The payment for booking (ID: {bookingId}) expired at {time}."
     }
   }
+  ,
+  "sms":{
+    "message":{
+      "confirmedBooking":"Your booking (Id: {bookingId}) for space {spaceName} has been confirmed. Payment due {expiredAt}"
+    }
+  }
 }
