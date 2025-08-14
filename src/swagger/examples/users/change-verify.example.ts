@@ -16,7 +16,8 @@ export function ApiResponseChangeVerifyExample() {
   return applyDecorators(
     ApiOperation({
       summary: 'Change verify user',
-      description: '[Admin/Moderator] change verify user',
+      description:
+        '[Admin/Moderator] change verify user **(Requires Bearer token)**',
     }),
     SwaggerUpdatedResponse(
       UserSummaryDto,

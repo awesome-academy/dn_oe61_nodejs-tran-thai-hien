@@ -10,7 +10,10 @@ import { LoginResponseDto } from 'src/user/dto/responses/login-response.dto';
 export function ApiResponseLogin() {
   const path = '/users/login';
   return applyDecorators(
-    ApiOperation({ summary: 'Login User' }),
+    ApiOperation({
+      summary: 'Login User',
+      description: 'Login User',
+    }),
     SwaggerCreatedResponse(
       LoginResponseDto,
       'Login successfully',

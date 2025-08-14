@@ -16,7 +16,7 @@ export function ApiResponseChangeRoleExample() {
   return applyDecorators(
     ApiOperation({
       summary: 'Change role user',
-      description: '[Admin] change role user',
+      description: '[Admin] change role user **(Requires Bearer token)**',
     }),
     SwaggerUpdatedResponse(
       UserSummaryDto,
