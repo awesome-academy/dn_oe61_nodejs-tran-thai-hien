@@ -10,7 +10,10 @@ import { UserSummaryDto } from 'src/user/dto/responses/user-summary.dto';
 export function ApiResponseGetPublicDetailExample() {
   const path = '/users/:id';
   return applyDecorators(
-    ApiOperation({ summary: 'Find detail users' }),
+    ApiOperation({
+      summary: 'Find detail users',
+      description: 'Find public detail users **(Requires Bearer token)**',
+    }),
     SwaggerGetResponse(
       UserSummaryDto,
       'Find user detail successfully',
