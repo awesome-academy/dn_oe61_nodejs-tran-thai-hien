@@ -16,6 +16,8 @@ export function ApiResponseStatusUpdate() {
   return applyDecorators(
     ApiOperation({
       summary: 'Change user status',
+      description:
+        '[MODERATOR/ADMIN]  change user status **(Requires Bearer token)**',
     }),
     SwaggerUpdatedResponse(
       UserSummaryDto,

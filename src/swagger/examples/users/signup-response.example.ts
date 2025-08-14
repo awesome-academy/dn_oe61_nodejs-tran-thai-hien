@@ -9,7 +9,10 @@ import { SignupResponseDto } from 'src/user/dto/responses/signup-response.dto';
 export function ApiResponseSignup() {
   const path = '/users/signup';
   return applyDecorators(
-    ApiOperation({ summary: 'Signup User' }),
+    ApiOperation({
+      summary: 'Signup User',
+      description: 'Signup User',
+    }),
     ApiResponse({
       status: 201,
       description: 'User Signup for system',
