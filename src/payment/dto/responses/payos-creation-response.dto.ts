@@ -6,7 +6,6 @@ export class PayOSCreatePaymentDataDto {
     description: 'URL to checkout payment',
   })
   checkoutUrl: string;
-
   @ApiProperty({
     example: 'https://payos.com/qrcode/abc123',
     description: 'URL of QR code',

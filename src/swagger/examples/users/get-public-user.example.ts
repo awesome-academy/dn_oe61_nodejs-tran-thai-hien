@@ -10,7 +10,10 @@ import { UserSummaryDto } from 'src/user/dto/responses/user-summary.dto';
 export function ApiResponseGetPublicUser() {
   const path = '/';
   return applyDecorators(
-    ApiOperation({ summary: 'Find public users' }),
+    ApiOperation({
+      summary: 'Find public users',
+      description: 'Find public users **(Requires Bearer token)**',
+    }),
     SwaggerGetPaginatedResponse(
       UserSummaryDto,
       'Find public users successfully',
