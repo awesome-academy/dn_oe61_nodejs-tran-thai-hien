@@ -17,6 +17,7 @@ export function ApiResponseUpdateStatusUserBulk() {
   return applyDecorators(
     ApiOperation({
       summary: 'Change user status bulk',
+      description: 'Change user status bulk **(Requires Bearer token)**',
     }),
     SwaggerUpdatedArrayResponse(
       UserSummaryDto,

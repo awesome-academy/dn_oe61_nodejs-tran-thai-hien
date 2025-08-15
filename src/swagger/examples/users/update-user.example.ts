@@ -11,7 +11,10 @@ import { UserProfileResponse } from 'src/user/dto/responses/user-profile.respons
 export function ApiResponseUpdateUserExample() {
   const path = '/users/profile';
   return applyDecorators(
-    ApiOperation({ summary: 'Update Profile' }),
+    ApiOperation({
+      summary: 'Update Profile',
+      description: 'Update Profile **(Requires Bearer token)**',
+    }),
     SwaggerUpdatedResponse(
       UserProfileResponse,
       'Update my profile successfully',
