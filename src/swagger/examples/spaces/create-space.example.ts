@@ -1,6 +1,7 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiBody, ApiOperation } from '@nestjs/swagger';
 import { SpaceCreationRequestDto } from 'src/space/dto/requests/space-creation-request.dto';
+import { SpaceSummaryResponseDto } from 'src/space/dto/responses/space-summary-response.dto';
 import {
   ApiErrorBadRequest,
   ApiErrorBadRequestValidation,
@@ -22,7 +23,7 @@ export function ApiResponseCreateSpace() {
       type: SpaceCreationRequestDto,
     }),
     SwaggerCreatedResponse(
-      SpaceCreationRequestDto,
+      SpaceSummaryResponseDto,
       'Space Creation Successfully',
       'Space Creation Successfully',
     ),
