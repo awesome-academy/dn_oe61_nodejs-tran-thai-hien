@@ -12,7 +12,7 @@ export function ApiResponseGetPorfileExample() {
   return applyDecorators(
     ApiOperation({
       summary: 'Get profile user',
-      description: 'Get profile user',
+      description: 'Get profile user **(Requires Bearer token)**',
     }),
     SwaggerGetResponse(
       UserProfileResponse,

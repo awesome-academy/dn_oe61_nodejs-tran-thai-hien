@@ -11,7 +11,10 @@ import { ResendVerifyEmailResponseDto } from 'src/user/dto/responses/resend-veri
 export function ApiResponseResendVerifyEmaiLExample() {
   const path = '/users/resend-verify';
   return applyDecorators(
-    ApiOperation({ summary: 'Resend verification email' }),
+    ApiOperation({
+      summary: 'Resend verification email',
+      description: 'Resend verification email',
+    }),
     ApiQuery({
       name: 'email',
       required: true,

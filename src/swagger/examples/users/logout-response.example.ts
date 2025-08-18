@@ -10,7 +10,10 @@ import { SwaggerBaseResponseNull } from 'src/swagger/decorators/swagger-response
 export function ApiResponseLogoutExample() {
   const path = '/users/logout';
   return applyDecorators(
-    ApiOperation({ summary: 'Logout', description: 'Logout' }),
+    ApiOperation({
+      summary: 'Logout',
+      description: 'Logout (Requires Bearer token)',
+    }),
     SwaggerBaseResponseNull('Logout', 'Logout successfully'),
     ApiErrorUnauthorized(
       'Unauthorized',
